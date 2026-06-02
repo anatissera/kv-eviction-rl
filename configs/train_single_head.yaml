@@ -56,7 +56,7 @@ compile_agent: True
 distributed: True
 
 home_dir: ${oc.env:PROJECT_ROOT}
-remote_dir: s3://ml-learning-to-evict
+remote_dir: s3://[your-bucket-here]
 
 # Output directory for trained agents
 # Structure: agents/grouped/{sweep_name}/layer_XXXXXX/kv_head_XXX/

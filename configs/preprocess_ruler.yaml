@@ -24,7 +24,7 @@
 # The preprocessed data will be saved to: data/gqa_safetensors/simonjegou_ruler/...
 
 home_dir: ${oc.env:PROJECT_ROOT}
-remote_dir: s3://ml-learning-to-evict
+remote_dir: s3://[your-bucket-here]
 output_dir: data/gqa_safetensors
 
 device: cuda
