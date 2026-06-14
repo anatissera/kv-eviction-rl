@@ -1,0 +1,17 @@
+{
+  "projectRoot": "/Users/alexanderbodner/Documents/Udesa/5to/aprendizaje reforzado/tp final/ml-learning-to-evict",
+  "batchFiles": [
+    {"path": "tests/test_generate_with_compression.py", "language": "python", "sizeLines": 204, "fileCategory": "code"},
+    {"path": "tests/test_kv_cache/test_compressor.py", "language": "python", "sizeLines": 476, "fileCategory": "code"},
+    {"path": "tests/test_kv_cache/test_patched_model_forward.py", "language": "python", "sizeLines": 84, "fileCategory": "code"},
+    {"path": "tests/test_online_attention.py", "language": "python", "sizeLines": 230, "fileCategory": "code"},
+    {"path": "tests/test_utils.py", "language": "python", "sizeLines": 83, "fileCategory": "code"}
+  ],
+  "batchImportData": {
+    "tests/test_generate_with_compression.py": ["tests/test_utils.py"],
+    "tests/test_kv_cache/test_compressor.py": ["tests/test_utils.py"],
+    "tests/test_kv_cache/test_patched_model_forward.py": ["tests/test_utils.py"],
+    "tests/test_online_attention.py": ["tests/test_utils.py"],
+    "tests/test_utils.py": []
+  }
+}

@@ -1,0 +1,5171 @@
+{
+  "version": "1.0.0",
+  "gitCommitHash": "1ad53d81c267a1cd6ebd206fd1ce1208faa9072d",
+  "generatedAt": "2026-06-14T20:46:58.313Z",
+  "files": {
+    ".env.template": {
+      "filePath": ".env.template",
+      "contentHash": "eb5079199c0391c9ba15ba4e4f5c1aacb062fc2f24f6f45f8332f631690e46b8",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 30,
+      "hasStructuralAnalysis": false
+    },
+    ".pre-commit-config.yaml": {
+      "filePath": ".pre-commit-config.yaml",
+      "contentHash": "96b9ba216a57caead81c3b2a3dc0c51a4747c577dbaeaa77a7f6f4be60f26eae",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 19,
+      "hasStructuralAnalysis": true
+    },
+    ".understand-anything/.understandignore": {
+      "filePath": ".understand-anything/.understandignore",
+      "contentHash": "162d00ef292eb1d9654b89f90ca63b8372a086cb2af313d1746bf6110c5405e6",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 127,
+      "hasStructuralAnalysis": false
+    },
+    "ACKNOWLEDGEMENTS": {
+      "filePath": "ACKNOWLEDGEMENTS",
+      "contentHash": "8f81a1b03f9bd8c8ecc6175ed4621f607ce1254b807fde17e17ca3cd0b3f4925",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 246,
+      "hasStructuralAnalysis": false
+    },
+    "assets/ruler_split/train.txt": {
+      "filePath": "assets/ruler_split/train.txt",
+      "contentHash": "4d2230dda0b922e4d1741cecacc7f2f677b09e3768404309df53903b570aac18",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 6176,
+      "hasStructuralAnalysis": false
+    },
+    "assets/ruler_split/val.txt": {
+      "filePath": "assets/ruler_split/val.txt",
+      "contentHash": "adf3afcdeeee5af2ed788f954a6bbb1c6cddf3ab8de48854627e4fd34a3ac3d8",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 326,
+      "hasStructuralAnalysis": false
+    },
+    "CODE_OF_CONDUCT.md": {
+      "filePath": "CODE_OF_CONDUCT.md",
+      "contentHash": "0e6f11d51b130db19d1179f24cdbd6c49b1ef513e3d1b7069fea6794a3bc2775",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 71,
+      "hasStructuralAnalysis": true
+    },
+    "configs/preprocess_ruler.yaml": {
+      "filePath": "configs/preprocess_ruler.yaml",
+      "contentHash": "dd2efa757017940d558495935d030b6273a4da42eb244f4076bd5a1639d4bdd3",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 109,
+      "hasStructuralAnalysis": true
+    },
+    "configs/setups/agent_training_setup.sh": {
+      "filePath": "configs/setups/agent_training_setup.sh",
+      "contentHash": "3b7f8f09007b2f99acdf45dcf3b4d9919d8886ded9cc0ddf8681bb4a973855de",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 52,
+      "hasStructuralAnalysis": true
+    },
+    "configs/setups/preprocessing_setup.sh": {
+      "filePath": "configs/setups/preprocessing_setup.sh",
+      "contentHash": "2ec799a54e7d82acb2e5978a5cbab8571ba19efc8f303f40720a7434ed2f32d8",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 38,
+      "hasStructuralAnalysis": true
+    },
+    "configs/train_single_head.yaml": {
+      "filePath": "configs/train_single_head.yaml",
+      "contentHash": "a96ab5cdca47d56884037755c0dc1b54d8883f4746d0b8ae64644f391dbda8df",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 217,
+      "hasStructuralAnalysis": true
+    },
+    "CONTRIBUTING.md": {
+      "filePath": "CONTRIBUTING.md",
+      "contentHash": "fadcdcbd577772118d702cf4f2e955e7bc1c7560246dc0f46bcc2a20f3f53ef8",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 8,
+      "hasStructuralAnalysis": true
+    },
+    "notebooks/inference_demo.ipynb": {
+      "filePath": "notebooks/inference_demo.ipynb",
+      "contentHash": "a777fe5241eaaddb8225c03405578c83836fd1d807390c5517e2ac3867e158e8",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 204,
+      "hasStructuralAnalysis": false
+    },
+    "pyproject.toml": {
+      "filePath": "pyproject.toml",
+      "contentHash": "5d4296373c3e80d901e705557d2e9045bd86c39212684030c6191de9b374fcc8",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 80,
+      "hasStructuralAnalysis": true
+    },
+    "README.md": {
+      "filePath": "README.md",
+      "contentHash": "c7b81c49b891c0176ee441a6b889d896b6d4e96249563700d1545d716d597b12",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 107,
+      "hasStructuralAnalysis": true
+    },
+    "scripts/download_data.py": {
+      "filePath": "scripts/download_data.py",
+      "contentHash": "fe034c7f90d40523bdb6ae134c3dd6dc6cc17898590240e9d9ee19b5e956573e",
+      "functions": [
+        {
+          "name": "main",
+          "params": [],
+          "exported": true,
+          "lineCount": 3
+        }
+      ],
+      "classes": [
+        {
+          "name": "DataDownloader",
+          "methods": [
+            "__init__",
+            "download",
+            "_download_gqa_data",
+            "_parse_indices",
+            "_get_sample_ids_from_splits",
+            "_download_with_patterns",
+            "_build_include_patterns",
+            "_run_aws_command",
+            "_verify_download_completeness"
+          ],
+          "properties": [],
+          "exported": true,
+          "lineCount": 462
+        }
+      ],
+      "imports": [
+        {
+          "source": "os",
+          "specifiers": [
+            "os"
+          ]
+        },
+        {
+          "source": "subprocess",
+          "specifiers": [
+            "subprocess"
+          ]
+        },
+        {
+          "source": "pathlib",
+          "specifiers": [
+            "Path"
+          ]
+        },
+        {
+          "source": "typing",
+          "specifiers": [
+            "List",
+            "Optional",
+            "Set"
+          ]
+        },
+        {
+          "source": "fire",
+          "specifiers": [
+            "fire"
+          ]
+        }
+      ],
+      "exports": [
+        "DataDownloader",
+        "main"
+      ],
+      "totalLines": 532,
+      "hasStructuralAnalysis": true
+    },
+    "scripts/orchestration/agent_registry.py": {
+      "filePath": "scripts/orchestration/agent_registry.py",
+      "contentHash": "82349141acf125b8ef82e80fca4e2333599c8c9ca9bbd7269a8b70369ca254bb",
+      "functions": [
+        {
+          "name": "list_sweeps",
+          "params": [
+            "group",
+            "bucket"
+          ],
+          "exported": true,
+          "lineCount": 38
+        },
+        {
+          "name": "discover",
+          "params": [
+            "sweep_name",
+            "group",
+            "bucket",
+            "verbose"
+          ],
+          "exported": true,
+          "lineCount": 42
+        },
+        {
+          "name": "validate_sweep",
+          "params": [
+            "sweep_name",
+            "expected_layers",
+            "expected_heads",
+            "expected_nagents",
+            "group",
+            "bucket",
+            "verbose"
+          ],
+          "exported": true,
+          "lineCount": 179
+        }
+      ],
+      "classes": [],
+      "imports": [
+        {
+          "source": "logging",
+          "specifiers": [
+            "logging"
+          ]
+        },
+        {
+          "source": "typer",
+          "specifiers": [
+            "typer"
+          ]
+        },
+        {
+          "source": "kvcompression.cli_logging",
+          "specifiers": [
+            "setup_cli_logging"
+          ]
+        },
+        {
+          "source": "kvcompression.tools.agent_registry",
+          "specifiers": [
+            "AgentRegistry"
+          ]
+        }
+      ],
+      "exports": [
+        "list_sweeps",
+        "discover",
+        "validate_sweep"
+      ],
+      "totalLines": 297,
+      "hasStructuralAnalysis": true
+    },
+    "scripts/orchestration/assignment_generator.py": {
+      "filePath": "scripts/orchestration/assignment_generator.py",
+      "contentHash": "27adff720212bf729d8cc9a54920ff0e8b65a08b52bace26c8c18a1b06be05f7",
+      "functions": [
+        {
+          "name": "main",
+          "params": [],
+          "exported": true,
+          "lineCount": 2
+        },
+        {
+          "name": "_parse_layer_head_params",
+          "params": [
+            "layers_str",
+            "heads_str"
+          ],
+          "returnType": "Tuple[Optional[List[int]], Optional[List[int]]]",
+          "exported": true,
+          "lineCount": 34
+        },
+        {
+          "name": "write_composites",
+          "params": [
+            "sweep_names",
+            "bucket",
+            "layers",
+            "heads",
+            "group",
+            "output_dir",
+            "expected_nagents",
+            "strict_unique"
+          ],
+          "exported": true,
+          "lineCount": 125
+        }
+      ],
+      "classes": [],
+      "imports": [
+        {
+          "source": "logging",
+          "specifiers": [
+            "logging"
+          ]
+        },
+        {
+          "source": "pathlib",
+          "specifiers": [
+            "Path"
+          ]
+        },
+        {
+          "source": "typing",
+          "specifiers": [
+            "List",
+            "Optional",
+            "Tuple"
+          ]
+        },
+        {
+          "source": "typer",
+          "specifiers": [
+            "typer"
+          ]
+        },
+        {
+          "source": "yaml",
+          "specifiers": [
+            "yaml"
+          ]
+        },
+        {
+          "source": "kvcompression.cli_logging",
+          "specifiers": [
+            "setup_cli_logging"
+          ]
+        },
+        {
+          "source": "kvcompression.tools.agent_registry",
+          "specifiers": [
+            "AgentRegistry"
+          ]
+        },
+        {
+          "source": "kvcompression.tools.assignment_generator",
+          "specifiers": [
+            "write_composites_file"
+          ]
+        }
+      ],
+      "exports": [
+        "main",
+        "_parse_layer_head_params",
+        "write_composites"
+      ],
+      "totalLines": 203,
+      "hasStructuralAnalysis": true
+    },
+    "src/kvcompression/__init__.py": {
+      "filePath": "src/kvcompression/__init__.py",
+      "contentHash": "8b40f440fd87c3fb9571d978dc22bc7855a80d1ec498e7886dbf518a327c5c46",
+      "functions": [
+        {
+          "name": "load_envs",
+          "params": [
+            "env_file"
+          ],
+          "returnType": "None",
+          "exported": true,
+          "lineCount": 13
+        },
+        {
+          "name": "format_resolver",
+          "params": [
+            "value",
+            "format_spec"
+          ],
+          "returnType": "str",
+          "exported": true,
+          "lineCount": 6
+        }
+      ],
+      "classes": [],
+      "imports": [
+        {
+          "source": "logging",
+          "specifiers": [
+            "logging"
+          ]
+        },
+        {
+          "source": "os",
+          "specifiers": [
+            "os"
+          ]
+        },
+        {
+          "source": "pathlib",
+          "specifiers": [
+            "Path"
+          ]
+        },
+        {
+          "source": "typing",
+          "specifiers": [
+            "Optional"
+          ]
+        },
+        {
+          "source": "dotenv",
+          "specifiers": [
+            "dotenv"
+          ]
+        },
+        {
+          "source": "git",
+          "specifiers": [
+            "git"
+          ]
+        },
+        {
+          "source": "omegaconf",
+          "specifiers": [
+            "OmegaConf"
+          ]
+        },
+        {
+          "source": "rich.logging",
+          "specifiers": [
+            "RichHandler"
+          ]
+        },
+        {
+          "source": "rich.traceback",
+          "specifiers": [
+            "install"
+          ]
+        }
+      ],
+      "exports": [
+        "load_envs",
+        "format_resolver"
+      ],
+      "totalLines": 68,
+      "hasStructuralAnalysis": true
+    },
+    "src/kvcompression/attention_utils.py": {
+      "filePath": "src/kvcompression/attention_utils.py",
+      "contentHash": "9dbf79594b27415774f3e4b98a1ad96f9cb6f70d33cc3a63bec9aa78bfa5f782",
+      "functions": [
+        {
+          "name": "materialize_attention_weights",
+          "params": [
+            "query",
+            "key",
+            "query_seq_lengths",
+            "key_seq_lengths",
+            "attn_mask",
+            "is_causal"
+          ],
+          "returnType": "torch.Tensor",
+          "exported": true,
+          "lineCount": 123
+        },
+        {
+          "name": "get_attention_mask",
+          "params": [
+            "batch_size",
+            "q_seq_len",
+            "kv_seq_len",
+            "device"
+          ],
+          "returnType": "torch.Tensor",
+          "exported": true,
+          "lineCount": 23
+        },
+        {
+          "name": "expand_kv_for_gqa",
+          "params": [
+            "k_cache",
+            "v_cache",
+            "num_q_heads",
+            "num_kv_heads"
+          ],
+          "exported": true,
+          "lineCount": 33
+        },
+        {
+          "name": "expand_k_for_gqa",
+          "params": [
+            "k_cache",
+            "num_q_heads",
+            "num_kv_heads"
+          ],
+          "exported": true,
+          "lineCount": 24
+        }
+      ],
+      "classes": [],
+      "imports": [
+        {
+          "source": "math",
+          "specifiers": [
+            "math"
+          ]
+        },
+        {
+          "source": "typing",
+          "specifiers": [
+            "Optional"
+          ]
+        },
+        {
+          "source": "torch",
+          "specifiers": [
+            "torch"
+          ]
+        }
+      ],
+      "exports": [
+        "materialize_attention_weights",
+        "get_attention_mask",
+        "expand_kv_for_gqa",
+        "expand_k_for_gqa"
+      ],
+      "totalLines": 221,
+      "hasStructuralAnalysis": true
+    },
+    "src/kvcompression/cli_logging.py": {
+      "filePath": "src/kvcompression/cli_logging.py",
+      "contentHash": "5f4745239691ab2108901b3a184c59cf57e6169b75882d0ee22c94ff635d8e48",
+      "functions": [
+        {
+          "name": "setup_cli_logging",
+          "params": [],
+          "exported": true,
+          "lineCount": 14
+        }
+      ],
+      "classes": [
+        {
+          "name": "CLIRichHandler",
+          "methods": [
+            "__init__",
+            "emit"
+          ],
+          "properties": [],
+          "exported": true,
+          "lineCount": 14
+        }
+      ],
+      "imports": [
+        {
+          "source": "logging",
+          "specifiers": [
+            "logging"
+          ]
+        },
+        {
+          "source": "rich.console",
+          "specifiers": [
+            "Console"
+          ]
+        },
+        {
+          "source": "rich.logging",
+          "specifiers": [
+            "RichHandler"
+          ]
+        }
+      ],
+      "exports": [
+        "CLIRichHandler",
+        "setup_cli_logging"
+      ],
+      "totalLines": 44,
+      "hasStructuralAnalysis": true
+    },
+    "src/kvcompression/constants.py": {
+      "filePath": "src/kvcompression/constants.py",
+      "contentHash": "8d665bac28af66a6412de5eac2944baa3438a9388d6472c865d32de2c50a60b4",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 7,
+      "hasStructuralAnalysis": true
+    },
+    "src/kvcompression/costs.py": {
+      "filePath": "src/kvcompression/costs.py",
+      "contentHash": "38bf5675b3718805e4d80cc8f73428af34e53cce2b5ca0aaf1f7c355477f689d",
+      "functions": [
+        {
+          "name": "reverse_cumsum",
+          "params": [
+            "x",
+            "dim"
+          ],
+          "returnType": "torch.Tensor",
+          "exported": true,
+          "lineCount": 3
+        },
+        {
+          "name": "batched_compute_cost",
+          "params": [
+            "kv_rankings",
+            "kv_rankings_length",
+            "attention_weights",
+            "seq_lengths"
+          ],
+          "returnType": "CostResult",
+          "exported": true,
+          "lineCount": 99
+        }
+      ],
+      "classes": [
+        {
+          "name": "CostResult",
+          "methods": [
+            "to"
+          ],
+          "properties": [
+            "cost",
+            "cost_per_cachesize",
+            "valid_lengths"
+          ],
+          "exported": true,
+          "lineCount": 19
+        }
+      ],
+      "imports": [
+        {
+          "source": "math",
+          "specifiers": [
+            "math"
+          ]
+        },
+        {
+          "source": "typing",
+          "specifiers": [
+            "NamedTuple",
+            "Optional"
+          ]
+        },
+        {
+          "source": "torch",
+          "specifiers": [
+            "torch"
+          ]
+        },
+        {
+          "source": "torchtune",
+          "specifiers": [
+            "utils"
+          ]
+        },
+        {
+          "source": "kvcompression.utils.utils",
+          "specifiers": [
+            "is_torch_compile_disabled"
+          ]
+        }
+      ],
+      "exports": [
+        "CostResult",
+        "reverse_cumsum",
+        "batched_compute_cost"
+      ],
+      "totalLines": 146,
+      "hasStructuralAnalysis": true
+    },
+    "src/kvcompression/data/__init__.py": {
+      "filePath": "src/kvcompression/data/__init__.py",
+      "contentHash": "1c78a5a7a7686fce4261c103a3b4dc07aa8af1cb8f42e64ca5fffe687d541218",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 6,
+      "hasStructuralAnalysis": true
+    },
+    "src/kvcompression/data/activations_dataset.py": {
+      "filePath": "src/kvcompression/data/activations_dataset.py",
+      "contentHash": "389f91ceb449a3c7217dc2c9ee1e1c7b831f57edb9741640c95d2becd4f7a363",
+      "functions": [],
+      "classes": [
+        {
+          "name": "QKVDataset",
+          "methods": [
+            "__init__",
+            "_load_split_samples",
+            "_discover_data_dirs",
+            "__len__",
+            "__getitem__"
+          ],
+          "properties": [],
+          "exported": true,
+          "lineCount": 170
+        }
+      ],
+      "imports": [
+        {
+          "source": "pathlib",
+          "specifiers": [
+            "Path"
+          ]
+        },
+        {
+          "source": "typing",
+          "specifiers": [
+            "Union"
+          ]
+        },
+        {
+          "source": "safetensors.torch",
+          "specifiers": [
+            "safetensors.torch"
+          ]
+        },
+        {
+          "source": "torch",
+          "specifiers": [
+            "torch"
+          ]
+        },
+        {
+          "source": "torch.utils.data",
+          "specifiers": [
+            "Dataset"
+          ]
+        },
+        {
+          "source": "torchtune",
+          "specifiers": [
+            "training",
+            "utils"
+          ]
+        },
+        {
+          "source": "kvcompression",
+          "specifiers": [
+            "PROJECT_ROOT"
+          ]
+        }
+      ],
+      "exports": [
+        "QKVDataset"
+      ],
+      "totalLines": 190,
+      "hasStructuralAnalysis": true
+    },
+    "src/kvcompression/data/chunk_sampler.py": {
+      "filePath": "src/kvcompression/data/chunk_sampler.py",
+      "contentHash": "b20a5fe74874de311716544cebc31305a9a8574e371eab413a3149ceaa7e1152",
+      "functions": [],
+      "classes": [
+        {
+          "name": "ChunkSampler",
+          "methods": [
+            "__init__",
+            "_get_indices",
+            "__iter__",
+            "__len__"
+          ],
+          "properties": [],
+          "exported": true,
+          "lineCount": 58
+        }
+      ],
+      "imports": [
+        {
+          "source": "typing",
+          "specifiers": [
+            "Iterator",
+            "List",
+            "Optional"
+          ]
+        },
+        {
+          "source": "numpy",
+          "specifiers": [
+            "np"
+          ]
+        },
+        {
+          "source": "torch.utils.data",
+          "specifiers": [
+            "Dataset",
+            "Sampler"
+          ]
+        }
+      ],
+      "exports": [
+        "ChunkSampler"
+      ],
+      "totalLines": 70,
+      "hasStructuralAnalysis": true
+    },
+    "src/kvcompression/data/kvpress_dataset.py": {
+      "filePath": "src/kvcompression/data/kvpress_dataset.py",
+      "contentHash": "1b5f044afed74b958d96f6bd83921b22a5a73ee6217b15eec71489cf8a1a1510",
+      "functions": [
+        {
+          "name": "_add_row_id",
+          "params": [
+            "example",
+            "idx"
+          ],
+          "exported": true,
+          "lineCount": 4
+        }
+      ],
+      "classes": [
+        {
+          "name": "KVPressPreprocessingDataset",
+          "methods": [
+            "__init__",
+            "__len__",
+            "__getitem__"
+          ],
+          "properties": [],
+          "exported": true,
+          "lineCount": 27
+        }
+      ],
+      "imports": [
+        {
+          "source": "logging",
+          "specifiers": [
+            "logging"
+          ]
+        },
+        {
+          "source": "torch",
+          "specifiers": [
+            "torch"
+          ]
+        },
+        {
+          "source": "datasets",
+          "specifiers": [
+            "load_dataset"
+          ]
+        },
+        {
+          "source": "torchtune",
+          "specifiers": [
+            "utils"
+          ]
+        },
+        {
+          "source": "torchtune.data",
+          "specifiers": [
+            "Message"
+          ]
+        },
+        {
+          "source": "torchtune.models.qwen2_5._tokenizer",
+          "specifiers": [
+            "Qwen2_5Tokenizer"
+          ]
+        }
+      ],
+      "exports": [
+        "_add_row_id",
+        "KVPressPreprocessingDataset"
+      ],
+      "totalLines": 52,
+      "hasStructuralAnalysis": true
+    },
+    "src/kvcompression/data/pad_collate.py": {
+      "filePath": "src/kvcompression/data/pad_collate.py",
+      "contentHash": "fae05771cda402a4ac75ada16c80920a5fda7b3141ef0d2d282b3c49a53dbba5",
+      "functions": [
+        {
+          "name": "pad_collate_fn",
+          "params": [
+            "samples"
+          ],
+          "exported": true,
+          "lineCount": 34
+        }
+      ],
+      "classes": [],
+      "imports": [
+        {
+          "source": "collections",
+          "specifiers": [
+            "defaultdict"
+          ]
+        },
+        {
+          "source": "torch",
+          "specifiers": [
+            "torch"
+          ]
+        },
+        {
+          "source": "torch.nn.functional",
+          "specifiers": [
+            "F"
+          ]
+        }
+      ],
+      "exports": [
+        "pad_collate_fn"
+      ],
+      "totalLines": 70,
+      "hasStructuralAnalysis": true
+    },
+    "src/kvcompression/entrypoints/__init__.py": {
+      "filePath": "src/kvcompression/entrypoints/__init__.py",
+      "contentHash": "8ca8ed7f11eb9ee6d627843d7e4610d0d679c7ecccc6a0e426645e6040982eba",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 5,
+      "hasStructuralAnalysis": true
+    },
+    "src/kvcompression/entrypoints/datagen/__init__.py": {
+      "filePath": "src/kvcompression/entrypoints/datagen/__init__.py",
+      "contentHash": "1c78a5a7a7686fce4261c103a3b4dc07aa8af1cb8f42e64ca5fffe687d541218",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 6,
+      "hasStructuralAnalysis": true
+    },
+    "src/kvcompression/entrypoints/datagen/unroll_and_store.py": {
+      "filePath": "src/kvcompression/entrypoints/datagen/unroll_and_store.py",
+      "contentHash": "1604fac50cf22b81f635225edecc5b5eaa6ab5af7ecf5843d99950f7ad4cdb52",
+      "functions": [
+        {
+          "name": "main",
+          "params": [
+            "cfg"
+          ],
+          "returnType": "None",
+          "exported": true,
+          "lineCount": 6
+        }
+      ],
+      "classes": [
+        {
+          "name": "InferenceRecipe",
+          "methods": [
+            "__init__",
+            "setup",
+            "_setup_data",
+            "_setup_model",
+            "generate",
+            "save_generation"
+          ],
+          "properties": [],
+          "exported": true,
+          "lineCount": 212
+        }
+      ],
+      "imports": [
+        {
+          "source": "concurrent",
+          "specifiers": [
+            "concurrent"
+          ]
+        },
+        {
+          "source": "shutil",
+          "specifiers": [
+            "shutil"
+          ]
+        },
+        {
+          "source": "sys",
+          "specifiers": [
+            "sys"
+          ]
+        },
+        {
+          "source": "functools",
+          "specifiers": [
+            "partial"
+          ]
+        },
+        {
+          "source": "pathlib",
+          "specifiers": [
+            "Path"
+          ]
+        },
+        {
+          "source": "typing",
+          "specifiers": [
+            "Any",
+            "Dict",
+            "Tuple"
+          ]
+        },
+        {
+          "source": "safetensors.torch",
+          "specifiers": [
+            "safetensors.torch"
+          ]
+        },
+        {
+          "source": "torch",
+          "specifiers": [
+            "torch"
+          ]
+        },
+        {
+          "source": "omegaconf",
+          "specifiers": [
+            "DictConfig"
+          ]
+        },
+        {
+          "source": "torch",
+          "specifiers": [
+            "nn"
+          ]
+        },
+        {
+          "source": "torch.utils.data",
+          "specifiers": [
+            "DataLoader"
+          ]
+        },
+        {
+          "source": "torchtune",
+          "specifiers": [
+            "config",
+            "generation",
+            "training",
+            "utils"
+          ]
+        },
+        {
+          "source": "torchtune.data",
+          "specifiers": [
+            "padded_collate"
+          ]
+        },
+        {
+          "source": "tqdm",
+          "specifiers": [
+            "tqdm"
+          ]
+        },
+        {
+          "source": "kvcompression.data.chunk_sampler",
+          "specifiers": [
+            "ChunkSampler"
+          ]
+        },
+        {
+          "source": "kvcompression.data.kvpress_dataset",
+          "specifiers": [
+            "KVPressPreprocessingDataset"
+          ]
+        },
+        {
+          "source": "kvcompression.hooks.extractors",
+          "specifiers": [
+            "ExtractAttentionTensors"
+          ]
+        },
+        {
+          "source": "kvcompression.utils.s3_utils",
+          "specifiers": [
+            "upload_directory"
+          ]
+        }
+      ],
+      "exports": [
+        "InferenceRecipe",
+        "main"
+      ],
+      "totalLines": 255,
+      "hasStructuralAnalysis": true
+    },
+    "src/kvcompression/entrypoints/rl/__init__.py": {
+      "filePath": "src/kvcompression/entrypoints/rl/__init__.py",
+      "contentHash": "1c78a5a7a7686fce4261c103a3b4dc07aa8af1cb8f42e64ca5fffe687d541218",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 6,
+      "hasStructuralAnalysis": true
+    },
+    "src/kvcompression/entrypoints/rl/train_agent_sampler_distributed.py": {
+      "filePath": "src/kvcompression/entrypoints/rl/train_agent_sampler_distributed.py",
+      "contentHash": "fc914885c82ed6e95a8c7e393ced3fdb4fbff36f85d8bf7e116764be63c25a53",
+      "functions": [
+        {
+          "name": "launch_training",
+          "params": [
+            "cfg",
+            "cleanup"
+          ],
+          "returnType": "MetricsManager",
+          "exported": true,
+          "lineCount": 32
+        },
+        {
+          "name": "main",
+          "params": [
+            "cfg"
+          ],
+          "returnType": "None",
+          "exported": true,
+          "lineCount": 4
+        }
+      ],
+      "classes": [
+        {
+          "name": "RLOOTrainingRecipeDistributed",
+          "methods": [
+            "__init__",
+            "_setup_distributed",
+            "_fast_forward_to_step",
+            "_should_save_checkpoint",
+            "_safe_checkpoint_save",
+            "setup",
+            "_detect_and_load_resume",
+            "_setup_data_and_environments",
+            "_setup_model_and_agent",
+            "_setup_trainer",
+            "_apply_remaining_resume_state",
+            "train",
+            "plot_results",
+            "evaluate_best_model",
+            "upload",
+            "cleanup"
+          ],
+          "properties": [],
+          "exported": true,
+          "lineCount": 903
+        }
+      ],
+      "imports": [
+        {
+          "source": "datetime",
+          "specifiers": [
+            "datetime"
+          ]
+        },
+        {
+          "source": "logging",
+          "specifiers": [
+            "logging"
+          ]
+        },
+        {
+          "source": "os",
+          "specifiers": [
+            "os"
+          ]
+        },
+        {
+          "source": "sys",
+          "specifiers": [
+            "sys"
+          ]
+        },
+        {
+          "source": "pathlib",
+          "specifiers": [
+            "Path"
+          ]
+        },
+        {
+          "source": "typing",
+          "specifiers": [
+            "Any",
+            "Dict",
+            "Optional"
+          ]
+        },
+        {
+          "source": "torch",
+          "specifiers": [
+            "torch"
+          ]
+        },
+        {
+          "source": "torch.distributed",
+          "specifiers": [
+            "dist"
+          ]
+        },
+        {
+          "source": "omegaconf",
+          "specifiers": [
+            "DictConfig",
+            "OmegaConf"
+          ]
+        },
+        {
+          "source": "torch",
+          "specifiers": [
+            "nn"
+          ]
+        },
+        {
+          "source": "torch.nn.parallel",
+          "specifiers": [
+            "DDP"
+          ]
+        },
+        {
+          "source": "torch.optim.swa_utils",
+          "specifiers": [
+            "AveragedModel"
+          ]
+        },
+        {
+          "source": "torch.utils.data",
+          "specifiers": [
+            "DataLoader",
+            "DistributedSampler"
+          ]
+        },
+        {
+          "source": "torchtune",
+          "specifiers": [
+            "config",
+            "training",
+            "utils"
+          ]
+        },
+        {
+          "source": "torchtune.recipe_interfaces",
+          "specifiers": [
+            "FTRecipeInterface"
+          ]
+        },
+        {
+          "source": "tqdm",
+          "specifiers": [
+            "tqdm"
+          ]
+        },
+        {
+          "source": "kvcompression",
+          "specifiers": [
+            "PROJECT_ROOT"
+          ]
+        },
+        {
+          "source": "kvcompression.data.pad_collate",
+          "specifiers": [
+            "pad_collate_fn"
+          ]
+        },
+        {
+          "source": "kvcompression.metrics._metrics_manager",
+          "specifiers": [
+            "MetricsManager"
+          ]
+        },
+        {
+          "source": "kvcompression.rl.trainers.rloo_terminal_trainer",
+          "specifiers": [
+            "RLOOTerminalTrainer"
+          ]
+        },
+        {
+          "source": "kvcompression.utils.infinite_distributed_sampler",
+          "specifiers": [
+            "InfiniteDistributedSampler"
+          ]
+        },
+        {
+          "source": "kvcompression.utils.s3_utils",
+          "specifiers": [
+            "get_corresponding_remote_path",
+            "upload_directory"
+          ]
+        },
+        {
+          "source": "kvcompression.utils.training_checkpointer",
+          "specifiers": [
+            "ResumeInfo",
+            "TrainingCheckpointer"
+          ]
+        },
+        {
+          "source": "kvcompression.utils.utils",
+          "specifiers": [
+            "get_underlying_model",
+            "is_torch_compile_disabled"
+          ]
+        }
+      ],
+      "exports": [
+        "RLOOTrainingRecipeDistributed",
+        "launch_training",
+        "main"
+      ],
+      "totalLines": 992,
+      "hasStructuralAnalysis": true
+    },
+    "src/kvcompression/hooks/__init__.py": {
+      "filePath": "src/kvcompression/hooks/__init__.py",
+      "contentHash": "1c78a5a7a7686fce4261c103a3b4dc07aa8af1cb8f42e64ca5fffe687d541218",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 6,
+      "hasStructuralAnalysis": true
+    },
+    "src/kvcompression/hooks/compressor.py": {
+      "filePath": "src/kvcompression/hooks/compressor.py",
+      "contentHash": "63b20e827d327e9c94498276a808790f7c9c492c3da2c3d916ff1aae05bccabb",
+      "functions": [],
+      "classes": [
+        {
+          "name": "LayerHeadCompressionConfig",
+          "methods": [
+            "matches",
+            "specificity",
+            "__lt__"
+          ],
+          "properties": [
+            "layer",
+            "head",
+            "strategy",
+            "strategy_name"
+          ],
+          "exported": true,
+          "lineCount": 31
+        },
+        {
+          "name": "KVCompressor",
+          "methods": [
+            "__init__",
+            "_validate_config_consistency",
+            "_check_exact_location_conflicts",
+            "_check_wildcard_conflicts",
+            "_check_wildcard_vs_specific_conflicts",
+            "_configs_conflict",
+            "__enter__",
+            "__exit__",
+            "compress_caches",
+            "mha_attention_post_hook"
+          ],
+          "properties": [],
+          "exported": true,
+          "lineCount": 213
+        }
+      ],
+      "imports": [
+        {
+          "source": "logging",
+          "specifiers": [
+            "logging"
+          ]
+        },
+        {
+          "source": "dataclasses",
+          "specifiers": [
+            "dataclass"
+          ]
+        },
+        {
+          "source": "typing",
+          "specifiers": [
+            "Any",
+            "List",
+            "Optional",
+            "Sequence",
+            "Union"
+          ]
+        },
+        {
+          "source": "torch",
+          "specifiers": [
+            "nn"
+          ]
+        },
+        {
+          "source": "kvcompression.hooks.registrar",
+          "specifiers": [
+            "monkeypatch_multihead_attention"
+          ]
+        },
+        {
+          "source": "kvcompression.kv_cache.compressible_attention",
+          "specifiers": [
+            "monkey_patched_mha_forward",
+            "monkey_patched_setup_cache"
+          ]
+        },
+        {
+          "source": "kvcompression.kv_cache.compressible_kv_cache",
+          "specifiers": [
+            "CompressibleKVCache"
+          ]
+        },
+        {
+          "source": "kvcompression.kv_cache.compression_strategy_protocol",
+          "specifiers": [
+            "CompressionStrategy",
+            "DummyCompressionStrategy"
+          ]
+        }
+      ],
+      "exports": [
+        "LayerHeadCompressionConfig",
+        "KVCompressor"
+      ],
+      "totalLines": 273,
+      "hasStructuralAnalysis": true
+    },
+    "src/kvcompression/hooks/extractors.py": {
+      "filePath": "src/kvcompression/hooks/extractors.py",
+      "contentHash": "5e067fcbaafbd426964f4169cd67a8d11d824e837495ec55f50a7ed24b496945",
+      "functions": [],
+      "classes": [
+        {
+          "name": "ExtractAttentionTensors",
+          "methods": [
+            "__init__",
+            "__enter__",
+            "__exit__",
+            "wrapped_attention_call",
+            "_store_attention_tensors",
+            "store_attention_tensors"
+          ],
+          "properties": [],
+          "exported": true,
+          "lineCount": 150
+        }
+      ],
+      "imports": [
+        {
+          "source": "concurrent.futures",
+          "specifiers": [
+            "Executor"
+          ]
+        },
+        {
+          "source": "pathlib",
+          "specifiers": [
+            "Path"
+          ]
+        },
+        {
+          "source": "typing",
+          "specifiers": [
+            "Optional"
+          ]
+        },
+        {
+          "source": "safetensors.torch",
+          "specifiers": [
+            "safetensors.torch"
+          ]
+        },
+        {
+          "source": "torch",
+          "specifiers": [
+            "torch"
+          ]
+        },
+        {
+          "source": "omegaconf",
+          "specifiers": [
+            "DictConfig"
+          ]
+        },
+        {
+          "source": "torch",
+          "specifiers": [
+            "nn"
+          ]
+        },
+        {
+          "source": "kvcompression.hooks.registrar",
+          "specifiers": [
+            "register_attention_forward_hook"
+          ]
+        }
+      ],
+      "exports": [
+        "ExtractAttentionTensors"
+      ],
+      "totalLines": 168,
+      "hasStructuralAnalysis": true
+    },
+    "src/kvcompression/hooks/registrar.py": {
+      "filePath": "src/kvcompression/hooks/registrar.py",
+      "contentHash": "119c1f364764ff090185f192a5e32b6cc77e57b621a5831b27aa3ff37ed3afdc",
+      "functions": [
+        {
+          "name": "register_attention_forward_hook",
+          "params": [
+            "model",
+            "hook",
+            "attention_wrapper"
+          ],
+          "returnType": "Generator",
+          "exported": true,
+          "lineCount": 55
+        },
+        {
+          "name": "monkeypatch_multihead_attention",
+          "params": [
+            "model",
+            "forward_post_hook",
+            "monkeypatch_mh_attention_forward",
+            "monkeypatch_mh_attention_setup_cache"
+          ],
+          "returnType": "Generator",
+          "exported": true,
+          "lineCount": 87
+        }
+      ],
+      "classes": [],
+      "imports": [
+        {
+          "source": "types",
+          "specifiers": [
+            "types"
+          ]
+        },
+        {
+          "source": "contextlib",
+          "specifiers": [
+            "contextmanager"
+          ]
+        },
+        {
+          "source": "functools",
+          "specifiers": [
+            "partial"
+          ]
+        },
+        {
+          "source": "typing",
+          "specifiers": [
+            "Callable",
+            "Generator",
+            "Optional"
+          ]
+        },
+        {
+          "source": "torch",
+          "specifiers": [
+            "nn"
+          ]
+        }
+      ],
+      "exports": [
+        "register_attention_forward_hook",
+        "monkeypatch_multihead_attention"
+      ],
+      "totalLines": 158,
+      "hasStructuralAnalysis": true
+    },
+    "src/kvcompression/kv_cache/__init__.py": {
+      "filePath": "src/kvcompression/kv_cache/__init__.py",
+      "contentHash": "28a08235e80abbeebe86b58f658314f41883843cb13d906716f9779798a21790",
+      "functions": [],
+      "classes": [],
+      "imports": [
+        {
+          "source": ".compressible_kv_cache",
+          "specifiers": [
+            "CompressibleKVCache"
+          ]
+        },
+        {
+          "source": ".compression_strategy_protocol",
+          "specifiers": [
+            "DummyCompressionStrategy"
+          ]
+        }
+      ],
+      "exports": [],
+      "totalLines": 13,
+      "hasStructuralAnalysis": true
+    },
+    "src/kvcompression/kv_cache/compressible_attention.py": {
+      "filePath": "src/kvcompression/kv_cache/compressible_attention.py",
+      "contentHash": "7f8c76a59ee3327114d2518a935217ac5f2b562400967b72447fd04472795c3e",
+      "functions": [
+        {
+          "name": "monkey_patched_setup_cache",
+          "params": [
+            "batch_size",
+            "dtype",
+            "max_seq_len",
+            "layer_head_configs"
+          ],
+          "returnType": "None",
+          "exported": true,
+          "lineCount": 37
+        },
+        {
+          "name": "_build_head_strategy_mapping",
+          "params": [
+            "layer_idx",
+            "num_kv_heads",
+            "layer_head_configs"
+          ],
+          "returnType": "Dict[int, DummyCompressionStrategy]",
+          "exported": true,
+          "lineCount": 48
+        },
+        {
+          "name": "monkey_patched_mha_forward",
+          "params": [
+            "x",
+            "y",
+            "mask",
+            "input_pos"
+          ],
+          "returnType": "torch.Tensor",
+          "exported": true,
+          "lineCount": 144
+        }
+      ],
+      "classes": [],
+      "imports": [
+        {
+          "source": "logging",
+          "specifiers": [
+            "logging"
+          ]
+        },
+        {
+          "source": "typing",
+          "specifiers": [
+            "TYPE_CHECKING",
+            "Dict",
+            "List",
+            "Optional"
+          ]
+        },
+        {
+          "source": "torch",
+          "specifiers": [
+            "torch"
+          ]
+        },
+        {
+          "source": "torch.nn.attention.flex_attention",
+          "specifiers": [
+            "and_masks",
+            "create_block_mask",
+            "flex_attention"
+          ]
+        },
+        {
+          "source": "kvcompression.attention_utils",
+          "specifiers": [
+            "expand_kv_for_gqa"
+          ]
+        },
+        {
+          "source": "kvcompression.kv_cache.compressible_kv_cache",
+          "specifiers": [
+            "CompressibleKVCache"
+          ]
+        },
+        {
+          "source": "kvcompression.kv_cache.compression_strategy_protocol",
+          "specifiers": [
+            "DummyCompressionStrategy"
+          ]
+        }
+      ],
+      "exports": [
+        "monkey_patched_setup_cache",
+        "_build_head_strategy_mapping",
+        "monkey_patched_mha_forward"
+      ],
+      "totalLines": 271,
+      "hasStructuralAnalysis": true
+    },
+    "src/kvcompression/kv_cache/compressible_kv_cache.py": {
+      "filePath": "src/kvcompression/kv_cache/compressible_kv_cache.py",
+      "contentHash": "379d5eb91cdd38e38e731f0236c85d42504d71dbbc609cc21e1c584786ace1b6",
+      "functions": [],
+      "classes": [
+        {
+          "name": "CompressibleKVCache",
+          "methods": [
+            "__init__",
+            "reset",
+            "size",
+            "num_active_entries",
+            "update",
+            "compress",
+            "get_k_v_and_mask_for_attention",
+            "get_queries_for_kv_head",
+            "get_all_queries_active"
+          ],
+          "properties": [],
+          "exported": true,
+          "lineCount": 280
+        }
+      ],
+      "imports": [
+        {
+          "source": "logging",
+          "specifiers": [
+            "logging"
+          ]
+        },
+        {
+          "source": "typing",
+          "specifiers": [
+            "Any",
+            "List",
+            "Optional",
+            "Tuple",
+            "Union"
+          ]
+        },
+        {
+          "source": "torch",
+          "specifiers": [
+            "torch"
+          ]
+        },
+        {
+          "source": "torch",
+          "specifiers": [
+            "nn"
+          ]
+        },
+        {
+          "source": "kvcompression.kv_cache.compression_strategy_protocol",
+          "specifiers": [
+            "DummyCompressionStrategy"
+          ]
+        }
+      ],
+      "exports": [
+        "CompressibleKVCache"
+      ],
+      "totalLines": 299,
+      "hasStructuralAnalysis": true
+    },
+    "src/kvcompression/kv_cache/compressible_mha_layer.py": {
+      "filePath": "src/kvcompression/kv_cache/compressible_mha_layer.py",
+      "contentHash": "12c64d73285d85a591606f64fe41506b8a1c7eeba6d4886259f71f6a6c9d8d1e",
+      "functions": [],
+      "classes": [
+        {
+          "name": "CompressibleMultiHeadAttention",
+          "methods": [
+            "__init__",
+            "reset_cache"
+          ],
+          "properties": [],
+          "exported": true,
+          "lineCount": 77
+        }
+      ],
+      "imports": [
+        {
+          "source": "logging",
+          "specifiers": [
+            "logging"
+          ]
+        },
+        {
+          "source": "typing",
+          "specifiers": [
+            "Optional"
+          ]
+        },
+        {
+          "source": "torch",
+          "specifiers": [
+            "nn"
+          ]
+        },
+        {
+          "source": "torchtune.modules.kv_cache",
+          "specifiers": [
+            "KVCache"
+          ]
+        },
+        {
+          "source": "kvcompression.kv_cache.compressible_attention",
+          "specifiers": [
+            "monkey_patched_mha_forward",
+            "monkey_patched_setup_cache"
+          ]
+        }
+      ],
+      "exports": [
+        "CompressibleMultiHeadAttention"
+      ],
+      "totalLines": 97,
+      "hasStructuralAnalysis": true
+    },
+    "src/kvcompression/kv_cache/compression_strategy_protocol.py": {
+      "filePath": "src/kvcompression/kv_cache/compression_strategy_protocol.py",
+      "contentHash": "76f349e6d7a95c2f5af14fd9e9634cbff52d4ad528f4d6a1cc4676aa4a7f7943",
+      "functions": [],
+      "classes": [
+        {
+          "name": "CompressionStrategy",
+          "methods": [
+            "__repr__",
+            "get_mask"
+          ],
+          "properties": [],
+          "exported": true,
+          "lineCount": 39
+        },
+        {
+          "name": "DummyCompressionStrategy",
+          "methods": [
+            "get_mask"
+          ],
+          "properties": [],
+          "exported": true,
+          "lineCount": 15
+        },
+        {
+          "name": "RandomCompressionStrategy",
+          "methods": [
+            "get_mask"
+          ],
+          "properties": [],
+          "exported": true,
+          "lineCount": 18
+        },
+        {
+          "name": "PressCompressionStrategy",
+          "methods": [
+            "__init__",
+            "__repr__",
+            "get_mask"
+          ],
+          "properties": [],
+          "exported": true,
+          "lineCount": 102
+        }
+      ],
+      "imports": [
+        {
+          "source": "abc",
+          "specifiers": [
+            "abc"
+          ]
+        },
+        {
+          "source": "typing",
+          "specifiers": [
+            "Any",
+            "Optional"
+          ]
+        },
+        {
+          "source": "torch",
+          "specifiers": [
+            "torch"
+          ]
+        },
+        {
+          "source": "kvcompression.attention_utils",
+          "specifiers": [
+            "expand_k_for_gqa",
+            "materialize_attention_weights"
+          ]
+        },
+        {
+          "source": "kvcompression.presses.base_press",
+          "specifiers": [
+            "BasePress"
+          ]
+        }
+      ],
+      "exports": [
+        "CompressionStrategy",
+        "DummyCompressionStrategy",
+        "RandomCompressionStrategy",
+        "PressCompressionStrategy"
+      ],
+      "totalLines": 198,
+      "hasStructuralAnalysis": true
+    },
+    "src/kvcompression/metrics/__init__.py": {
+      "filePath": "src/kvcompression/metrics/__init__.py",
+      "contentHash": "40cb7a6b0b09663152f648e2175e5218e65340f3fe344a622b1a20d301f95916",
+      "functions": [],
+      "classes": [],
+      "imports": [
+        {
+          "source": "._metrics_manager",
+          "specifiers": [
+            "MetricsManager"
+          ]
+        }
+      ],
+      "exports": [],
+      "totalLines": 11,
+      "hasStructuralAnalysis": true
+    },
+    "src/kvcompression/metrics/_metrics_manager.py": {
+      "filePath": "src/kvcompression/metrics/_metrics_manager.py",
+      "contentHash": "e576d77db0f5efe6cd4fd93f7effba5a0d4b10c9eae469ef8df093f9970a2f2a",
+      "functions": [],
+      "classes": [
+        {
+          "name": "MetricsManager",
+          "methods": [
+            "__init__",
+            "_gather_and_sum_metric_on_rank0",
+            "default_run_dir",
+            "default_figures_dir",
+            "best_ckpt_path",
+            "is_wandb_enabled",
+            "increment_step",
+            "add_metric_group",
+            "add",
+            "add_batch",
+            "get_latest",
+            "get_running_average",
+            "get_all",
+            "plot_metric",
+            "plot_metrics",
+            "plot_metric_grid",
+            "format_for_tqdm",
+            "log_hparams",
+            "finalize"
+          ],
+          "properties": [],
+          "exported": true,
+          "lineCount": 578
+        }
+      ],
+      "imports": [
+        {
+          "source": "datetime",
+          "specifiers": [
+            "datetime"
+          ]
+        },
+        {
+          "source": "logging",
+          "specifiers": [
+            "logging"
+          ]
+        },
+        {
+          "source": "pathlib",
+          "specifiers": [
+            "Path"
+          ]
+        },
+        {
+          "source": "typing",
+          "specifiers": [
+            "Any",
+            "Dict",
+            "List",
+            "Optional",
+            "Sequence",
+            "Tuple",
+            "Union"
+          ]
+        },
+        {
+          "source": "matplotlib.pyplot",
+          "specifiers": [
+            "plt"
+          ]
+        },
+        {
+          "source": "numpy",
+          "specifiers": [
+            "np"
+          ]
+        },
+        {
+          "source": "torch",
+          "specifiers": [
+            "torch"
+          ]
+        },
+        {
+          "source": "torch.distributed",
+          "specifiers": [
+            "dist"
+          ]
+        },
+        {
+          "source": "kvcompression",
+          "specifiers": [
+            "PROJECT_ROOT"
+          ]
+        }
+      ],
+      "exports": [
+        "MetricsManager"
+      ],
+      "totalLines": 599,
+      "hasStructuralAnalysis": true
+    },
+    "src/kvcompression/presses/__init__.py": {
+      "filePath": "src/kvcompression/presses/__init__.py",
+      "contentHash": "8ca8ed7f11eb9ee6d627843d7e4610d0d679c7ecccc6a0e426645e6040982eba",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 5,
+      "hasStructuralAnalysis": true
+    },
+    "src/kvcompression/presses/base_press.py": {
+      "filePath": "src/kvcompression/presses/base_press.py",
+      "contentHash": "7c6510b3ed834f1c2c0489d68a77d747e7c4373f77ea52a78e9cca13d59157fe",
+      "functions": [],
+      "classes": [
+        {
+          "name": "BasePress",
+          "methods": [
+            "sort",
+            "forward",
+            "requires_attention_weights",
+            "supports_gqa"
+          ],
+          "properties": [],
+          "exported": true,
+          "lineCount": 60
+        }
+      ],
+      "imports": [
+        {
+          "source": "abc",
+          "specifiers": [
+            "abc"
+          ]
+        },
+        {
+          "source": "typing",
+          "specifiers": [
+            "Optional"
+          ]
+        },
+        {
+          "source": "torch",
+          "specifiers": [
+            "torch"
+          ]
+        },
+        {
+          "source": "torch",
+          "specifiers": [
+            "nn"
+          ]
+        }
+      ],
+      "exports": [
+        "BasePress"
+      ],
+      "totalLines": 73,
+      "hasStructuralAnalysis": true
+    },
+    "src/kvcompression/presses/random_press.py": {
+      "filePath": "src/kvcompression/presses/random_press.py",
+      "contentHash": "a51311cf4ba0ab44c296bc03f183a77dc97075ed1127c42bd9b24be61dcae6f5",
+      "functions": [],
+      "classes": [
+        {
+          "name": "RandomPress",
+          "methods": [
+            "sort"
+          ],
+          "properties": [],
+          "exported": true,
+          "lineCount": 13
+        }
+      ],
+      "imports": [
+        {
+          "source": "torch",
+          "specifiers": [
+            "torch"
+          ]
+        },
+        {
+          "source": "kvcompression.presses.base_press",
+          "specifiers": [
+            "BasePress"
+          ]
+        }
+      ],
+      "exports": [
+        "RandomPress"
+      ],
+      "totalLines": 24,
+      "hasStructuralAnalysis": true
+    },
+    "src/kvcompression/presses/sampler_agent_press.py": {
+      "filePath": "src/kvcompression/presses/sampler_agent_press.py",
+      "contentHash": "979047787cfea4269d9afb6ba7201e1b488cf7c9ede3fcdd09f210f1b8f7a334",
+      "functions": [],
+      "classes": [
+        {
+          "name": "SamplerAgentPress",
+          "methods": [
+            "__init__",
+            "_find_latest_remote_resume_ckpt",
+            "_find_checkpoint_path",
+            "requires_attention_weights",
+            "_apply_sink_and_window",
+            "sort",
+            "supports_gqa"
+          ],
+          "properties": [],
+          "exported": true,
+          "lineCount": 313
+        }
+      ],
+      "imports": [
+        {
+          "source": "os",
+          "specifiers": [
+            "os"
+          ]
+        },
+        {
+          "source": "pathlib",
+          "specifiers": [
+            "Path"
+          ]
+        },
+        {
+          "source": "typing",
+          "specifiers": [
+            "List",
+            "Optional"
+          ]
+        },
+        {
+          "source": "torch",
+          "specifiers": [
+            "torch"
+          ]
+        },
+        {
+          "source": "torch.distributed",
+          "specifiers": [
+            "dist"
+          ]
+        },
+        {
+          "source": "torchtune",
+          "specifiers": [
+            "utils"
+          ]
+        },
+        {
+          "source": "kvcompression",
+          "specifiers": [
+            "PROJECT_ROOT"
+          ]
+        },
+        {
+          "source": "kvcompression.presses.base_press",
+          "specifiers": [
+            "BasePress"
+          ]
+        },
+        {
+          "source": "kvcompression.utils.s3_utils",
+          "specifiers": [
+            "download_file",
+            "get_s3_filesystem",
+            "ls_remote_folder"
+          ]
+        },
+        {
+          "source": "kvcompression.utils.utils",
+          "specifiers": [
+            "instantiate_agent_from_ckpt"
+          ]
+        }
+      ],
+      "exports": [
+        "SamplerAgentPress"
+      ],
+      "totalLines": 343,
+      "hasStructuralAnalysis": true
+    },
+    "src/kvcompression/rl/__init__.py": {
+      "filePath": "src/kvcompression/rl/__init__.py",
+      "contentHash": "8ca8ed7f11eb9ee6d627843d7e4610d0d679c7ecccc6a0e426645e6040982eba",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 5,
+      "hasStructuralAnalysis": true
+    },
+    "src/kvcompression/rl/agents/__init__.py": {
+      "filePath": "src/kvcompression/rl/agents/__init__.py",
+      "contentHash": "1c78a5a7a7686fce4261c103a3b4dc07aa8af1cb8f42e64ca5fffe687d541218",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 6,
+      "hasStructuralAnalysis": true
+    },
+    "src/kvcompression/rl/agents/base_agent.py": {
+      "filePath": "src/kvcompression/rl/agents/base_agent.py",
+      "contentHash": "861d4e897345861ae517ab2b5fb6dc3edd18566403267e7ab0d2f523128f16ef",
+      "functions": [],
+      "classes": [
+        {
+          "name": "BaseAgent",
+          "methods": [
+            "forward",
+            "sample_actions",
+            "get_action",
+            "act",
+            "create_action_mask"
+          ],
+          "properties": [],
+          "exported": true,
+          "lineCount": 111
+        }
+      ],
+      "imports": [
+        {
+          "source": "abc",
+          "specifiers": [
+            "abc"
+          ]
+        },
+        {
+          "source": "typing",
+          "specifiers": [
+            "Dict",
+            "Optional"
+          ]
+        },
+        {
+          "source": "torch",
+          "specifiers": [
+            "torch"
+          ]
+        },
+        {
+          "source": "torch.nn",
+          "specifiers": [
+            "nn"
+          ]
+        },
+        {
+          "source": "torch.nn.functional",
+          "specifiers": [
+            "F"
+          ]
+        },
+        {
+          "source": "torch.distributions",
+          "specifiers": [
+            "Categorical"
+          ]
+        }
+      ],
+      "exports": [
+        "BaseAgent"
+      ],
+      "totalLines": 126,
+      "hasStructuralAnalysis": true
+    },
+    "src/kvcompression/rl/agents/kv_sorting_agent.py": {
+      "filePath": "src/kvcompression/rl/agents/kv_sorting_agent.py",
+      "contentHash": "8c242c15bc3442d1d3b5dc81627265b7edd67f4b90da5485efef1c1a0a8f60ec",
+      "functions": [],
+      "classes": [
+        {
+          "name": "KVSamplingGroupedQueryAgent",
+          "methods": [
+            "__init__",
+            "requires_attention_weights",
+            "_compute_keydiff_features",
+            "_aggregate_queries",
+            "forward",
+            "supports_gqa"
+          ],
+          "properties": [],
+          "exported": true,
+          "lineCount": 259
+        }
+      ],
+      "imports": [
+        {
+          "source": "typing",
+          "specifiers": [
+            "Dict",
+            "Optional",
+            "Union"
+          ]
+        },
+        {
+          "source": "torch",
+          "specifiers": [
+            "torch"
+          ]
+        },
+        {
+          "source": "torch",
+          "specifiers": [
+            "nn"
+          ]
+        },
+        {
+          "source": "torch.nn",
+          "specifiers": [
+            "F"
+          ]
+        },
+        {
+          "source": "kvcompression.rl.agents.base_agent",
+          "specifiers": [
+            "BaseAgent"
+          ]
+        }
+      ],
+      "exports": [
+        "KVSamplingGroupedQueryAgent"
+      ],
+      "totalLines": 274,
+      "hasStructuralAnalysis": true
+    },
+    "src/kvcompression/rl/environments/__init__.py": {
+      "filePath": "src/kvcompression/rl/environments/__init__.py",
+      "contentHash": "1c78a5a7a7686fce4261c103a3b4dc07aa8af1cb8f42e64ca5fffe687d541218",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 6,
+      "hasStructuralAnalysis": true
+    },
+    "src/kvcompression/rl/environments/base_env.py": {
+      "filePath": "src/kvcompression/rl/environments/base_env.py",
+      "contentHash": "88f34f59e76496c54d8a684797783c056c83f974a646ff6b7aa81d262fc49442",
+      "functions": [],
+      "classes": [
+        {
+          "name": "BaseEnvironment",
+          "methods": [
+            "reset",
+            "step",
+            "get_valid_actions"
+          ],
+          "properties": [],
+          "exported": true,
+          "lineCount": 17
+        }
+      ],
+      "imports": [
+        {
+          "source": "typing",
+          "specifiers": [
+            "Dict"
+          ]
+        },
+        {
+          "source": "torch",
+          "specifiers": [
+            "torch"
+          ]
+        }
+      ],
+      "exports": [
+        "BaseEnvironment"
+      ],
+      "totalLines": 28,
+      "hasStructuralAnalysis": true
+    },
+    "src/kvcompression/rl/environments/kvsorting_env.py": {
+      "filePath": "src/kvcompression/rl/environments/kvsorting_env.py",
+      "contentHash": "374284dbcbc258494e2353c26dd416b96774de7f281592a9e330dd83797b831c",
+      "functions": [],
+      "classes": [
+        {
+          "name": "KVSortingEnvironmentV2",
+          "methods": [
+            "__init__",
+            "_create_legacy_reward_strategy",
+            "_initialize_info_dict",
+            "_extract_info_from_oracle_result",
+            "_compute_reward",
+            "length",
+            "recreate_iterator",
+            "_get_next_batch",
+            "reset_iterator",
+            "reset",
+            "_get_observation",
+            "step",
+            "get_valid_actions",
+            "compute_rewards_for_chunk"
+          ],
+          "properties": [],
+          "exported": true,
+          "lineCount": 404
+        }
+      ],
+      "imports": [
+        {
+          "source": "logging",
+          "specifiers": [
+            "logging"
+          ]
+        },
+        {
+          "source": "typing",
+          "specifiers": [
+            "Dict",
+            "List",
+            "Optional",
+            "Union"
+          ]
+        },
+        {
+          "source": "torch",
+          "specifiers": [
+            "torch"
+          ]
+        },
+        {
+          "source": "torch.distributed",
+          "specifiers": [
+            "dist"
+          ]
+        },
+        {
+          "source": "torchtune",
+          "specifiers": [
+            "torchtune"
+          ]
+        },
+        {
+          "source": "omegaconf",
+          "specifiers": [
+            "OmegaConf"
+          ]
+        },
+        {
+          "source": "torch.utils.data",
+          "specifiers": [
+            "Dataset"
+          ]
+        },
+        {
+          "source": "torchtune",
+          "specifiers": [
+            "config"
+          ]
+        },
+        {
+          "source": "torchtune.utils",
+          "specifiers": [
+            "get_logger"
+          ]
+        },
+        {
+          "source": "kvcompression.rl.rewards.base_reward_strategy",
+          "specifiers": [
+            "RewardStrategy"
+          ]
+        },
+        {
+          "source": "kvcompression.rl.rewards.basic_strategies",
+          "specifiers": [
+            "FutureAttentionAucNormalizedReward"
+          ]
+        },
+        {
+          "source": "kvcompression.rl.rewards.oracle",
+          "specifiers": [
+            "Oracle"
+          ]
+        },
+        {
+          "source": "kvcompression.utils.utils",
+          "specifiers": [
+            "batch_to_device"
+          ]
+        }
+      ],
+      "exports": [
+        "KVSortingEnvironmentV2"
+      ],
+      "totalLines": 429,
+      "hasStructuralAnalysis": true
+    },
+    "src/kvcompression/rl/rewards/__init__.py": {
+      "filePath": "src/kvcompression/rl/rewards/__init__.py",
+      "contentHash": "1c78a5a7a7686fce4261c103a3b4dc07aa8af1cb8f42e64ca5fffe687d541218",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 6,
+      "hasStructuralAnalysis": true
+    },
+    "src/kvcompression/rl/rewards/base_reward_strategy.py": {
+      "filePath": "src/kvcompression/rl/rewards/base_reward_strategy.py",
+      "contentHash": "d24e62a1b879be9f6d12fc861a7d15d2ad1c3be82e8e538b62faa92aaa7030ae",
+      "functions": [],
+      "classes": [
+        {
+          "name": "RewardStrategy",
+          "methods": [
+            "compute_reward"
+          ],
+          "properties": [],
+          "exported": true,
+          "lineCount": 18
+        }
+      ],
+      "imports": [
+        {
+          "source": "abc",
+          "specifiers": [
+            "abc"
+          ]
+        },
+        {
+          "source": "torch",
+          "specifiers": [
+            "torch"
+          ]
+        },
+        {
+          "source": "kvcompression.costs",
+          "specifiers": [
+            "CostResult"
+          ]
+        }
+      ],
+      "exports": [
+        "RewardStrategy"
+      ],
+      "totalLines": 31,
+      "hasStructuralAnalysis": true
+    },
+    "src/kvcompression/rl/rewards/basic_strategies.py": {
+      "filePath": "src/kvcompression/rl/rewards/basic_strategies.py",
+      "contentHash": "023eb7b1fca7c01dc3129b01336685a27c7b724101b53de1a3c1067976d2a56b",
+      "functions": [],
+      "classes": [
+        {
+          "name": "FutureAttentionAucNormalizedReward",
+          "methods": [
+            "compute_reward"
+          ],
+          "properties": [],
+          "exported": true,
+          "lineCount": 5
+        }
+      ],
+      "imports": [
+        {
+          "source": "torch",
+          "specifiers": [
+            "torch"
+          ]
+        },
+        {
+          "source": "kvcompression.costs",
+          "specifiers": [
+            "CostResult"
+          ]
+        },
+        {
+          "source": ".base_reward_strategy",
+          "specifiers": [
+            "RewardStrategy"
+          ]
+        }
+      ],
+      "exports": [
+        "FutureAttentionAucNormalizedReward"
+      ],
+      "totalLines": 16,
+      "hasStructuralAnalysis": true
+    },
+    "src/kvcompression/rl/rewards/oracle.py": {
+      "filePath": "src/kvcompression/rl/rewards/oracle.py",
+      "contentHash": "bba8071690a25f4aaeb0a33b55f934ad608b1714188560427dcdf2f91b6d36e1",
+      "functions": [],
+      "classes": [
+        {
+          "name": "Oracle",
+          "methods": [
+            "compute_cost"
+          ],
+          "properties": [],
+          "exported": true,
+          "lineCount": 55
+        }
+      ],
+      "imports": [
+        {
+          "source": "torch",
+          "specifiers": [
+            "torch"
+          ]
+        },
+        {
+          "source": "kvcompression.attention_utils",
+          "specifiers": [
+            "materialize_attention_weights"
+          ]
+        },
+        {
+          "source": "kvcompression.costs",
+          "specifiers": [
+            "CostResult",
+            "batched_compute_cost"
+          ]
+        },
+        {
+          "source": "kvcompression.utils.utils",
+          "specifiers": [
+            "is_torch_compile_disabled"
+          ]
+        }
+      ],
+      "exports": [
+        "Oracle"
+      ],
+      "totalLines": 73,
+      "hasStructuralAnalysis": true
+    },
+    "src/kvcompression/rl/trainers/__init__.py": {
+      "filePath": "src/kvcompression/rl/trainers/__init__.py",
+      "contentHash": "1c78a5a7a7686fce4261c103a3b4dc07aa8af1cb8f42e64ca5fffe687d541218",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 6,
+      "hasStructuralAnalysis": true
+    },
+    "src/kvcompression/rl/trainers/compute_advantages.py": {
+      "filePath": "src/kvcompression/rl/trainers/compute_advantages.py",
+      "contentHash": "ab0e31977239f2b0fe5ccebe7ec710e1486b61da3d2a7fbe0e3018ed7a198d99",
+      "functions": [
+        {
+          "name": "compute_returns_and_advantage",
+          "params": [
+            "rewards",
+            "episode_lengths",
+            "normalize_advantages"
+          ],
+          "returnType": "Optional[torch.Tensor]",
+          "exported": true,
+          "lineCount": 50
+        },
+        {
+          "name": "compute_returns_and_advantage_vec",
+          "params": [
+            "rewards",
+            "episode_lengths",
+            "normalize_advantages"
+          ],
+          "returnType": "Optional[torch.Tensor]",
+          "exported": true,
+          "lineCount": 46
+        }
+      ],
+      "classes": [],
+      "imports": [
+        {
+          "source": "typing",
+          "specifiers": [
+            "Optional"
+          ]
+        },
+        {
+          "source": "torch",
+          "specifiers": [
+            "torch"
+          ]
+        }
+      ],
+      "exports": [
+        "compute_returns_and_advantage",
+        "compute_returns_and_advantage_vec"
+      ],
+      "totalLines": 111,
+      "hasStructuralAnalysis": true
+    },
+    "src/kvcompression/rl/trainers/policy_entropy_loss.py": {
+      "filePath": "src/kvcompression/rl/trainers/policy_entropy_loss.py",
+      "contentHash": "bafbb5a9e898b4808a46831ce78b483d191676c91c0dd099668c0c5bf2288cf9",
+      "functions": [
+        {
+          "name": "compute_policy_entropy_loss",
+          "params": [
+            "device",
+            "entropy_coef",
+            "batch_size",
+            "action_dim",
+            "max_steps",
+            "seq_lengths",
+            "episode_lengths",
+            "actions",
+            "policy_logits",
+            "advantages"
+          ],
+          "exported": true,
+          "lineCount": 90
+        }
+      ],
+      "classes": [],
+      "imports": [
+        {
+          "source": "torch",
+          "specifiers": [
+            "torch"
+          ]
+        },
+        {
+          "source": "torch.nn.functional",
+          "specifiers": [
+            "F"
+          ]
+        },
+        {
+          "source": "torch.distributions",
+          "specifiers": [
+            "Categorical"
+          ]
+        }
+      ],
+      "exports": [
+        "compute_policy_entropy_loss"
+      ],
+      "totalLines": 101,
+      "hasStructuralAnalysis": true
+    },
+    "src/kvcompression/rl/trainers/rloo_gumbel_terminal_trainer.py": {
+      "filePath": "src/kvcompression/rl/trainers/rloo_gumbel_terminal_trainer.py",
+      "contentHash": "2fd396417da3f048a7cc0b25e34298d681212550cf57795308ad27ae0dcbb4fc",
+      "functions": [],
+      "classes": [
+        {
+          "name": "RLOOGumbelTrainer",
+          "methods": [
+            "__init__",
+            "collect_trajectories",
+            "evaluate"
+          ],
+          "properties": [],
+          "exported": true,
+          "lineCount": 283
+        }
+      ],
+      "imports": [
+        {
+          "source": "logging",
+          "specifiers": [
+            "logging"
+          ]
+        },
+        {
+          "source": "warnings",
+          "specifiers": [
+            "warnings"
+          ]
+        },
+        {
+          "source": "typing",
+          "specifiers": [
+            "Any",
+            "Dict"
+          ]
+        },
+        {
+          "source": "torch",
+          "specifiers": [
+            "torch"
+          ]
+        },
+        {
+          "source": "tqdm",
+          "specifiers": [
+            "tqdm"
+          ]
+        },
+        {
+          "source": "kvcompression.rl.trainers.rloo_terminal_trainer",
+          "specifiers": [
+            "RLOOTerminalTrainer"
+          ]
+        }
+      ],
+      "exports": [
+        "RLOOGumbelTrainer"
+      ],
+      "totalLines": 301,
+      "hasStructuralAnalysis": true
+    },
+    "src/kvcompression/rl/trainers/rloo_terminal_trainer.py": {
+      "filePath": "src/kvcompression/rl/trainers/rloo_terminal_trainer.py",
+      "contentHash": "1c69d17c3b278c0d0ea862491ecc51d1aa240c72e09cc609f65190120f477026",
+      "functions": [],
+      "classes": [
+        {
+          "name": "RLOOTerminalTrainer",
+          "methods": [
+            "__init__",
+            "_setup_metrics",
+            "collect_trajectories",
+            "update_policy",
+            "train_batch",
+            "evaluate",
+            "plot_training_curves",
+            "plot_loss_curves",
+            "plot_eval_metrics"
+          ],
+          "properties": [],
+          "exported": true,
+          "lineCount": 719
+        }
+      ],
+      "imports": [
+        {
+          "source": "logging",
+          "specifiers": [
+            "logging"
+          ]
+        },
+        {
+          "source": "warnings",
+          "specifiers": [
+            "warnings"
+          ]
+        },
+        {
+          "source": "typing",
+          "specifiers": [
+            "Any",
+            "Dict",
+            "List",
+            "Optional",
+            "Set",
+            "Union"
+          ]
+        },
+        {
+          "source": "torch",
+          "specifiers": [
+            "torch"
+          ]
+        },
+        {
+          "source": "omegaconf",
+          "specifiers": [
+            "DictConfig",
+            "OmegaConf"
+          ]
+        },
+        {
+          "source": "torch.distributions",
+          "specifiers": [
+            "Categorical"
+          ]
+        },
+        {
+          "source": "torchtune",
+          "specifiers": [
+            "config"
+          ]
+        },
+        {
+          "source": "tqdm",
+          "specifiers": [
+            "tqdm"
+          ]
+        },
+        {
+          "source": "kvcompression.metrics",
+          "specifiers": [
+            "MetricsManager"
+          ]
+        },
+        {
+          "source": "kvcompression.rl.agents.base_agent",
+          "specifiers": [
+            "BaseAgent"
+          ]
+        },
+        {
+          "source": "kvcompression.rl.environments.base_env",
+          "specifiers": [
+            "BaseEnvironment"
+          ]
+        },
+        {
+          "source": "kvcompression.rl.trainers.compute_advantages",
+          "specifiers": [
+            "compute_returns_and_advantage_vec"
+          ]
+        },
+        {
+          "source": "kvcompression.utils.utils",
+          "specifiers": [
+            "get_underlying_model"
+          ]
+        }
+      ],
+      "exports": [
+        "RLOOTerminalTrainer"
+      ],
+      "totalLines": 748,
+      "hasStructuralAnalysis": true
+    },
+    "src/kvcompression/rl/trainers/triton_policy_entropy_loss.py": {
+      "filePath": "src/kvcompression/rl/trainers/triton_policy_entropy_loss.py",
+      "contentHash": "004ad94e24f46de85e11347b1ddb9b19f6208417386e32b60c77ae43ced6d844",
+      "functions": [
+        {
+          "name": "_policy_entropy_loss_forward_kernel",
+          "params": [
+            "logits_ptr",
+            "actions_ptr",
+            "seq_lengths_ptr",
+            "episode_lengths_ptr",
+            "prefix_sum_lengths_ptr",
+            "flat_log_probs_out_ptr",
+            "flat_entropies_out_ptr",
+            "batch_size",
+            "action_dim",
+            "max_steps",
+            "stride_logits_b",
+            "stride_logits_a",
+            "stride_actions_b",
+            "stride_actions_t",
+            "logit_dtype",
+            "BLOCK_SIZE_ACTION"
+          ],
+          "exported": true,
+          "lineCount": 122
+        },
+        {
+          "name": "_policy_entropy_loss_backward_kernel",
+          "params": [
+            "logits_ptr",
+            "actions_ptr",
+            "seq_lengths_ptr",
+            "episode_lengths_ptr",
+            "prefix_sum_lengths_ptr",
+            "advantages_ptr",
+            "grad_output_ptr",
+            "grad_logits_out_ptr",
+            "batch_size",
+            "action_dim",
+            "max_steps",
+            "total_num_steps",
+            "stride_logits_b",
+            "stride_logits_a",
+            "stride_actions_b",
+            "stride_actions_t",
+            "stride_grad_logits_b",
+            "stride_grad_logits_a",
+            "logit_dtype",
+            "entropy_coef",
+            "BLOCK_SIZE_ACTION"
+          ],
+          "exported": true,
+          "lineCount": 146
+        },
+        {
+          "name": "compute_policy_entropy_loss_triton",
+          "params": [
+            "device",
+            "entropy_coef",
+            "batch_size",
+            "max_steps",
+            "action_dim",
+            "seq_lengths",
+            "episode_lengths",
+            "actions",
+            "policy_logits",
+            "advantages"
+          ],
+          "exported": true,
+          "lineCount": 75
+        }
+      ],
+      "classes": [
+        {
+          "name": "PolicyEntropyLossTriton",
+          "methods": [
+            "forward",
+            "backward"
+          ],
+          "properties": [],
+          "exported": true,
+          "lineCount": 273
+        }
+      ],
+      "imports": [
+        {
+          "source": "logging",
+          "specifiers": [
+            "logging"
+          ]
+        },
+        {
+          "source": "torch",
+          "specifiers": [
+            "torch"
+          ]
+        },
+        {
+          "source": "torch.autograd",
+          "specifiers": [
+            "autograd"
+          ]
+        },
+        {
+          "source": "triton",
+          "specifiers": [
+            "triton"
+          ]
+        },
+        {
+          "source": "triton.language",
+          "specifiers": [
+            "tl"
+          ]
+        }
+      ],
+      "exports": [
+        "_policy_entropy_loss_forward_kernel",
+        "_policy_entropy_loss_backward_kernel",
+        "PolicyEntropyLossTriton",
+        "compute_policy_entropy_loss_triton"
+      ],
+      "totalLines": 640,
+      "hasStructuralAnalysis": true
+    },
+    "src/kvcompression/tools/__init__.py": {
+      "filePath": "src/kvcompression/tools/__init__.py",
+      "contentHash": "2bb9ad279f4a6617a1d4de388e3b822b0a7f3ce8093874f7fb617ac0c6ffddfa",
+      "functions": [],
+      "classes": [],
+      "imports": [
+        {
+          "source": ".agent_registry",
+          "specifiers": [
+            "AgentRegistry"
+          ]
+        },
+        {
+          "source": ".assignment_generator",
+          "specifiers": [
+            "generate_composites",
+            "write_composites_file"
+          ]
+        }
+      ],
+      "exports": [],
+      "totalLines": 19,
+      "hasStructuralAnalysis": true
+    },
+    "src/kvcompression/tools/agent_registry.py": {
+      "filePath": "src/kvcompression/tools/agent_registry.py",
+      "contentHash": "b207e39905c0e829b225e2670c86a7e6b9c74140baeb40d288c51c99199114fa",
+      "functions": [],
+      "classes": [
+        {
+          "name": "AgentRegistry",
+          "methods": [
+            "__init__",
+            "list_sweeps",
+            "discover_agent",
+            "resolve_checkpoint_path",
+            "_find_latest_resume_checkpoint_remote",
+            "validate_agent_checkpoint",
+            "discover_all_agents",
+            "print_discovery_summary"
+          ],
+          "properties": [],
+          "exported": true,
+          "lineCount": 266
+        }
+      ],
+      "imports": [
+        {
+          "source": "logging",
+          "specifiers": [
+            "logging"
+          ]
+        },
+        {
+          "source": "pathlib",
+          "specifiers": [
+            "Path"
+          ]
+        },
+        {
+          "source": "typing",
+          "specifiers": [
+            "Dict",
+            "List",
+            "Optional",
+            "Tuple"
+          ]
+        },
+        {
+          "source": "kvcompression.utils.s3_utils",
+          "specifiers": [
+            "get_s3_filesystem",
+            "ls_remote_folder"
+          ]
+        }
+      ],
+      "exports": [
+        "AgentRegistry"
+      ],
+      "totalLines": 287,
+      "hasStructuralAnalysis": true
+    },
+    "src/kvcompression/tools/assignment_generator.py": {
+      "filePath": "src/kvcompression/tools/assignment_generator.py",
+      "contentHash": "e2b9c2d897102d302f68a99cdd3c6529cdc7e6a440ac77a56ac0e58691c87311",
+      "functions": [
+        {
+          "name": "generate_composites",
+          "params": [
+            "group",
+            "sweep_name",
+            "bucket",
+            "registry",
+            "layers",
+            "heads",
+            "expected_nagents",
+            "strict_unique"
+          ],
+          "returnType": "List[Dict[str, Any]]",
+          "exported": true,
+          "lineCount": 144
+        },
+        {
+          "name": "write_composites_file",
+          "params": [
+            "group",
+            "sweep_name",
+            "bucket",
+            "registry",
+            "layers",
+            "heads",
+            "expected_nagents",
+            "output_dir",
+            "strict_unique"
+          ],
+          "returnType": "Path",
+          "exported": true,
+          "lineCount": 36
+        }
+      ],
+      "classes": [],
+      "imports": [
+        {
+          "source": "logging",
+          "specifiers": [
+            "logging"
+          ]
+        },
+        {
+          "source": "pathlib",
+          "specifiers": [
+            "Path"
+          ]
+        },
+        {
+          "source": "typing",
+          "specifiers": [
+            "Any",
+            "Dict",
+            "List",
+            "Optional"
+          ]
+        },
+        {
+          "source": "yaml",
+          "specifiers": [
+            "yaml"
+          ]
+        },
+        {
+          "source": "kvcompression.tools.agent_registry",
+          "specifiers": [
+            "AgentRegistry"
+          ]
+        }
+      ],
+      "exports": [
+        "generate_composites",
+        "write_composites_file"
+      ],
+      "totalLines": 206,
+      "hasStructuralAnalysis": true
+    },
+    "src/kvcompression/utils/__init__.py": {
+      "filePath": "src/kvcompression/utils/__init__.py",
+      "contentHash": "c397530581787c0bf3c7279955a0c508d963fc76fe9467fe588479987e4be499",
+      "functions": [],
+      "classes": [],
+      "imports": [
+        {
+          "source": ".generation",
+          "specifiers": [
+            "generate_with_compression"
+          ]
+        }
+      ],
+      "exports": [],
+      "totalLines": 13,
+      "hasStructuralAnalysis": true
+    },
+    "src/kvcompression/utils/generation.py": {
+      "filePath": "src/kvcompression/utils/generation.py",
+      "contentHash": "07cde38084d7c3868315740bd2acf66011ebaf1101f6034ef5e5850f497950c5",
+      "functions": [
+        {
+          "name": "_sample_like_torchtune",
+          "params": [
+            "logits",
+            "temperature"
+          ],
+          "returnType": "torch.Tensor",
+          "exported": true,
+          "lineCount": 15
+        },
+        {
+          "name": "generate_with_compression",
+          "params": [
+            "model",
+            "prompt",
+            "kv_compressor",
+            "target_cache_size",
+            "max_generated_tokens",
+            "pad_id",
+            "stop_tokens"
+          ],
+          "returnType": "torch.Tensor",
+          "exported": true,
+          "lineCount": 104
+        }
+      ],
+      "classes": [],
+      "imports": [
+        {
+          "source": "typing",
+          "specifiers": [
+            "List",
+            "Optional"
+          ]
+        },
+        {
+          "source": "torch",
+          "specifiers": [
+            "torch"
+          ]
+        }
+      ],
+      "exports": [
+        "_sample_like_torchtune",
+        "generate_with_compression"
+      ],
+      "totalLines": 134,
+      "hasStructuralAnalysis": true
+    },
+    "src/kvcompression/utils/infinite_distributed_sampler.py": {
+      "filePath": "src/kvcompression/utils/infinite_distributed_sampler.py",
+      "contentHash": "2616c06055eb4269e9ff7d91a2a154d6a7e819ccfabb9c7c91889a1794e0d66d",
+      "functions": [],
+      "classes": [
+        {
+          "name": "InfiniteDistributedSampler",
+          "methods": [
+            "__init__",
+            "__iter__",
+            "state_dict",
+            "load_state_dict"
+          ],
+          "properties": [],
+          "exported": true,
+          "lineCount": 78
+        }
+      ],
+      "imports": [
+        {
+          "source": "logging",
+          "specifiers": [
+            "logging"
+          ]
+        },
+        {
+          "source": "typing",
+          "specifiers": [
+            "Iterator",
+            "Optional"
+          ]
+        },
+        {
+          "source": "torch.distributed",
+          "specifiers": [
+            "dist"
+          ]
+        },
+        {
+          "source": "torch.utils.data",
+          "specifiers": [
+            "Dataset",
+            "DistributedSampler"
+          ]
+        }
+      ],
+      "exports": [
+        "InfiniteDistributedSampler"
+      ],
+      "totalLines": 100,
+      "hasStructuralAnalysis": true
+    },
+    "src/kvcompression/utils/s3_utils.py": {
+      "filePath": "src/kvcompression/utils/s3_utils.py",
+      "contentHash": "fbdc4a1af930556a310edbf4d78d31ce2140ce8d412692af1371d5b205b75495",
+      "functions": [
+        {
+          "name": "get_s3_filesystem",
+          "params": [],
+          "returnType": "Dict[str, Any]",
+          "exported": true,
+          "lineCount": 27
+        },
+        {
+          "name": "upload_directory",
+          "params": [
+            "local_directory",
+            "remote_destination_path",
+            "fs"
+          ],
+          "returnType": "bool",
+          "exported": true,
+          "lineCount": 69
+        },
+        {
+          "name": "download_file",
+          "params": [
+            "remote_source_path",
+            "local_destination",
+            "fs"
+          ],
+          "returnType": "bool",
+          "exported": true,
+          "lineCount": 48
+        },
+        {
+          "name": "get_corresponding_remote_path",
+          "params": [
+            "path",
+            "local_root",
+            "remote_root"
+          ],
+          "returnType": "Path",
+          "exported": true,
+          "lineCount": 11
+        },
+        {
+          "name": "load_remote_json_secrets",
+          "params": [
+            "remote_secret_file",
+            "local_secret_file",
+            "rank"
+          ],
+          "returnType": "None",
+          "exported": true,
+          "lineCount": 113
+        },
+        {
+          "name": "ls_remote_folder",
+          "params": [
+            "remote_source_path",
+            "fs"
+          ],
+          "returnType": "Sequence[str]",
+          "exported": true,
+          "lineCount": 12
+        }
+      ],
+      "classes": [],
+      "imports": [
+        {
+          "source": "json",
+          "specifiers": [
+            "json"
+          ]
+        },
+        {
+          "source": "logging",
+          "specifiers": [
+            "logging"
+          ]
+        },
+        {
+          "source": "os",
+          "specifiers": [
+            "os"
+          ]
+        },
+        {
+          "source": "time",
+          "specifiers": [
+            "time"
+          ]
+        },
+        {
+          "source": "pathlib",
+          "specifiers": [
+            "Path"
+          ]
+        },
+        {
+          "source": "typing",
+          "specifiers": [
+            "Any",
+            "Dict",
+            "Optional",
+            "Sequence",
+            "Union"
+          ]
+        },
+        {
+          "source": "fsspec",
+          "specifiers": [
+            "fsspec"
+          ]
+        },
+        {
+          "source": "torch.distributed",
+          "specifiers": [
+            "dist"
+          ]
+        },
+        {
+          "source": "s3fs",
+          "specifiers": [
+            "FileSystemClass"
+          ]
+        }
+      ],
+      "exports": [
+        "get_s3_filesystem",
+        "upload_directory",
+        "download_file",
+        "get_corresponding_remote_path",
+        "load_remote_json_secrets",
+        "ls_remote_folder"
+      ],
+      "totalLines": 310,
+      "hasStructuralAnalysis": true
+    },
+    "src/kvcompression/utils/scheduler_factory.py": {
+      "filePath": "src/kvcompression/utils/scheduler_factory.py",
+      "contentHash": "52d6345721e31a6000ef43736431d60d57d20adb3e4a28b27ea0cf06240523a5",
+      "functions": [],
+      "classes": [
+        {
+          "name": "SequentialWarmupCosineScheduler",
+          "methods": [
+            "__init__"
+          ],
+          "properties": [],
+          "exported": true,
+          "lineCount": 29
+        }
+      ],
+      "imports": [
+        {
+          "source": "torch",
+          "specifiers": [
+            "torch"
+          ]
+        },
+        {
+          "source": "torch.optim",
+          "specifiers": [
+            "Optimizer"
+          ]
+        }
+      ],
+      "exports": [
+        "SequentialWarmupCosineScheduler"
+      ],
+      "totalLines": 41,
+      "hasStructuralAnalysis": true
+    },
+    "src/kvcompression/utils/training_checkpointer.py": {
+      "filePath": "src/kvcompression/utils/training_checkpointer.py",
+      "contentHash": "b151578c0e5accfd126a403aae38046dbccbc6f313031c54462a379d1c4e8934",
+      "functions": [],
+      "classes": [
+        {
+          "name": "ResumeInfo",
+          "methods": [],
+          "properties": [
+            "resume_success",
+            "step",
+            "best_eval_metric_value",
+            "last_eval_step",
+            "wandb_run_id",
+            "metrics_history",
+            "step_counter",
+            "random_states"
+          ],
+          "exported": true,
+          "lineCount": 11
+        },
+        {
+          "name": "TrainingCheckpointer",
+          "methods": [
+            "__init__",
+            "_get_local_checkpoint_dir",
+            "_get_latest_checkpoint",
+            "check_for_resume",
+            "restore_best_checkpoint_if_exists",
+            "load_checkpoint",
+            "_save_to_file",
+            "save_checkpoint",
+            "save_best_checkpoint",
+            "_create_checkpoint_dict",
+            "cleanup_old_checkpoints",
+            "should_save_checkpoint",
+            "broadcast_checkpoint_path",
+            "apply_random_states",
+            "sync_after_checkpoint"
+          ],
+          "properties": [
+            "DIR_NAME",
+            "FILE_MATCH",
+            "FILE_FORMAT"
+          ],
+          "exported": true,
+          "lineCount": 414
+        }
+      ],
+      "imports": [
+        {
+          "source": "logging",
+          "specifiers": [
+            "logging"
+          ]
+        },
+        {
+          "source": "random",
+          "specifiers": [
+            "random"
+          ]
+        },
+        {
+          "source": "dataclasses",
+          "specifiers": [
+            "dataclass",
+            "field"
+          ]
+        },
+        {
+          "source": "pathlib",
+          "specifiers": [
+            "Path"
+          ]
+        },
+        {
+          "source": "typing",
+          "specifiers": [
+            "TYPE_CHECKING",
+            "Any",
+            "Dict",
+            "List",
+            "Optional",
+            "Union"
+          ]
+        },
+        {
+          "source": "numpy",
+          "specifiers": [
+            "np"
+          ]
+        },
+        {
+          "source": "torch",
+          "specifiers": [
+            "torch"
+          ]
+        },
+        {
+          "source": "torch.distributed",
+          "specifiers": [
+            "dist"
+          ]
+        },
+        {
+          "source": "omegaconf",
+          "specifiers": [
+            "DictConfig",
+            "OmegaConf"
+          ]
+        },
+        {
+          "source": "kvcompression.utils.utils",
+          "specifiers": [
+            "get_underlying_model"
+          ]
+        }
+      ],
+      "exports": [
+        "ResumeInfo",
+        "TrainingCheckpointer"
+      ],
+      "totalLines": 463,
+      "hasStructuralAnalysis": true
+    },
+    "src/kvcompression/utils/utils.py": {
+      "filePath": "src/kvcompression/utils/utils.py",
+      "contentHash": "26153c5331ba6e9f500336126d8a2cedfef7ca97650370b3296d426aa5cc594e",
+      "functions": [
+        {
+          "name": "get_underlying_model",
+          "params": [
+            "model_instance"
+          ],
+          "exported": true,
+          "lineCount": 6
+        },
+        {
+          "name": "instantiate_agent_from_ckpt",
+          "params": [
+            "checkpoint_path",
+            "model_key"
+          ],
+          "returnType": "nn.Module",
+          "exported": true,
+          "lineCount": 30
+        },
+        {
+          "name": "_select_seed_randomly",
+          "params": [
+            "min_seed_value",
+            "max_seed_value"
+          ],
+          "returnType": "int",
+          "exported": true,
+          "lineCount": 4
+        },
+        {
+          "name": "seed_everything",
+          "params": [
+            "seed"
+          ],
+          "returnType": "int",
+          "exported": true,
+          "lineCount": 27
+        },
+        {
+          "name": "is_torch_compile_disabled",
+          "params": [],
+          "returnType": "bool",
+          "exported": true,
+          "lineCount": 3
+        },
+        {
+          "name": "batch_to_device",
+          "params": [
+            "batch",
+            "device",
+            "**kwargs"
+          ],
+          "returnType": "None",
+          "exported": true,
+          "lineCount": 19
+        }
+      ],
+      "classes": [],
+      "imports": [
+        {
+          "source": "logging",
+          "specifiers": [
+            "logging"
+          ]
+        },
+        {
+          "source": "os",
+          "specifiers": [
+            "os"
+          ]
+        },
+        {
+          "source": "random",
+          "specifiers": [
+            "random"
+          ]
+        },
+        {
+          "source": "pathlib",
+          "specifiers": [
+            "Path"
+          ]
+        },
+        {
+          "source": "typing",
+          "specifiers": [
+            "Optional"
+          ]
+        },
+        {
+          "source": "numpy",
+          "specifiers": [
+            "np"
+          ]
+        },
+        {
+          "source": "torch",
+          "specifiers": [
+            "torch"
+          ]
+        },
+        {
+          "source": "omegaconf",
+          "specifiers": [
+            "OmegaConf"
+          ]
+        },
+        {
+          "source": "torch",
+          "specifiers": [
+            "nn"
+          ]
+        },
+        {
+          "source": "torch.nn",
+          "specifiers": [
+            "DataParallel"
+          ]
+        },
+        {
+          "source": "torch.nn.parallel",
+          "specifiers": [
+            "DDP"
+          ]
+        },
+        {
+          "source": "torchtune",
+          "specifiers": [
+            "config"
+          ]
+        },
+        {
+          "source": "kvcompression.constants",
+          "specifiers": [
+            "DISABLE_TORCH_COMPILER_VARNAME"
+          ]
+        }
+      ],
+      "exports": [
+        "get_underlying_model",
+        "instantiate_agent_from_ckpt",
+        "_select_seed_randomly",
+        "seed_everything",
+        "is_torch_compile_disabled",
+        "batch_to_device"
+      ],
+      "totalLines": 128,
+      "hasStructuralAnalysis": true
+    },
+    "tests/__init__.py": {
+      "filePath": "tests/__init__.py",
+      "contentHash": "1c78a5a7a7686fce4261c103a3b4dc07aa8af1cb8f42e64ca5fffe687d541218",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 6,
+      "hasStructuralAnalysis": true
+    },
+    "tests/conftest.py": {
+      "filePath": "tests/conftest.py",
+      "contentHash": "ece712d7fe1e43d5b2f3e86f5f8eed7a5d5d585cac8788c0bb007eeaf145d0ca",
+      "functions": [
+        {
+          "name": "pytest_configure",
+          "params": [
+            "config"
+          ],
+          "exported": true,
+          "lineCount": 5
+        },
+        {
+          "name": "skip_cuda_tests_if_no_gpu",
+          "params": [
+            "request"
+          ],
+          "exported": true,
+          "lineCount": 5
+        },
+        {
+          "name": "model_base_config_fixture",
+          "params": [],
+          "exported": true,
+          "lineCount": 10
+        }
+      ],
+      "classes": [],
+      "imports": [
+        {
+          "source": "os",
+          "specifiers": [
+            "os"
+          ]
+        },
+        {
+          "source": "pytest",
+          "specifiers": [
+            "pytest"
+          ]
+        },
+        {
+          "source": "torch",
+          "specifiers": [
+            "torch"
+          ]
+        },
+        {
+          "source": "kvcompression.constants",
+          "specifiers": [
+            "DISABLE_TORCH_COMPILER_VARNAME"
+          ]
+        },
+        {
+          "source": "kvcompression.utils.utils",
+          "specifiers": [
+            "seed_everything"
+          ]
+        }
+      ],
+      "exports": [
+        "pytest_configure",
+        "skip_cuda_tests_if_no_gpu",
+        "model_base_config_fixture"
+      ],
+      "totalLines": 47,
+      "hasStructuralAnalysis": true
+    },
+    "tests/data/test_chunk_sampler.py": {
+      "filePath": "tests/data/test_chunk_sampler.py",
+      "contentHash": "95e5c59a9212ee00ba6127b56a7525614b968c5403a00d30fa2a13035b03e3dc",
+      "functions": [
+        {
+          "name": "test_chunk_validation",
+          "params": [],
+          "returnType": "None",
+          "exported": true,
+          "lineCount": 11
+        },
+        {
+          "name": "test_complete_coverage",
+          "params": [],
+          "returnType": "None",
+          "exported": true,
+          "lineCount": 21
+        },
+        {
+          "name": "test_uneven_chunk_distribution",
+          "params": [],
+          "returnType": "None",
+          "exported": true,
+          "lineCount": 14
+        },
+        {
+          "name": "test_shuffle_determinism",
+          "params": [],
+          "returnType": "None",
+          "exported": true,
+          "lineCount": 17
+        }
+      ],
+      "classes": [
+        {
+          "name": "DummyDataset",
+          "methods": [
+            "__init__",
+            "__len__",
+            "__getitem__"
+          ],
+          "properties": [],
+          "exported": true,
+          "lineCount": 9
+        }
+      ],
+      "imports": [
+        {
+          "source": "typing",
+          "specifiers": [
+            "List"
+          ]
+        },
+        {
+          "source": "pytest",
+          "specifiers": [
+            "pytest"
+          ]
+        },
+        {
+          "source": "torch.utils.data",
+          "specifiers": [
+            "Dataset"
+          ]
+        },
+        {
+          "source": "kvcompression.data.chunk_sampler",
+          "specifiers": [
+            "ChunkSampler"
+          ]
+        }
+      ],
+      "exports": [
+        "DummyDataset",
+        "test_chunk_validation",
+        "test_complete_coverage",
+        "test_uneven_chunk_distribution",
+        "test_shuffle_determinism"
+      ],
+      "totalLines": 94,
+      "hasStructuralAnalysis": true
+    },
+    "tests/rl/test_compute_advantages.py": {
+      "filePath": "tests/rl/test_compute_advantages.py",
+      "contentHash": "d2de0fa57675d600afe97ffe219f7506d8840821a2d941bd100e0d69a1ff53cf",
+      "functions": [
+        {
+          "name": "generate_test_data",
+          "params": [
+            "batch_size",
+            "max_seq_len",
+            "length_distribution",
+            "device"
+          ],
+          "exported": true,
+          "lineCount": 64
+        },
+        {
+          "name": "test_compute_returns_and_advantage",
+          "params": [
+            "batch_size",
+            "max_seq_len",
+            "length_distribution",
+            "normalize_advantages"
+          ],
+          "exported": true,
+          "lineCount": 41
+        }
+      ],
+      "classes": [],
+      "imports": [
+        {
+          "source": "pytest",
+          "specifiers": [
+            "pytest"
+          ]
+        },
+        {
+          "source": "torch",
+          "specifiers": [
+            "torch"
+          ]
+        },
+        {
+          "source": "kvcompression.rl.trainers.compute_advantages",
+          "specifiers": [
+            "compute_returns_and_advantage",
+            "compute_returns_and_advantage_vec"
+          ]
+        }
+      ],
+      "exports": [
+        "generate_test_data",
+        "test_compute_returns_and_advantage"
+      ],
+      "totalLines": 148,
+      "hasStructuralAnalysis": true
+    },
+    "tests/rl/test_masked_logprob_entropy.py": {
+      "filePath": "tests/rl/test_masked_logprob_entropy.py",
+      "contentHash": "5b0c10727bcf941b629ea519da346b7c74de38fd948ae6d0e919e52e9bebd87c",
+      "functions": [
+        {
+          "name": "compute_policy_entropy_loss_simple",
+          "params": [
+            "device",
+            "entropy_coef",
+            "batch_size",
+            "max_steps",
+            "action_dim",
+            "seq_lengths",
+            "episode_lengths",
+            "actions",
+            "policy_logits",
+            "advantages"
+          ],
+          "exported": true,
+          "lineCount": 120
+        },
+        {
+          "name": "test_loss_equivalence",
+          "params": [
+            "batch_size",
+            "action_dim",
+            "max_steps",
+            "entropy_coef",
+            "dtype",
+            "optimize_fn"
+          ],
+          "exported": true,
+          "lineCount": 139
+        }
+      ],
+      "classes": [],
+      "imports": [
+        {
+          "source": "pytest",
+          "specifiers": [
+            "pytest"
+          ]
+        },
+        {
+          "source": "torch",
+          "specifiers": [
+            "torch"
+          ]
+        },
+        {
+          "source": "torch.distributions",
+          "specifiers": [
+            "Categorical"
+          ]
+        },
+        {
+          "source": "kvcompression.rl.trainers.policy_entropy_loss",
+          "specifiers": [
+            "compute_policy_entropy_loss"
+          ]
+        }
+      ],
+      "exports": [
+        "compute_policy_entropy_loss_simple",
+        "test_loss_equivalence"
+      ],
+      "totalLines": 305,
+      "hasStructuralAnalysis": true
+    },
+    "tests/test_attention_utils.py": {
+      "filePath": "tests/test_attention_utils.py",
+      "contentHash": "acfc525015fc69bb9c4d6bca412074cb5048cd5bef7767987dbfc84a68f75333",
+      "functions": [
+        {
+          "name": "_create_sdpa_equivalent_additive_bias",
+          "params": [
+            "query_shape",
+            "key_shape",
+            "is_causal_custom",
+            "explicit_attn_mask_custom",
+            "query_seq_lengths_custom",
+            "key_seq_lengths_custom",
+            "device",
+            "dtype"
+          ],
+          "returnType": "Optional[torch.Tensor]",
+          "exported": true,
+          "lineCount": 76
+        },
+        {
+          "name": "test_materialize_attention_weights_against_sdpa",
+          "params": [
+            "B",
+            "H",
+            "L_padded",
+            "S_padded",
+            "Dk",
+            "use_causal",
+            "use_q_pad",
+            "use_k_pad",
+            "explicit_mask_type",
+            "dtype"
+          ],
+          "exported": true,
+          "lineCount": 88
+        }
+      ],
+      "classes": [],
+      "imports": [
+        {
+          "source": "typing",
+          "specifiers": [
+            "Optional",
+            "Tuple"
+          ]
+        },
+        {
+          "source": "pytest",
+          "specifiers": [
+            "pytest"
+          ]
+        },
+        {
+          "source": "torch",
+          "specifiers": [
+            "torch"
+          ]
+        },
+        {
+          "source": "torch.nn.functional",
+          "specifiers": [
+            "F"
+          ]
+        },
+        {
+          "source": "kvcompression.attention_utils",
+          "specifiers": [
+            "materialize_attention_weights"
+          ]
+        }
+      ],
+      "exports": [
+        "_create_sdpa_equivalent_additive_bias",
+        "test_materialize_attention_weights_against_sdpa"
+      ],
+      "totalLines": 215,
+      "hasStructuralAnalysis": true
+    },
+    "tests/test_costs.py": {
+      "filePath": "tests/test_costs.py",
+      "contentHash": "f4d356573c525d6be61595a759b0d2c69eac1067cfa5184c8366096f0f0a215b",
+      "functions": [
+        {
+          "name": "test_batched_compute_cost_regression",
+          "params": [],
+          "exported": true,
+          "lineCount": 52
+        },
+        {
+          "name": "test_batched_compute_cost_output_structure",
+          "params": [
+            "batch_size",
+            "sequence_length",
+            "time_length"
+          ],
+          "exported": true,
+          "lineCount": 22
+        },
+        {
+          "name": "test_batched_compute_cost_oracle_ranking",
+          "params": [],
+          "exported": true,
+          "lineCount": 29
+        },
+        {
+          "name": "test_batched_compute_cost_gqa",
+          "params": [
+            "batch_size",
+            "num_queries",
+            "time_length",
+            "sequence_length"
+          ],
+          "exported": true,
+          "lineCount": 24
+        },
+        {
+          "name": "test_batched_compute_cost_with_padding",
+          "params": [],
+          "exported": true,
+          "lineCount": 26
+        },
+        {
+          "name": "test_cost_result_to_device",
+          "params": [],
+          "exported": true,
+          "lineCount": 16
+        },
+        {
+          "name": "test_batched_compute_cost_cost_is_sum_of_per_cachesize",
+          "params": [],
+          "exported": true,
+          "lineCount": 25
+        }
+      ],
+      "classes": [],
+      "imports": [
+        {
+          "source": "torch",
+          "specifiers": [
+            "torch"
+          ]
+        },
+        {
+          "source": "pytest",
+          "specifiers": [
+            "pytest"
+          ]
+        },
+        {
+          "source": "kvcompression.costs",
+          "specifiers": [
+            "batched_compute_cost",
+            "CostResult",
+            "reverse_cumsum"
+          ]
+        }
+      ],
+      "exports": [
+        "test_batched_compute_cost_regression",
+        "test_batched_compute_cost_output_structure",
+        "test_batched_compute_cost_oracle_ranking",
+        "test_batched_compute_cost_gqa",
+        "test_batched_compute_cost_with_padding",
+        "test_cost_result_to_device",
+        "test_batched_compute_cost_cost_is_sum_of_per_cachesize"
+      ],
+      "totalLines": 235,
+      "hasStructuralAnalysis": true
+    },
+    "tests/test_generate_with_compression.py": {
+      "filePath": "tests/test_generate_with_compression.py",
+      "contentHash": "2eef2b01e97cf029162eeeb935e9e3ac9d7ee32bd652bc8b1d972ff5fba0f0bc",
+      "functions": [
+        {
+          "name": "create_model",
+          "params": [
+            "model_base_config_fixture"
+          ],
+          "exported": true,
+          "lineCount": 17
+        },
+        {
+          "name": "test_matches_torchtune_without_compression",
+          "params": [
+            "create_model",
+            "prompt_length",
+            "max_generated_tokens"
+          ],
+          "exported": true,
+          "lineCount": 40
+        },
+        {
+          "name": "test_differs_from_torchtune_with_real_compression",
+          "params": [
+            "create_model",
+            "prompt_length",
+            "max_generated_tokens"
+          ],
+          "exported": true,
+          "lineCount": 48
+        },
+        {
+          "name": "test_matches_torchtune_with_noop_compression",
+          "params": [
+            "create_model",
+            "prompt_length",
+            "max_generated_tokens"
+          ],
+          "exported": true,
+          "lineCount": 48
+        },
+        {
+          "name": "test_batch_size_validation",
+          "params": [
+            "create_model"
+          ],
+          "exported": true,
+          "lineCount": 16
+        }
+      ],
+      "classes": [],
+      "imports": [
+        {
+          "source": "pytest",
+          "specifiers": [
+            "pytest"
+          ]
+        },
+        {
+          "source": "torch",
+          "specifiers": [
+            "torch"
+          ]
+        },
+        {
+          "source": "torchtune",
+          "specifiers": [
+            "generation"
+          ]
+        },
+        {
+          "source": "kvcompression.hooks.compressor",
+          "specifiers": [
+            "KVCompressor"
+          ]
+        },
+        {
+          "source": "kvcompression.kv_cache.compression_strategy_protocol",
+          "specifiers": [
+            "DummyCompressionStrategy",
+            "RandomCompressionStrategy"
+          ]
+        },
+        {
+          "source": "kvcompression.utils.generation",
+          "specifiers": [
+            "generate_with_compression"
+          ]
+        },
+        {
+          "source": "tests.test_utils",
+          "specifiers": [
+            "base_test_model",
+            "fixed_init_model"
+          ]
+        }
+      ],
+      "exports": [
+        "create_model",
+        "test_matches_torchtune_without_compression",
+        "test_differs_from_torchtune_with_real_compression",
+        "test_matches_torchtune_with_noop_compression",
+        "test_batch_size_validation"
+      ],
+      "totalLines": 205,
+      "hasStructuralAnalysis": true
+    },
+    "tests/test_kv_cache/test_compressible_kv_cache.py": {
+      "filePath": "tests/test_kv_cache/test_compressible_kv_cache.py",
+      "contentHash": "de1bc2eb355f4a79539509266ffbf28745451c53c5fae7053d39b8da13ed74c2",
+      "functions": [
+        {
+          "name": "cache_params",
+          "params": [],
+          "exported": true,
+          "lineCount": 9
+        },
+        {
+          "name": "mock_strategy_single_head_keep_first",
+          "params": [],
+          "exported": true,
+          "lineCount": 2
+        },
+        {
+          "name": "mock_strategy_multi_head_keep_last",
+          "params": [],
+          "exported": true,
+          "lineCount": 2
+        },
+        {
+          "name": "_create_dummy_data",
+          "params": [
+            "bsz",
+            "num_h",
+            "s_new",
+            "h_dim",
+            "dtype",
+            "value_offset"
+          ],
+          "exported": true,
+          "lineCount": 4
+        },
+        {
+          "name": "test_initialization",
+          "params": [
+            "cache_params",
+            "mock_strategy_single_head_keep_first"
+          ],
+          "exported": true,
+          "lineCount": 27
+        },
+        {
+          "name": "test_reset",
+          "params": [
+            "cache_params",
+            "mock_strategy_single_head_keep_first"
+          ],
+          "exported": true,
+          "lineCount": 29
+        },
+        {
+          "name": "test_update_simple",
+          "params": [
+            "cache_params",
+            "mock_strategy_single_head_keep_first"
+          ],
+          "exported": true,
+          "lineCount": 23
+        },
+        {
+          "name": "test_update_multiple",
+          "params": [
+            "cache_params",
+            "mock_strategy_single_head_keep_first"
+          ],
+          "exported": true,
+          "lineCount": 41
+        },
+        {
+          "name": "test_update_overflow",
+          "params": [
+            "cache_params",
+            "mock_strategy_single_head_keep_first"
+          ],
+          "exported": true,
+          "lineCount": 26
+        },
+        {
+          "name": "test_update_s_new_zero",
+          "params": [
+            "cache_params",
+            "mock_strategy_single_head_keep_first"
+          ],
+          "exported": true,
+          "lineCount": 18
+        },
+        {
+          "name": "test_compress_empty_cache",
+          "params": [
+            "cache_params",
+            "mock_strategy_single_head_keep_first"
+          ],
+          "exported": true,
+          "lineCount": 12
+        },
+        {
+          "name": "test_compress_target_zero",
+          "params": [
+            "cache_params",
+            "mock_strategy_single_head_keep_first"
+          ],
+          "exported": true,
+          "lineCount": 20
+        },
+        {
+          "name": "test_compress_logic_single_head_strategy",
+          "params": [
+            "cache_params",
+            "mock_strategy_single_head_keep_first"
+          ],
+          "exported": true,
+          "lineCount": 53
+        },
+        {
+          "name": "test_compress_invalid_target_size",
+          "params": [
+            "cache_params",
+            "mock_strategy_single_head_keep_first"
+          ],
+          "exported": true,
+          "lineCount": 9
+        },
+        {
+          "name": "test_num_kv_heads_zero",
+          "params": [
+            "cache_params"
+          ],
+          "exported": true,
+          "lineCount": 42
+        },
+        {
+          "name": "test_get_k_v_q_and_mask_sliced_output",
+          "params": [
+            "cache_params",
+            "mock_strategy_single_head_keep_first"
+          ],
+          "exported": true,
+          "lineCount": 63
+        },
+        {
+          "name": "test_get_k_v_q_and_mask_full_length_output",
+          "params": [
+            "cache_params",
+            "mock_strategy_single_head_keep_first"
+          ],
+          "exported": true,
+          "lineCount": 34
+        },
+        {
+          "name": "test_get_k_v_q_and_mask_empty_cache_output",
+          "params": [
+            "cache_params",
+            "mock_strategy_single_head_keep_first"
+          ],
+          "exported": true,
+          "lineCount": 31
+        },
+        {
+          "name": "test_query_group_extraction_gqa",
+          "params": [],
+          "exported": true,
+          "lineCount": 29
+        },
+        {
+          "name": "test_query_storage_without_queries",
+          "params": [],
+          "exported": true,
+          "lineCount": 27
+        },
+        {
+          "name": "test_query_storage_shape_mismatch",
+          "params": [],
+          "exported": true,
+          "lineCount": 24
+        },
+        {
+          "name": "test_compression_strategy_receives_correct_query_groups",
+          "params": [],
+          "exported": true,
+          "lineCount": 34
+        },
+        {
+          "name": "test_get_queries_for_kv_head_edge_cases",
+          "params": [],
+          "exported": true,
+          "lineCount": 34
+        }
+      ],
+      "classes": [
+        {
+          "name": "MockStrategy",
+          "methods": [
+            "__init__",
+            "is_multihead",
+            "get_mask"
+          ],
+          "properties": [],
+          "exported": true,
+          "lineCount": 37
+        },
+        {
+          "name": "QueryCapturingStrategy",
+          "methods": [
+            "__init__",
+            "get_mask"
+          ],
+          "properties": [],
+          "exported": true,
+          "lineCount": 26
+        }
+      ],
+      "imports": [
+        {
+          "source": "typing",
+          "specifiers": [
+            "Any"
+          ]
+        },
+        {
+          "source": "pytest",
+          "specifiers": [
+            "pytest"
+          ]
+        },
+        {
+          "source": "torch",
+          "specifiers": [
+            "torch"
+          ]
+        },
+        {
+          "source": "kvcompression.kv_cache",
+          "specifiers": [
+            "CompressibleKVCache",
+            "DummyCompressionStrategy"
+          ]
+        }
+      ],
+      "exports": [
+        "MockStrategy",
+        "cache_params",
+        "mock_strategy_single_head_keep_first",
+        "mock_strategy_multi_head_keep_last",
+        "_create_dummy_data",
+        "test_initialization",
+        "test_reset",
+        "test_update_simple",
+        "test_update_multiple",
+        "test_update_overflow",
+        "test_update_s_new_zero",
+        "test_compress_empty_cache",
+        "test_compress_target_zero",
+        "test_compress_logic_single_head_strategy",
+        "test_compress_invalid_target_size",
+        "test_num_kv_heads_zero",
+        "test_get_k_v_q_and_mask_sliced_output",
+        "test_get_k_v_q_and_mask_full_length_output",
+        "test_get_k_v_q_and_mask_empty_cache_output",
+        "test_query_group_extraction_gqa",
+        "test_query_storage_without_queries",
+        "test_query_storage_shape_mismatch",
+        "QueryCapturingStrategy",
+        "test_compression_strategy_receives_correct_query_groups",
+        "test_get_queries_for_kv_head_edge_cases"
+      ],
+      "totalLines": 721,
+      "hasStructuralAnalysis": true
+    },
+    "tests/test_kv_cache/test_compressor.py": {
+      "filePath": "tests/test_kv_cache/test_compressor.py",
+      "contentHash": "7561a559a24e28451ebcc2dcd360a5acb7f7486aab617198868addf427d4a00b",
+      "functions": [],
+      "classes": [
+        {
+          "name": "TestKVCompressorEquivalence",
+          "methods": [
+            "test_output_equivalence_with_noop_strategy",
+            "test_generate_equivalence_with_noop_strategy",
+            "test_output_no_equivalence_with_no_noop_strategy"
+          ],
+          "properties": [],
+          "exported": true,
+          "lineCount": 455
+        }
+      ],
+      "imports": [
+        {
+          "source": "pytest",
+          "specifiers": [
+            "pytest"
+          ]
+        },
+        {
+          "source": "torch",
+          "specifiers": [
+            "torch"
+          ]
+        },
+        {
+          "source": "torchtune",
+          "specifiers": [
+            "generation"
+          ]
+        },
+        {
+          "source": "kvcompression.attention_utils",
+          "specifiers": [
+            "get_attention_mask"
+          ]
+        },
+        {
+          "source": "kvcompression.hooks.compressor",
+          "specifiers": [
+            "KVCompressor"
+          ]
+        },
+        {
+          "source": "kvcompression.kv_cache.compression_strategy_protocol",
+          "specifiers": [
+            "DummyCompressionStrategy",
+            "PressCompressionStrategy",
+            "RandomCompressionStrategy"
+          ]
+        },
+        {
+          "source": "kvcompression.presses.random_press",
+          "specifiers": [
+            "RandomPress"
+          ]
+        },
+        {
+          "source": "tests.test_utils",
+          "specifiers": [
+            "base_test_model",
+            "fixed_init_model"
+          ]
+        }
+      ],
+      "exports": [
+        "TestKVCompressorEquivalence"
+      ],
+      "totalLines": 477,
+      "hasStructuralAnalysis": true
+    },
+    "tests/test_kv_cache/test_flexattention_bfloat16.py": {
+      "filePath": "tests/test_kv_cache/test_flexattention_bfloat16.py",
+      "contentHash": "d92f82995a88c3616d381eb211eab5a63cf66663591cbafcaf5056048ba3a6c0",
+      "functions": [
+        {
+          "name": "test_flex_attention_vs_sdpa_numerical_equivalence",
+          "params": [
+            "dtype"
+          ],
+          "exported": true,
+          "lineCount": 82
+        },
+        {
+          "name": "test_flex_attention_vs_sdpa_small_example",
+          "params": [],
+          "exported": true,
+          "lineCount": 50
+        }
+      ],
+      "classes": [],
+      "imports": [
+        {
+          "source": "warnings",
+          "specifiers": [
+            "warnings"
+          ]
+        },
+        {
+          "source": "pytest",
+          "specifiers": [
+            "pytest"
+          ]
+        },
+        {
+          "source": "torch",
+          "specifiers": [
+            "torch"
+          ]
+        },
+        {
+          "source": "torch.nn.functional",
+          "specifiers": [
+            "F"
+          ]
+        },
+        {
+          "source": "torch.nn.attention.flex_attention",
+          "specifiers": [
+            "create_block_mask",
+            "flex_attention"
+          ]
+        }
+      ],
+      "exports": [
+        "test_flex_attention_vs_sdpa_numerical_equivalence",
+        "test_flex_attention_vs_sdpa_small_example"
+      ],
+      "totalLines": 149,
+      "hasStructuralAnalysis": true
+    },
+    "tests/test_kv_cache/test_patched_attention.py": {
+      "filePath": "tests/test_kv_cache/test_patched_attention.py",
+      "contentHash": "7e142f36706932f79449346b62a9a078779fec221863e3f6c4d29fcb831741a1",
+      "functions": [
+        {
+          "name": "config",
+          "params": [
+            "request"
+          ],
+          "exported": true,
+          "lineCount": 2
+        },
+        {
+          "name": "create_mha_instance",
+          "params": [
+            "config",
+            "use_standard_kv_cache",
+            "device",
+            "mha_class"
+          ],
+          "exported": true,
+          "lineCount": 66
+        },
+        {
+          "name": "test_mha_patch_equivalence",
+          "params": [
+            "config"
+          ],
+          "exported": true,
+          "lineCount": 147
+        },
+        {
+          "name": "test_compressible_mha_equivalence",
+          "params": [
+            "config"
+          ],
+          "exported": true,
+          "lineCount": 145
+        }
+      ],
+      "classes": [],
+      "imports": [
+        {
+          "source": "types",
+          "specifiers": [
+            "types"
+          ]
+        },
+        {
+          "source": "typing",
+          "specifiers": [
+            "Any",
+            "Dict",
+            "List"
+          ]
+        },
+        {
+          "source": "pytest",
+          "specifiers": [
+            "pytest"
+          ]
+        },
+        {
+          "source": "torch",
+          "specifiers": [
+            "torch"
+          ]
+        },
+        {
+          "source": "torch.nn",
+          "specifiers": [
+            "nn"
+          ]
+        },
+        {
+          "source": "torchtune.modules",
+          "specifiers": [
+            "KVCache",
+            "MultiHeadAttention"
+          ]
+        },
+        {
+          "source": "kvcompression.kv_cache.compressible_attention",
+          "specifiers": [
+            "monkey_patched_mha_forward"
+          ]
+        },
+        {
+          "source": "kvcompression.kv_cache.compressible_kv_cache",
+          "specifiers": [
+            "CompressibleKVCache"
+          ]
+        },
+        {
+          "source": "kvcompression.kv_cache.compressible_mha_layer",
+          "specifiers": [
+            "CompressibleMultiHeadAttention"
+          ]
+        },
+        {
+          "source": "kvcompression.kv_cache.compression_strategy_protocol",
+          "specifiers": [
+            "DummyCompressionStrategy"
+          ]
+        }
+      ],
+      "exports": [
+        "config",
+        "create_mha_instance",
+        "test_mha_patch_equivalence",
+        "test_compressible_mha_equivalence"
+      ],
+      "totalLines": 425,
+      "hasStructuralAnalysis": true
+    },
+    "tests/test_kv_cache/test_patched_model_forward.py": {
+      "filePath": "tests/test_kv_cache/test_patched_model_forward.py",
+      "contentHash": "d5b828a2828b20e57752cdb95376010efbd8d958938608960897fa74c710682d",
+      "functions": [
+        {
+          "name": "test_patched_model_forward",
+          "params": [
+            "model_base_config_fixture",
+            "dtype"
+          ],
+          "exported": true,
+          "lineCount": 66
+        }
+      ],
+      "classes": [],
+      "imports": [
+        {
+          "source": "pytest",
+          "specifiers": [
+            "pytest"
+          ]
+        },
+        {
+          "source": "torch",
+          "specifiers": [
+            "torch"
+          ]
+        },
+        {
+          "source": "torchtune",
+          "specifiers": [
+            "training"
+          ]
+        },
+        {
+          "source": "kvcompression.attention_utils",
+          "specifiers": [
+            "get_attention_mask"
+          ]
+        },
+        {
+          "source": "kvcompression.hooks.compressor",
+          "specifiers": [
+            "KVCompressor"
+          ]
+        },
+        {
+          "source": "kvcompression.kv_cache.compression_strategy_protocol",
+          "specifiers": [
+            "DummyCompressionStrategy"
+          ]
+        },
+        {
+          "source": "tests.test_utils",
+          "specifiers": [
+            "base_test_model"
+          ]
+        }
+      ],
+      "exports": [
+        "test_patched_model_forward"
+      ],
+      "totalLines": 85,
+      "hasStructuralAnalysis": true
+    },
+    "tests/test_online_attention.py": {
+      "filePath": "tests/test_online_attention.py",
+      "contentHash": "11c0f7ac7a4664c8286ca05dbf3949d3d330b3d6d4c28e8f457a1a18cca2c123",
+      "functions": [
+        {
+          "name": "test_attention_rematerialization_equivalence",
+          "params": [
+            "model_base_config_fixture",
+            "batch_size",
+            "seq_len",
+            "num_kv_heads",
+            "num_q_heads"
+          ],
+          "exported": true,
+          "lineCount": 43
+        },
+        {
+          "name": "_setup_model_and_run_forward",
+          "params": [
+            "model_base_config_fixture",
+            "batch_size",
+            "seq_len",
+            "num_kv_heads",
+            "num_q_heads"
+          ],
+          "exported": true,
+          "lineCount": 70
+        },
+        {
+          "name": "_verify_attention_outputs",
+          "params": [
+            "rematerialized_weights",
+            "output_custom",
+            "output_sdpa",
+            "batch_size",
+            "num_q_heads",
+            "seq_len",
+            "head_dim"
+          ],
+          "exported": true,
+          "lineCount": 40
+        },
+        {
+          "name": "test_gqa_expansion_correctness",
+          "params": [],
+          "exported": true,
+          "lineCount": 25
+        },
+        {
+          "name": "test_edge_cases",
+          "params": [],
+          "exported": true,
+          "lineCount": 21
+        }
+      ],
+      "classes": [],
+      "imports": [
+        {
+          "source": "pytest",
+          "specifiers": [
+            "pytest"
+          ]
+        },
+        {
+          "source": "torch",
+          "specifiers": [
+            "torch"
+          ]
+        },
+        {
+          "source": "kvcompression.attention_utils",
+          "specifiers": [
+            "expand_kv_for_gqa",
+            "get_attention_mask",
+            "materialize_attention_weights"
+          ]
+        },
+        {
+          "source": "kvcompression.hooks.compressor",
+          "specifiers": [
+            "KVCompressor"
+          ]
+        },
+        {
+          "source": "kvcompression.kv_cache.compression_strategy_protocol",
+          "specifiers": [
+            "DummyCompressionStrategy"
+          ]
+        },
+        {
+          "source": "tests.test_utils",
+          "specifiers": [
+            "base_test_model",
+            "fixed_init_model"
+          ]
+        }
+      ],
+      "exports": [
+        "test_attention_rematerialization_equivalence",
+        "_setup_model_and_run_forward",
+        "_verify_attention_outputs",
+        "test_gqa_expansion_correctness",
+        "test_edge_cases"
+      ],
+      "totalLines": 231,
+      "hasStructuralAnalysis": true
+    },
+    "tests/test_utils.py": {
+      "filePath": "tests/test_utils.py",
+      "contentHash": "bad75e977a04f0278d96bab177c10686cb9df00348cb1e3ed207092bbf04a709",
+      "functions": [
+        {
+          "name": "fixed_init_tensor",
+          "params": [
+            "shape",
+            "min_val",
+            "max_val",
+            "nonlinear",
+            "dtype"
+          ],
+          "exported": true,
+          "lineCount": 28
+        },
+        {
+          "name": "fixed_init_model",
+          "params": [
+            "model",
+            "min_val",
+            "max_val",
+            "nonlinear",
+            "dtype"
+          ],
+          "exported": true,
+          "lineCount": 21
+        },
+        {
+          "name": "base_test_model",
+          "params": [
+            "config",
+            "device"
+          ],
+          "returnType": "nn.Module",
+          "exported": true,
+          "lineCount": 16
+        }
+      ],
+      "classes": [],
+      "imports": [
+        {
+          "source": "math",
+          "specifiers": [
+            "math"
+          ]
+        },
+        {
+          "source": "typing",
+          "specifiers": [
+            "Optional",
+            "Union"
+          ]
+        },
+        {
+          "source": "torch",
+          "specifiers": [
+            "torch"
+          ]
+        },
+        {
+          "source": "torch.nn",
+          "specifiers": [
+            "nn"
+          ]
+        },
+        {
+          "source": "torchtune.models.llama2",
+          "specifiers": [
+            "Llama2Builder"
+          ]
+        }
+      ],
+      "exports": [
+        "fixed_init_tensor",
+        "fixed_init_model",
+        "base_test_model"
+      ],
+      "totalLines": 84,
+      "hasStructuralAnalysis": true
+    }
+  }
+}

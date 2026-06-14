@@ -1,0 +1,1631 @@
+{
+  "scriptCompleted": true,
+  "filesAnalyzed": 5,
+  "filesSkipped": [],
+  "results": [
+    {
+      "path": "tests/test_generate_with_compression.py",
+      "language": "python",
+      "fileCategory": "code",
+      "totalLines": 204,
+      "nonEmptyLines": 178,
+      "functions": [
+        {
+          "name": "create_model",
+          "startLine": 20,
+          "endLine": 36,
+          "params": [
+            "model_base_config_fixture"
+          ]
+        },
+        {
+          "name": "test_matches_torchtune_without_compression",
+          "startLine": 41,
+          "endLine": 80,
+          "params": [
+            "create_model",
+            "prompt_length",
+            "max_generated_tokens"
+          ]
+        },
+        {
+          "name": "test_differs_from_torchtune_with_real_compression",
+          "startLine": 86,
+          "endLine": 133,
+          "params": [
+            "create_model",
+            "prompt_length",
+            "max_generated_tokens"
+          ]
+        },
+        {
+          "name": "test_matches_torchtune_with_noop_compression",
+          "startLine": 139,
+          "endLine": 186,
+          "params": [
+            "create_model",
+            "prompt_length",
+            "max_generated_tokens"
+          ]
+        },
+        {
+          "name": "test_batch_size_validation",
+          "startLine": 189,
+          "endLine": 204,
+          "params": [
+            "create_model"
+          ]
+        }
+      ],
+      "exports": [
+        {
+          "name": "create_model",
+          "line": 19,
+          "isDefault": false
+        },
+        {
+          "name": "test_matches_torchtune_without_compression",
+          "line": 39,
+          "isDefault": false
+        },
+        {
+          "name": "test_differs_from_torchtune_with_real_compression",
+          "line": 83,
+          "isDefault": false
+        },
+        {
+          "name": "test_matches_torchtune_with_noop_compression",
+          "line": 136,
+          "isDefault": false
+        },
+        {
+          "name": "test_batch_size_validation",
+          "line": 189,
+          "isDefault": false
+        }
+      ],
+      "callGraph": [
+        {
+          "caller": "_create",
+          "callee": "base_test_model",
+          "lineNumber": 27
+        },
+        {
+          "caller": "_create",
+          "callee": "torch.manual_seed",
+          "lineNumber": 28
+        },
+        {
+          "caller": "_create",
+          "callee": "fixed_init_model",
+          "lineNumber": 29
+        },
+        {
+          "caller": "_create",
+          "callee": "model.to",
+          "lineNumber": 32
+        },
+        {
+          "caller": "_create",
+          "callee": "model.eval",
+          "lineNumber": 33
+        },
+        {
+          "caller": "test_matches_torchtune_without_compression",
+          "callee": "create_model",
+          "lineNumber": 48
+        },
+        {
+          "caller": "test_matches_torchtune_without_compression",
+          "callee": "create_model",
+          "lineNumber": 49
+        },
+        {
+          "caller": "test_matches_torchtune_without_compression",
+          "callee": "next",
+          "lineNumber": 50
+        },
+        {
+          "caller": "test_matches_torchtune_without_compression",
+          "callee": "model1.parameters",
+          "lineNumber": 50
+        },
+        {
+          "caller": "test_matches_torchtune_without_compression",
+          "callee": "torch.randint",
+          "lineNumber": 51
+        },
+        {
+          "caller": "test_matches_torchtune_without_compression",
+          "callee": "getattr",
+          "lineNumber": 52
+        },
+        {
+          "caller": "test_matches_torchtune_without_compression",
+          "callee": "model1.setup_caches",
+          "lineNumber": 54
+        },
+        {
+          "caller": "test_matches_torchtune_without_compression",
+          "callee": "torch.manual_seed",
+          "lineNumber": 55
+        },
+        {
+          "caller": "test_matches_torchtune_without_compression",
+          "callee": "generate_with_compression",
+          "lineNumber": 56
+        },
+        {
+          "caller": "test_matches_torchtune_without_compression",
+          "callee": "model2.setup_caches",
+          "lineNumber": 65
+        },
+        {
+          "caller": "test_matches_torchtune_without_compression",
+          "callee": "torch.manual_seed",
+          "lineNumber": 66
+        },
+        {
+          "caller": "test_matches_torchtune_without_compression",
+          "callee": "generation.generate",
+          "lineNumber": 67
+        },
+        {
+          "caller": "test_matches_torchtune_without_compression",
+          "callee": "torch.equal",
+          "lineNumber": 76
+        },
+        {
+          "caller": "test_differs_from_torchtune_with_real_compression",
+          "callee": "create_model",
+          "lineNumber": 93
+        },
+        {
+          "caller": "test_differs_from_torchtune_with_real_compression",
+          "callee": "create_model",
+          "lineNumber": 94
+        },
+        {
+          "caller": "test_differs_from_torchtune_with_real_compression",
+          "callee": "next",
+          "lineNumber": 95
+        },
+        {
+          "caller": "test_differs_from_torchtune_with_real_compression",
+          "callee": "model1.parameters",
+          "lineNumber": 95
+        },
+        {
+          "caller": "test_differs_from_torchtune_with_real_compression",
+          "callee": "torch.randint",
+          "lineNumber": 96
+        },
+        {
+          "caller": "test_differs_from_torchtune_with_real_compression",
+          "callee": "getattr",
+          "lineNumber": 98
+        },
+        {
+          "caller": "test_differs_from_torchtune_with_real_compression",
+          "callee": "RandomCompressionStrategy",
+          "lineNumber": 100
+        },
+        {
+          "caller": "test_differs_from_torchtune_with_real_compression",
+          "callee": "KVCompressor",
+          "lineNumber": 101
+        },
+        {
+          "caller": "test_differs_from_torchtune_with_real_compression",
+          "callee": "torch.manual_seed",
+          "lineNumber": 103
+        },
+        {
+          "caller": "test_differs_from_torchtune_with_real_compression",
+          "callee": "torch.device",
+          "lineNumber": 106
+        },
+        {
+          "caller": "test_differs_from_torchtune_with_real_compression",
+          "callee": "model1.setup_caches",
+          "lineNumber": 107
+        },
+        {
+          "caller": "test_differs_from_torchtune_with_real_compression",
+          "callee": "generate_with_compression",
+          "lineNumber": 108
+        },
+        {
+          "caller": "test_differs_from_torchtune_with_real_compression",
+          "callee": "torch.device",
+          "lineNumber": 117
+        },
+        {
+          "caller": "test_differs_from_torchtune_with_real_compression",
+          "callee": "model2.setup_caches",
+          "lineNumber": 118
+        },
+        {
+          "caller": "test_differs_from_torchtune_with_real_compression",
+          "callee": "torch.manual_seed",
+          "lineNumber": 119
+        },
+        {
+          "caller": "test_differs_from_torchtune_with_real_compression",
+          "callee": "generation.generate",
+          "lineNumber": 120
+        },
+        {
+          "caller": "test_differs_from_torchtune_with_real_compression",
+          "callee": "torch.equal",
+          "lineNumber": 129
+        },
+        {
+          "caller": "test_matches_torchtune_with_noop_compression",
+          "callee": "create_model",
+          "lineNumber": 146
+        },
+        {
+          "caller": "test_matches_torchtune_with_noop_compression",
+          "callee": "create_model",
+          "lineNumber": 147
+        },
+        {
+          "caller": "test_matches_torchtune_with_noop_compression",
+          "callee": "next",
+          "lineNumber": 148
+        },
+        {
+          "caller": "test_matches_torchtune_with_noop_compression",
+          "callee": "model1.parameters",
+          "lineNumber": 148
+        },
+        {
+          "caller": "test_matches_torchtune_with_noop_compression",
+          "callee": "torch.randint",
+          "lineNumber": 149
+        },
+        {
+          "caller": "test_matches_torchtune_with_noop_compression",
+          "callee": "getattr",
+          "lineNumber": 151
+        },
+        {
+          "caller": "test_matches_torchtune_with_noop_compression",
+          "callee": "DummyCompressionStrategy",
+          "lineNumber": 153
+        },
+        {
+          "caller": "test_matches_torchtune_with_noop_compression",
+          "callee": "KVCompressor",
+          "lineNumber": 154
+        },
+        {
+          "caller": "test_matches_torchtune_with_noop_compression",
+          "callee": "torch.manual_seed",
+          "lineNumber": 156
+        },
+        {
+          "caller": "test_matches_torchtune_with_noop_compression",
+          "callee": "torch.device",
+          "lineNumber": 159
+        },
+        {
+          "caller": "test_matches_torchtune_with_noop_compression",
+          "callee": "model1.setup_caches",
+          "lineNumber": 160
+        },
+        {
+          "caller": "test_matches_torchtune_with_noop_compression",
+          "callee": "generate_with_compression",
+          "lineNumber": 161
+        },
+        {
+          "caller": "test_matches_torchtune_with_noop_compression",
+          "callee": "torch.device",
+          "lineNumber": 170
+        },
+        {
+          "caller": "test_matches_torchtune_with_noop_compression",
+          "callee": "model2.setup_caches",
+          "lineNumber": 171
+        },
+        {
+          "caller": "test_matches_torchtune_with_noop_compression",
+          "callee": "torch.manual_seed",
+          "lineNumber": 172
+        },
+        {
+          "caller": "test_matches_torchtune_with_noop_compression",
+          "callee": "generation.generate",
+          "lineNumber": 173
+        },
+        {
+          "caller": "test_matches_torchtune_with_noop_compression",
+          "callee": "torch.equal",
+          "lineNumber": 182
+        },
+        {
+          "caller": "test_batch_size_validation",
+          "callee": "create_model",
+          "lineNumber": 191
+        },
+        {
+          "caller": "test_batch_size_validation",
+          "callee": "next",
+          "lineNumber": 192
+        },
+        {
+          "caller": "test_batch_size_validation",
+          "callee": "model.parameters",
+          "lineNumber": 192
+        },
+        {
+          "caller": "test_batch_size_validation",
+          "callee": "torch.randint",
+          "lineNumber": 193
+        },
+        {
+          "caller": "test_batch_size_validation",
+          "callee": "pytest.raises",
+          "lineNumber": 195
+        },
+        {
+          "caller": "test_batch_size_validation",
+          "callee": "generate_with_compression",
+          "lineNumber": 198
+        }
+      ],
+      "metrics": {
+        "importCount": 1,
+        "exportCount": 5,
+        "functionCount": 5,
+        "classCount": 0
+      }
+    },
+    {
+      "path": "tests/test_kv_cache/test_compressor.py",
+      "language": "python",
+      "fileCategory": "code",
+      "totalLines": 476,
+      "nonEmptyLines": 429,
+      "classes": [
+        {
+          "name": "TestKVCompressorEquivalence",
+          "startLine": 22,
+          "endLine": 476,
+          "methods": [
+            "test_output_equivalence_with_noop_strategy",
+            "test_generate_equivalence_with_noop_strategy",
+            "test_output_no_equivalence_with_no_noop_strategy"
+          ],
+          "properties": []
+        }
+      ],
+      "exports": [
+        {
+          "name": "TestKVCompressorEquivalence",
+          "line": 21,
+          "isDefault": false
+        }
+      ],
+      "callGraph": [
+        {
+          "caller": "test_output_equivalence_with_noop_strategy",
+          "callee": "base_test_model",
+          "lineNumber": 34
+        },
+        {
+          "caller": "test_output_equivalence_with_noop_strategy",
+          "callee": "base_test_model",
+          "lineNumber": 35
+        },
+        {
+          "caller": "test_output_equivalence_with_noop_strategy",
+          "callee": "torch.device",
+          "lineNumber": 43
+        },
+        {
+          "caller": "test_output_equivalence_with_noop_strategy",
+          "callee": "original_model.setup_caches",
+          "lineNumber": 44
+        },
+        {
+          "caller": "test_output_equivalence_with_noop_strategy",
+          "callee": "torch.randint",
+          "lineNumber": 51
+        },
+        {
+          "caller": "test_output_equivalence_with_noop_strategy",
+          "callee": "torch.arange(\n            0, prompt_seq_len, device=current_device, dtype=torch.long\n        ).unsqueeze",
+          "lineNumber": 59
+        },
+        {
+          "caller": "test_output_equivalence_with_noop_strategy",
+          "callee": "torch.arange",
+          "lineNumber": 59
+        },
+        {
+          "caller": "test_output_equivalence_with_noop_strategy",
+          "callee": "get_attention_mask",
+          "lineNumber": 64
+        },
+        {
+          "caller": "test_output_equivalence_with_noop_strategy",
+          "callee": "torch.manual_seed",
+          "lineNumber": 71
+        },
+        {
+          "caller": "test_output_equivalence_with_noop_strategy",
+          "callee": "original_model.eval",
+          "lineNumber": 72
+        },
+        {
+          "caller": "test_output_equivalence_with_noop_strategy",
+          "callee": "torch.no_grad",
+          "lineNumber": 73
+        },
+        {
+          "caller": "test_output_equivalence_with_noop_strategy",
+          "callee": "original_model",
+          "lineNumber": 74
+        },
+        {
+          "caller": "test_output_equivalence_with_noop_strategy",
+          "callee": "torch.manual_seed",
+          "lineNumber": 83
+        },
+        {
+          "caller": "test_output_equivalence_with_noop_strategy",
+          "callee": "original_model.eval",
+          "lineNumber": 84
+        },
+        {
+          "caller": "test_output_equivalence_with_noop_strategy",
+          "callee": "DummyCompressionStrategy",
+          "lineNumber": 86
+        },
+        {
+          "caller": "test_output_equivalence_with_noop_strategy",
+          "callee": "KVCompressor",
+          "lineNumber": 87
+        },
+        {
+          "caller": "test_output_equivalence_with_noop_strategy",
+          "callee": "torch.device",
+          "lineNumber": 92
+        },
+        {
+          "caller": "test_output_equivalence_with_noop_strategy",
+          "callee": "patched_model.setup_caches",
+          "lineNumber": 93
+        },
+        {
+          "caller": "test_output_equivalence_with_noop_strategy",
+          "callee": "torch.no_grad",
+          "lineNumber": 98
+        },
+        {
+          "caller": "test_output_equivalence_with_noop_strategy",
+          "callee": "patched_model",
+          "lineNumber": 99
+        },
+        {
+          "caller": "test_output_equivalence_with_noop_strategy",
+          "callee": "torch.testing.assert_close",
+          "lineNumber": 106
+        },
+        {
+          "caller": "test_output_equivalence_with_noop_strategy",
+          "callee": "torch.device",
+          "lineNumber": 116
+        },
+        {
+          "caller": "test_output_equivalence_with_noop_strategy",
+          "callee": "patched_model.setup_caches",
+          "lineNumber": 117
+        },
+        {
+          "caller": "test_output_equivalence_with_noop_strategy",
+          "callee": "get_attention_mask",
+          "lineNumber": 123
+        },
+        {
+          "caller": "test_output_equivalence_with_noop_strategy",
+          "callee": "torch.manual_seed",
+          "lineNumber": 130
+        },
+        {
+          "caller": "test_output_equivalence_with_noop_strategy",
+          "callee": "patched_model.eval",
+          "lineNumber": 131
+        },
+        {
+          "caller": "test_output_equivalence_with_noop_strategy",
+          "callee": "torch.no_grad",
+          "lineNumber": 132
+        },
+        {
+          "caller": "test_output_equivalence_with_noop_strategy",
+          "callee": "patched_model",
+          "lineNumber": 133
+        },
+        {
+          "caller": "test_output_equivalence_with_noop_strategy",
+          "callee": "torch.testing.assert_close",
+          "lineNumber": 140
+        },
+        {
+          "caller": "test_generate_equivalence_with_noop_strategy",
+          "callee": "model_base_config_fixture.copy",
+          "lineNumber": 159
+        },
+        {
+          "caller": "test_generate_equivalence_with_noop_strategy",
+          "callee": "pytest.skip",
+          "lineNumber": 165
+        },
+        {
+          "caller": "test_generate_equivalence_with_noop_strategy",
+          "callee": "pytest.skip",
+          "lineNumber": 171
+        },
+        {
+          "caller": "test_generate_equivalence_with_noop_strategy",
+          "callee": "base_test_model",
+          "lineNumber": 176
+        },
+        {
+          "caller": "test_generate_equivalence_with_noop_strategy",
+          "callee": "original_model.to",
+          "lineNumber": 178
+        },
+        {
+          "caller": "test_generate_equivalence_with_noop_strategy",
+          "callee": "fixed_init_model",
+          "lineNumber": 179
+        },
+        {
+          "caller": "test_generate_equivalence_with_noop_strategy",
+          "callee": "base_test_model",
+          "lineNumber": 181
+        },
+        {
+          "caller": "test_generate_equivalence_with_noop_strategy",
+          "callee": "patched_model.to",
+          "lineNumber": 182
+        },
+        {
+          "caller": "test_generate_equivalence_with_noop_strategy",
+          "callee": "fixed_init_model",
+          "lineNumber": 183
+        },
+        {
+          "caller": "test_generate_equivalence_with_noop_strategy",
+          "callee": "torch.device",
+          "lineNumber": 186
+        },
+        {
+          "caller": "test_generate_equivalence_with_noop_strategy",
+          "callee": "original_model.setup_caches",
+          "lineNumber": 187
+        },
+        {
+          "caller": "test_generate_equivalence_with_noop_strategy",
+          "callee": "next",
+          "lineNumber": 193
+        },
+        {
+          "caller": "test_generate_equivalence_with_noop_strategy",
+          "callee": "original_model.parameters",
+          "lineNumber": 193
+        },
+        {
+          "caller": "test_generate_equivalence_with_noop_strategy",
+          "callee": "getattr",
+          "lineNumber": 195
+        },
+        {
+          "caller": "test_generate_equivalence_with_noop_strategy",
+          "callee": "torch.randint",
+          "lineNumber": 197
+        },
+        {
+          "caller": "test_generate_equivalence_with_noop_strategy",
+          "callee": "torch.manual_seed",
+          "lineNumber": 208
+        },
+        {
+          "caller": "test_generate_equivalence_with_noop_strategy",
+          "callee": "original_model.eval",
+          "lineNumber": 209
+        },
+        {
+          "caller": "test_generate_equivalence_with_noop_strategy",
+          "callee": "torch.no_grad",
+          "lineNumber": 210
+        },
+        {
+          "caller": "test_generate_equivalence_with_noop_strategy",
+          "callee": "generation.generate",
+          "lineNumber": 211
+        },
+        {
+          "caller": "test_generate_equivalence_with_noop_strategy",
+          "callee": "RandomCompressionStrategy",
+          "lineNumber": 223
+        },
+        {
+          "caller": "test_generate_equivalence_with_noop_strategy",
+          "callee": "KVCompressor",
+          "lineNumber": 224
+        },
+        {
+          "caller": "test_generate_equivalence_with_noop_strategy",
+          "callee": "torch.manual_seed",
+          "lineNumber": 229
+        },
+        {
+          "caller": "test_generate_equivalence_with_noop_strategy",
+          "callee": "patched_model.eval",
+          "lineNumber": 230
+        },
+        {
+          "caller": "test_generate_equivalence_with_noop_strategy",
+          "callee": "torch.device",
+          "lineNumber": 232
+        },
+        {
+          "caller": "test_generate_equivalence_with_noop_strategy",
+          "callee": "patched_model.setup_caches",
+          "lineNumber": 233
+        },
+        {
+          "caller": "test_generate_equivalence_with_noop_strategy",
+          "callee": "torch.no_grad",
+          "lineNumber": 238
+        },
+        {
+          "caller": "test_generate_equivalence_with_noop_strategy",
+          "callee": "generation.generate",
+          "lineNumber": 239
+        },
+        {
+          "caller": "test_generate_equivalence_with_noop_strategy",
+          "callee": "torch.allclose",
+          "lineNumber": 251
+        },
+        {
+          "caller": "test_generate_equivalence_with_noop_strategy",
+          "callee": "torch.manual_seed",
+          "lineNumber": 261
+        },
+        {
+          "caller": "test_generate_equivalence_with_noop_strategy",
+          "callee": "patched_model.eval",
+          "lineNumber": 262
+        },
+        {
+          "caller": "test_generate_equivalence_with_noop_strategy",
+          "callee": "torch.device",
+          "lineNumber": 263
+        },
+        {
+          "caller": "test_generate_equivalence_with_noop_strategy",
+          "callee": "patched_model.setup_caches",
+          "lineNumber": 264
+        },
+        {
+          "caller": "test_generate_equivalence_with_noop_strategy",
+          "callee": "torch.no_grad",
+          "lineNumber": 269
+        },
+        {
+          "caller": "test_generate_equivalence_with_noop_strategy",
+          "callee": "generation.generate",
+          "lineNumber": 270
+        },
+        {
+          "caller": "test_generate_equivalence_with_noop_strategy",
+          "callee": "torch.allclose",
+          "lineNumber": 281
+        },
+        {
+          "caller": "test_output_no_equivalence_with_no_noop_strategy",
+          "callee": "base_test_model",
+          "lineNumber": 320
+        },
+        {
+          "caller": "test_output_no_equivalence_with_no_noop_strategy",
+          "callee": "torch.device",
+          "lineNumber": 321
+        },
+        {
+          "caller": "test_output_no_equivalence_with_no_noop_strategy",
+          "callee": "original_model.setup_caches",
+          "lineNumber": 322
+        },
+        {
+          "caller": "test_output_no_equivalence_with_no_noop_strategy",
+          "callee": "torch.randint",
+          "lineNumber": 329
+        },
+        {
+          "caller": "test_output_no_equivalence_with_no_noop_strategy",
+          "callee": "torch.arange(\n            0, prompt_seq_len, device=current_device, dtype=torch.long\n        ).unsqueeze",
+          "lineNumber": 336
+        },
+        {
+          "caller": "test_output_no_equivalence_with_no_noop_strategy",
+          "callee": "torch.arange",
+          "lineNumber": 336
+        },
+        {
+          "caller": "test_output_no_equivalence_with_no_noop_strategy",
+          "callee": "get_attention_mask",
+          "lineNumber": 339
+        },
+        {
+          "caller": "test_output_no_equivalence_with_no_noop_strategy",
+          "callee": "torch.manual_seed",
+          "lineNumber": 346
+        },
+        {
+          "caller": "test_output_no_equivalence_with_no_noop_strategy",
+          "callee": "original_model.eval",
+          "lineNumber": 347
+        },
+        {
+          "caller": "test_output_no_equivalence_with_no_noop_strategy",
+          "callee": "torch.no_grad",
+          "lineNumber": 348
+        },
+        {
+          "caller": "test_output_no_equivalence_with_no_noop_strategy",
+          "callee": "original_model",
+          "lineNumber": 349
+        },
+        {
+          "caller": "test_output_no_equivalence_with_no_noop_strategy",
+          "callee": "base_test_model",
+          "lineNumber": 356
+        },
+        {
+          "caller": "test_output_no_equivalence_with_no_noop_strategy",
+          "callee": "torch.device",
+          "lineNumber": 357
+        },
+        {
+          "caller": "test_output_no_equivalence_with_no_noop_strategy",
+          "callee": "original_model.setup_caches",
+          "lineNumber": 358
+        },
+        {
+          "caller": "test_output_no_equivalence_with_no_noop_strategy",
+          "callee": "torch.manual_seed",
+          "lineNumber": 364
+        },
+        {
+          "caller": "test_output_no_equivalence_with_no_noop_strategy",
+          "callee": "original_model.eval",
+          "lineNumber": 365
+        },
+        {
+          "caller": "test_output_no_equivalence_with_no_noop_strategy",
+          "callee": "torch.no_grad",
+          "lineNumber": 366
+        },
+        {
+          "caller": "test_output_no_equivalence_with_no_noop_strategy",
+          "callee": "original_model",
+          "lineNumber": 367
+        },
+        {
+          "caller": "test_output_no_equivalence_with_no_noop_strategy",
+          "callee": "original_model",
+          "lineNumber": 372
+        },
+        {
+          "caller": "test_output_no_equivalence_with_no_noop_strategy",
+          "callee": "torch.cat",
+          "lineNumber": 377
+        },
+        {
+          "caller": "test_output_no_equivalence_with_no_noop_strategy",
+          "callee": "torch.testing.assert_close",
+          "lineNumber": 381
+        },
+        {
+          "caller": "test_output_no_equivalence_with_no_noop_strategy",
+          "callee": "torch.manual_seed",
+          "lineNumber": 391
+        },
+        {
+          "caller": "test_output_no_equivalence_with_no_noop_strategy",
+          "callee": "base_test_model",
+          "lineNumber": 393
+        },
+        {
+          "caller": "test_output_no_equivalence_with_no_noop_strategy",
+          "callee": "patched_model.eval",
+          "lineNumber": 394
+        },
+        {
+          "caller": "test_output_no_equivalence_with_no_noop_strategy",
+          "callee": "PressCompressionStrategy",
+          "lineNumber": 395
+        },
+        {
+          "caller": "test_output_no_equivalence_with_no_noop_strategy",
+          "callee": "RandomPress",
+          "lineNumber": 396
+        },
+        {
+          "caller": "test_output_no_equivalence_with_no_noop_strategy",
+          "callee": "KVCompressor",
+          "lineNumber": 398
+        },
+        {
+          "caller": "test_output_no_equivalence_with_no_noop_strategy",
+          "callee": "torch.device",
+          "lineNumber": 403
+        },
+        {
+          "caller": "test_output_no_equivalence_with_no_noop_strategy",
+          "callee": "patched_model.setup_caches",
+          "lineNumber": 404
+        },
+        {
+          "caller": "test_output_no_equivalence_with_no_noop_strategy",
+          "callee": "torch.no_grad",
+          "lineNumber": 409
+        },
+        {
+          "caller": "test_output_no_equivalence_with_no_noop_strategy",
+          "callee": "patched_model",
+          "lineNumber": 410
+        },
+        {
+          "caller": "test_output_no_equivalence_with_no_noop_strategy",
+          "callee": "patched_model",
+          "lineNumber": 415
+        },
+        {
+          "caller": "test_output_no_equivalence_with_no_noop_strategy",
+          "callee": "torch.cat",
+          "lineNumber": 420
+        },
+        {
+          "caller": "test_output_no_equivalence_with_no_noop_strategy",
+          "callee": "torch.testing.assert_close",
+          "lineNumber": 424
+        },
+        {
+          "caller": "test_output_no_equivalence_with_no_noop_strategy",
+          "callee": "torch.manual_seed",
+          "lineNumber": 434
+        },
+        {
+          "caller": "test_output_no_equivalence_with_no_noop_strategy",
+          "callee": "base_test_model",
+          "lineNumber": 436
+        },
+        {
+          "caller": "test_output_no_equivalence_with_no_noop_strategy",
+          "callee": "compressed_model.eval",
+          "lineNumber": 437
+        },
+        {
+          "caller": "test_output_no_equivalence_with_no_noop_strategy",
+          "callee": "PressCompressionStrategy",
+          "lineNumber": 438
+        },
+        {
+          "caller": "test_output_no_equivalence_with_no_noop_strategy",
+          "callee": "RandomPress",
+          "lineNumber": 439
+        },
+        {
+          "caller": "test_output_no_equivalence_with_no_noop_strategy",
+          "callee": "KVCompressor",
+          "lineNumber": 441
+        },
+        {
+          "caller": "test_output_no_equivalence_with_no_noop_strategy",
+          "callee": "torch.device",
+          "lineNumber": 446
+        },
+        {
+          "caller": "test_output_no_equivalence_with_no_noop_strategy",
+          "callee": "compressed_model.setup_caches",
+          "lineNumber": 447
+        },
+        {
+          "caller": "test_output_no_equivalence_with_no_noop_strategy",
+          "callee": "torch.no_grad",
+          "lineNumber": 452
+        },
+        {
+          "caller": "test_output_no_equivalence_with_no_noop_strategy",
+          "callee": "compressed_model",
+          "lineNumber": 453
+        },
+        {
+          "caller": "test_output_no_equivalence_with_no_noop_strategy",
+          "callee": "kv_compressor.compress_caches",
+          "lineNumber": 458
+        },
+        {
+          "caller": "test_output_no_equivalence_with_no_noop_strategy",
+          "callee": "int",
+          "lineNumber": 459
+        },
+        {
+          "caller": "test_output_no_equivalence_with_no_noop_strategy",
+          "callee": "compressed_model",
+          "lineNumber": 461
+        },
+        {
+          "caller": "test_output_no_equivalence_with_no_noop_strategy",
+          "callee": "torch.cat",
+          "lineNumber": 466
+        },
+        {
+          "caller": "test_output_no_equivalence_with_no_noop_strategy",
+          "callee": "torch.allclose",
+          "lineNumber": 471
+        }
+      ],
+      "metrics": {
+        "importCount": 1,
+        "exportCount": 1,
+        "functionCount": 0,
+        "classCount": 1
+      }
+    },
+    {
+      "path": "tests/test_kv_cache/test_patched_model_forward.py",
+      "language": "python",
+      "fileCategory": "code",
+      "totalLines": 84,
+      "nonEmptyLines": 67,
+      "functions": [
+        {
+          "name": "test_patched_model_forward",
+          "startLine": 19,
+          "endLine": 84,
+          "params": [
+            "model_base_config_fixture",
+            "dtype"
+          ]
+        }
+      ],
+      "exports": [
+        {
+          "name": "test_patched_model_forward",
+          "line": 18,
+          "isDefault": false
+        }
+      ],
+      "callGraph": [
+        {
+          "caller": "test_patched_model_forward",
+          "callee": "pytest.skip",
+          "lineNumber": 21
+        },
+        {
+          "caller": "test_patched_model_forward",
+          "callee": "training.set_default_dtype",
+          "lineNumber": 25
+        },
+        {
+          "caller": "test_patched_model_forward",
+          "callee": "base_test_model",
+          "lineNumber": 27
+        },
+        {
+          "caller": "test_patched_model_forward",
+          "callee": "torch.device",
+          "lineNumber": 30
+        },
+        {
+          "caller": "test_patched_model_forward",
+          "callee": "torch.cuda.is_available",
+          "lineNumber": 30
+        },
+        {
+          "caller": "test_patched_model_forward",
+          "callee": "model.to",
+          "lineNumber": 31
+        },
+        {
+          "caller": "test_patched_model_forward",
+          "callee": "torch.randint",
+          "lineNumber": 36
+        },
+        {
+          "caller": "test_patched_model_forward",
+          "callee": "torch.arange(seq_len, device=device).unsqueeze",
+          "lineNumber": 39
+        },
+        {
+          "caller": "test_patched_model_forward",
+          "callee": "torch.arange",
+          "lineNumber": 39
+        },
+        {
+          "caller": "test_patched_model_forward",
+          "callee": "get_attention_mask",
+          "lineNumber": 42
+        },
+        {
+          "caller": "test_patched_model_forward",
+          "callee": "model.setup_caches",
+          "lineNumber": 51
+        },
+        {
+          "caller": "test_patched_model_forward",
+          "callee": "torch.no_grad",
+          "lineNumber": 57
+        },
+        {
+          "caller": "test_patched_model_forward",
+          "callee": "model",
+          "lineNumber": 58
+        },
+        {
+          "caller": "test_patched_model_forward",
+          "callee": "print",
+          "lineNumber": 62
+        },
+        {
+          "caller": "test_patched_model_forward",
+          "callee": "model.reset_caches",
+          "lineNumber": 65
+        },
+        {
+          "caller": "test_patched_model_forward",
+          "callee": "DummyCompressionStrategy",
+          "lineNumber": 67
+        },
+        {
+          "caller": "test_patched_model_forward",
+          "callee": "KVCompressor",
+          "lineNumber": 68
+        },
+        {
+          "caller": "test_patched_model_forward",
+          "callee": "model.setup_caches",
+          "lineNumber": 69
+        },
+        {
+          "caller": "test_patched_model_forward",
+          "callee": "torch.no_grad",
+          "lineNumber": 75
+        },
+        {
+          "caller": "test_patched_model_forward",
+          "callee": "model",
+          "lineNumber": 78
+        },
+        {
+          "caller": "test_patched_model_forward",
+          "callee": "print",
+          "lineNumber": 82
+        },
+        {
+          "caller": "test_patched_model_forward",
+          "callee": "torch.allclose",
+          "lineNumber": 84
+        }
+      ],
+      "metrics": {
+        "importCount": 1,
+        "exportCount": 1,
+        "functionCount": 1,
+        "classCount": 0
+      }
+    },
+    {
+      "path": "tests/test_online_attention.py",
+      "language": "python",
+      "fileCategory": "code",
+      "totalLines": 230,
+      "nonEmptyLines": 194,
+      "functions": [
+        {
+          "name": "test_attention_rematerialization_equivalence",
+          "startLine": 24,
+          "endLine": 66,
+          "params": [
+            "model_base_config_fixture",
+            "batch_size",
+            "seq_len",
+            "num_kv_heads",
+            "num_q_heads"
+          ]
+        },
+        {
+          "name": "_setup_model_and_run_forward",
+          "startLine": 69,
+          "endLine": 138,
+          "params": [
+            "model_base_config_fixture",
+            "batch_size",
+            "seq_len",
+            "num_kv_heads",
+            "num_q_heads"
+          ]
+        },
+        {
+          "name": "_verify_attention_outputs",
+          "startLine": 141,
+          "endLine": 180,
+          "params": [
+            "rematerialized_weights",
+            "output_custom",
+            "output_sdpa",
+            "batch_size",
+            "num_q_heads",
+            "seq_len",
+            "head_dim"
+          ]
+        },
+        {
+          "name": "test_gqa_expansion_correctness",
+          "startLine": 183,
+          "endLine": 207,
+          "params": []
+        },
+        {
+          "name": "test_edge_cases",
+          "startLine": 210,
+          "endLine": 230,
+          "params": []
+        }
+      ],
+      "exports": [
+        {
+          "name": "test_attention_rematerialization_equivalence",
+          "line": 21,
+          "isDefault": false
+        },
+        {
+          "name": "_setup_model_and_run_forward",
+          "line": 69,
+          "isDefault": false
+        },
+        {
+          "name": "_verify_attention_outputs",
+          "line": 141,
+          "isDefault": false
+        },
+        {
+          "name": "test_gqa_expansion_correctness",
+          "line": 183,
+          "isDefault": false
+        },
+        {
+          "name": "test_edge_cases",
+          "line": 210,
+          "isDefault": false
+        }
+      ],
+      "callGraph": [
+        {
+          "caller": "test_attention_rematerialization_equivalence",
+          "callee": "_setup_model_and_run_forward",
+          "lineNumber": 34
+        },
+        {
+          "caller": "test_attention_rematerialization_equivalence",
+          "callee": "next",
+          "lineNumber": 39
+        },
+        {
+          "caller": "test_attention_rematerialization_equivalence",
+          "callee": "model.parameters",
+          "lineNumber": 39
+        },
+        {
+          "caller": "test_attention_rematerialization_equivalence",
+          "callee": "torch.full",
+          "lineNumber": 40
+        },
+        {
+          "caller": "test_attention_rematerialization_equivalence",
+          "callee": "materialize_attention_weights",
+          "lineNumber": 43
+        },
+        {
+          "caller": "test_attention_rematerialization_equivalence",
+          "callee": "torch.matmul",
+          "lineNumber": 52
+        },
+        {
+          "caller": "test_attention_rematerialization_equivalence",
+          "callee": "torch.nn.functional.scaled_dot_product_attention",
+          "lineNumber": 53
+        },
+        {
+          "caller": "test_attention_rematerialization_equivalence",
+          "callee": "_verify_attention_outputs",
+          "lineNumber": 58
+        },
+        {
+          "caller": "_setup_model_and_run_forward",
+          "callee": "model_base_config_fixture.copy",
+          "lineNumber": 73
+        },
+        {
+          "caller": "_setup_model_and_run_forward",
+          "callee": "model_config.update",
+          "lineNumber": 74
+        },
+        {
+          "caller": "_setup_model_and_run_forward",
+          "callee": "max",
+          "lineNumber": 78
+        },
+        {
+          "caller": "_setup_model_and_run_forward",
+          "callee": "base_test_model",
+          "lineNumber": 82
+        },
+        {
+          "caller": "_setup_model_and_run_forward",
+          "callee": "model.to",
+          "lineNumber": 84
+        },
+        {
+          "caller": "_setup_model_and_run_forward",
+          "callee": "fixed_init_model",
+          "lineNumber": 85
+        },
+        {
+          "caller": "_setup_model_and_run_forward",
+          "callee": "next",
+          "lineNumber": 87
+        },
+        {
+          "caller": "_setup_model_and_run_forward",
+          "callee": "model.parameters",
+          "lineNumber": 87
+        },
+        {
+          "caller": "_setup_model_and_run_forward",
+          "callee": "torch.randint",
+          "lineNumber": 88
+        },
+        {
+          "caller": "_setup_model_and_run_forward",
+          "callee": "DummyCompressionStrategy",
+          "lineNumber": 97
+        },
+        {
+          "caller": "_setup_model_and_run_forward",
+          "callee": "KVCompressor",
+          "lineNumber": 98
+        },
+        {
+          "caller": "_setup_model_and_run_forward",
+          "callee": "model.setup_caches",
+          "lineNumber": 101
+        },
+        {
+          "caller": "_setup_model_and_run_forward",
+          "callee": "torch.arange(seq_len, device=device).unsqueeze",
+          "lineNumber": 107
+        },
+        {
+          "caller": "_setup_model_and_run_forward",
+          "callee": "torch.arange",
+          "lineNumber": 107
+        },
+        {
+          "caller": "_setup_model_and_run_forward",
+          "callee": "get_attention_mask",
+          "lineNumber": 109
+        },
+        {
+          "caller": "_setup_model_and_run_forward",
+          "callee": "torch.manual_seed",
+          "lineNumber": 116
+        },
+        {
+          "caller": "_setup_model_and_run_forward",
+          "callee": "model.eval",
+          "lineNumber": 117
+        },
+        {
+          "caller": "_setup_model_and_run_forward",
+          "callee": "torch.no_grad",
+          "lineNumber": 118
+        },
+        {
+          "caller": "_setup_model_and_run_forward",
+          "callee": "model",
+          "lineNumber": 119
+        },
+        {
+          "caller": "_setup_model_and_run_forward",
+          "callee": "next",
+          "lineNumber": 122
+        },
+        {
+          "caller": "_setup_model_and_run_forward",
+          "callee": "model.modules",
+          "lineNumber": 124
+        },
+        {
+          "caller": "_setup_model_and_run_forward",
+          "callee": "hasattr",
+          "lineNumber": 125
+        },
+        {
+          "caller": "_setup_model_and_run_forward",
+          "callee": "kv_cache.get_k_v_and_mask_for_attention",
+          "lineNumber": 128
+        },
+        {
+          "caller": "_setup_model_and_run_forward",
+          "callee": "kv_cache.get_all_queries_active",
+          "lineNumber": 129
+        },
+        {
+          "caller": "_setup_model_and_run_forward",
+          "callee": "expand_kv_for_gqa",
+          "lineNumber": 134
+        },
+        {
+          "caller": "_verify_attention_outputs",
+          "callee": "torch.testing.assert_close",
+          "lineNumber": 162
+        },
+        {
+          "caller": "_verify_attention_outputs",
+          "callee": "rematerialized_weights.sum",
+          "lineNumber": 172
+        },
+        {
+          "caller": "_verify_attention_outputs",
+          "callee": "torch.ones_like",
+          "lineNumber": 173
+        },
+        {
+          "caller": "_verify_attention_outputs",
+          "callee": "torch.testing.assert_close",
+          "lineNumber": 174
+        },
+        {
+          "caller": "test_gqa_expansion_correctness",
+          "callee": "torch.randn",
+          "lineNumber": 188
+        },
+        {
+          "caller": "test_gqa_expansion_correctness",
+          "callee": "torch.randn",
+          "lineNumber": 189
+        },
+        {
+          "caller": "test_gqa_expansion_correctness",
+          "callee": "expand_kv_for_gqa",
+          "lineNumber": 191
+        },
+        {
+          "caller": "test_gqa_expansion_correctness",
+          "callee": "range",
+          "lineNumber": 201
+        },
+        {
+          "caller": "test_gqa_expansion_correctness",
+          "callee": "range",
+          "lineNumber": 202
+        },
+        {
+          "caller": "test_gqa_expansion_correctness",
+          "callee": "torch.testing.assert_close",
+          "lineNumber": 204
+        },
+        {
+          "caller": "test_edge_cases",
+          "callee": "torch.device",
+          "lineNumber": 212
+        },
+        {
+          "caller": "test_edge_cases",
+          "callee": "torch.randn",
+          "lineNumber": 216
+        },
+        {
+          "caller": "test_edge_cases",
+          "callee": "torch.randn",
+          "lineNumber": 217
+        },
+        {
+          "caller": "test_edge_cases",
+          "callee": "torch.tensor",
+          "lineNumber": 218
+        },
+        {
+          "caller": "test_edge_cases",
+          "callee": "materialize_attention_weights",
+          "lineNumber": 220
+        },
+        {
+          "caller": "test_edge_cases",
+          "callee": "torch.testing.assert_close",
+          "lineNumber": 230
+        },
+        {
+          "caller": "test_edge_cases",
+          "callee": "torch.ones_like",
+          "lineNumber": 230
+        }
+      ],
+      "metrics": {
+        "importCount": 1,
+        "exportCount": 5,
+        "functionCount": 5,
+        "classCount": 0
+      }
+    },
+    {
+      "path": "tests/test_utils.py",
+      "language": "python",
+      "fileCategory": "code",
+      "totalLines": 83,
+      "nonEmptyLines": 72,
+      "functions": [
+        {
+          "name": "fixed_init_tensor",
+          "startLine": 14,
+          "endLine": 41,
+          "params": [
+            "shape",
+            "min_val",
+            "max_val",
+            "nonlinear",
+            "dtype"
+          ]
+        },
+        {
+          "name": "fixed_init_model",
+          "startLine": 45,
+          "endLine": 65,
+          "params": [
+            "model",
+            "min_val",
+            "max_val",
+            "nonlinear",
+            "dtype"
+          ]
+        },
+        {
+          "name": "base_test_model",
+          "startLine": 68,
+          "endLine": 83,
+          "params": [
+            "config",
+            "device"
+          ]
+        }
+      ],
+      "exports": [
+        {
+          "name": "fixed_init_tensor",
+          "line": 14,
+          "isDefault": false
+        },
+        {
+          "name": "fixed_init_model",
+          "line": 44,
+          "isDefault": false
+        },
+        {
+          "name": "base_test_model",
+          "line": 68,
+          "isDefault": false
+        }
+      ],
+      "callGraph": [
+        {
+          "caller": "fixed_init_tensor",
+          "callee": "math.prod",
+          "lineNumber": 27
+        },
+        {
+          "caller": "fixed_init_tensor",
+          "callee": "torch.empty",
+          "lineNumber": 29
+        },
+        {
+          "caller": "fixed_init_tensor",
+          "callee": "torch.arange",
+          "lineNumber": 31
+        },
+        {
+          "caller": "fixed_init_tensor",
+          "callee": "x.numel",
+          "lineNumber": 32
+        },
+        {
+          "caller": "fixed_init_tensor",
+          "callee": "torch.full",
+          "lineNumber": 33
+        },
+        {
+          "caller": "fixed_init_tensor",
+          "callee": "x.numel",
+          "lineNumber": 34
+        },
+        {
+          "caller": "fixed_init_tensor",
+          "callee": "x.numel",
+          "lineNumber": 34
+        },
+        {
+          "caller": "fixed_init_tensor",
+          "callee": "torch.cat",
+          "lineNumber": 36
+        },
+        {
+          "caller": "fixed_init_tensor",
+          "callee": "x.reshape",
+          "lineNumber": 38
+        },
+        {
+          "caller": "fixed_init_tensor",
+          "callee": "torch.sin",
+          "lineNumber": 40
+        },
+        {
+          "caller": "fixed_init_model",
+          "callee": "model.named_parameters",
+          "lineNumber": 56
+        },
+        {
+          "caller": "fixed_init_model",
+          "callee": "param.copy_",
+          "lineNumber": 57
+        },
+        {
+          "caller": "fixed_init_model",
+          "callee": "fixed_init_tensor",
+          "lineNumber": 58
+        },
+        {
+          "caller": "base_test_model",
+          "callee": "Llama2Builder",
+          "lineNumber": 80
+        },
+        {
+          "caller": "base_test_model",
+          "callee": "fixed_init_model",
+          "lineNumber": 81
+        },
+        {
+          "caller": "base_test_model",
+          "callee": "model.eval",
+          "lineNumber": 82
+        },
+        {
+          "caller": "base_test_model",
+          "callee": "model.to",
+          "lineNumber": 83
+        },
+        {
+          "caller": "base_test_model",
+          "callee": "torch.device",
+          "lineNumber": 83
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 3,
+        "functionCount": 3,
+        "classCount": 0
+      }
+    }
+  ]
+}

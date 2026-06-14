@@ -1,0 +1,316 @@
+{
+  "nodes": [
+    {
+      "id": "file:src/kvcompression/rl/agents/base_agent.py",
+      "type": "file",
+      "name": "base_agent.py",
+      "filePath": "src/kvcompression/rl/agents/base_agent.py",
+      "summary": "Defines the abstract BaseAgent class that all KV cache RL agents must implement, providing shared logic for action sampling, masked softmax selection, and entropy-based exploration.",
+      "tags": ["base-class", "rl-agent", "abstract", "policy"],
+      "complexity": "moderate",
+      "languageNotes": "Uses PyTorch Categorical distributions for stochastic action sampling with optional greedy argmax fallback."
+    },
+    {
+      "id": "class:src/kvcompression/rl/agents/base_agent.py:BaseAgent",
+      "type": "class",
+      "name": "BaseAgent",
+      "filePath": "src/kvcompression/rl/agents/base_agent.py",
+      "lineRange": [15, 125],
+      "summary": "Abstract base class for RL agents in the KV cache eviction framework, defining the interface for forward pass, action sampling with masked logits, and action mask creation.",
+      "tags": ["abstract", "rl-agent", "policy", "action-sampling"],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:src/kvcompression/rl/agents/kv_sorting_agent.py",
+      "type": "file",
+      "name": "kv_sorting_agent.py",
+      "filePath": "src/kvcompression/rl/agents/kv_sorting_agent.py",
+      "summary": "Implements KVSamplingGroupedQueryAgent, a neural network agent that scores KV cache entries for eviction by combining projected key, value, positional, and query-aggregated features through an MLP, supporting grouped-query attention (GQA).",
+      "tags": ["rl-agent", "neural-network", "kv-cache", "gqa"],
+      "complexity": "complex",
+      "languageNotes": "Builds separate feature streams (key projection, value projection, positional embedding, key-difference cosine similarity, query aggregation) that are concatenated and passed through an MLP for final eviction scoring."
+    },
+    {
+      "id": "class:src/kvcompression/rl/agents/kv_sorting_agent.py:KVSamplingGroupedQueryAgent",
+      "type": "class",
+      "name": "KVSamplingGroupedQueryAgent",
+      "filePath": "src/kvcompression/rl/agents/kv_sorting_agent.py",
+      "lineRange": [15, 273],
+      "summary": "Concrete RL agent that produces per-token eviction scores for KV cache entries by projecting key/value tensors, computing positional and key-difference features, aggregating queries under GQA, and feeding combined features through a multi-layer MLP.",
+      "tags": ["rl-agent", "kv-cache", "mlp", "feature-extraction"],
+      "complexity": "complex"
+    },
+    {
+      "id": "file:src/kvcompression/rl/environments/base_env.py",
+      "type": "file",
+      "name": "base_env.py",
+      "filePath": "src/kvcompression/rl/environments/base_env.py",
+      "summary": "Defines the abstract BaseEnvironment interface that all KV cache RL environments must implement, exposing reset, step, and get_valid_actions methods.",
+      "tags": ["abstract", "rl-environment", "base-class", "interface"],
+      "complexity": "simple"
+    },
+    {
+      "id": "class:src/kvcompression/rl/environments/base_env.py:BaseEnvironment",
+      "type": "class",
+      "name": "BaseEnvironment",
+      "filePath": "src/kvcompression/rl/environments/base_env.py",
+      "lineRange": [11, 27],
+      "summary": "Abstract base class defining the standard RL environment interface (reset, step, get_valid_actions) for KV cache eviction environments.",
+      "tags": ["abstract", "rl-environment", "interface"],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:src/kvcompression/rl/trainers/compute_advantages.py",
+      "type": "file",
+      "name": "compute_advantages.py",
+      "filePath": "src/kvcompression/rl/trainers/compute_advantages.py",
+      "summary": "Provides two utility functions for computing RLOO-style advantages from terminal rewards: a loop-based version and a vectorized version, both supporting optional advantage normalization.",
+      "tags": ["utility", "rl-training", "advantage-computation", "rloo"],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:src/kvcompression/rl/trainers/compute_advantages.py:compute_returns_and_advantage",
+      "type": "function",
+      "name": "compute_returns_and_advantage",
+      "filePath": "src/kvcompression/rl/trainers/compute_advantages.py",
+      "lineRange": [12, 61],
+      "summary": "Computes per-step RLOO advantages for a batch of episodes using a loop over valid episodes, with optional mean/std normalization across the batch.",
+      "tags": ["advantage-computation", "rloo", "rl-training"],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:src/kvcompression/rl/trainers/compute_advantages.py:compute_returns_and_advantage_vec",
+      "type": "function",
+      "name": "compute_returns_and_advantage_vec",
+      "filePath": "src/kvcompression/rl/trainers/compute_advantages.py",
+      "lineRange": [65, 110],
+      "summary": "Vectorized version of advantage computation that uses tensor broadcasting to expand per-episode advantages across timesteps, more efficient than the loop-based variant.",
+      "tags": ["advantage-computation", "vectorized", "rloo", "rl-training"],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:src/kvcompression/rl/trainers/rloo_gumbel_terminal_trainer.py",
+      "type": "file",
+      "name": "rloo_gumbel_terminal_trainer.py",
+      "filePath": "src/kvcompression/rl/trainers/rloo_gumbel_terminal_trainer.py",
+      "summary": "Extends RLOOTerminalTrainer with a Gumbel-noise-based trajectory collection strategy that replaces stochastic categorical sampling with Gumbel-top-k sorted ordering, enabling differentiable or diverse rank-based eviction decisions.",
+      "tags": ["rl-training", "rloo", "gumbel", "trajectory-collection"],
+      "complexity": "complex",
+      "languageNotes": "Adds Gumbel noise (log(-log(u))) to agent scores before argsort, converting score ranking into a form of stochastic sorting without requiring categorical sampling."
+    },
+    {
+      "id": "class:src/kvcompression/rl/trainers/rloo_gumbel_terminal_trainer.py:RLOOGumbelTrainer",
+      "type": "class",
+      "name": "RLOOGumbelTrainer",
+      "filePath": "src/kvcompression/rl/trainers/rloo_gumbel_terminal_trainer.py",
+      "lineRange": [18, 300],
+      "summary": "Trainer subclass that overrides collect_trajectories and evaluate to use Gumbel-perturbed scores for producing sorted eviction orderings, while inheriting the RLOO policy update and metrics infrastructure from RLOOTerminalTrainer.",
+      "tags": ["rl-training", "rloo", "gumbel", "trajectory-collection"],
+      "complexity": "complex"
+    },
+    {
+      "id": "file:src/kvcompression/rl/trainers/rloo_terminal_trainer.py",
+      "type": "file",
+      "name": "rloo_terminal_trainer.py",
+      "filePath": "src/kvcompression/rl/trainers/rloo_terminal_trainer.py",
+      "summary": "Core RLOO (Reward-Linked Online Optimization) trainer that manages the full RL training loop for KV cache eviction agents, including trajectory collection with sequential token eviction, policy updates with entropy regularization, EMA model maintenance, and evaluation with plotting utilities.",
+      "tags": ["rl-training", "rloo", "policy-update", "trajectory-collection"],
+      "complexity": "complex",
+      "languageNotes": "Implements terminal-reward RL where each episode corresponds to evicting tokens from a KV cache sequence and the reward is only observed at episode termination; supports both sequential action-by-action eviction and precomputed-score bulk eviction modes."
+    },
+    {
+      "id": "class:src/kvcompression/rl/trainers/rloo_terminal_trainer.py:RLOOTerminalTrainer",
+      "type": "class",
+      "name": "RLOOTerminalTrainer",
+      "filePath": "src/kvcompression/rl/trainers/rloo_terminal_trainer.py",
+      "lineRange": [29, 747],
+      "summary": "Full-featured RLOO trainer orchestrating trajectory sampling from BaseEnvironment, advantage computation, policy gradient updates with entropy loss and gradient clipping, EMA-based evaluation agent, and per-metric logging and plotting across training and evaluation phases.",
+      "tags": ["rl-training", "policy-gradient", "rloo", "trainer"],
+      "complexity": "complex"
+    }
+  ],
+  "edges": [
+    {
+      "source": "file:src/kvcompression/rl/agents/base_agent.py",
+      "target": "class:src/kvcompression/rl/agents/base_agent.py:BaseAgent",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/kvcompression/rl/agents/base_agent.py",
+      "target": "class:src/kvcompression/rl/agents/base_agent.py:BaseAgent",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/kvcompression/rl/agents/kv_sorting_agent.py",
+      "target": "file:src/kvcompression/rl/agents/base_agent.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:src/kvcompression/rl/agents/kv_sorting_agent.py",
+      "target": "class:src/kvcompression/rl/agents/kv_sorting_agent.py:KVSamplingGroupedQueryAgent",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/kvcompression/rl/agents/kv_sorting_agent.py",
+      "target": "class:src/kvcompression/rl/agents/kv_sorting_agent.py:KVSamplingGroupedQueryAgent",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "class:src/kvcompression/rl/agents/kv_sorting_agent.py:KVSamplingGroupedQueryAgent",
+      "target": "class:src/kvcompression/rl/agents/base_agent.py:BaseAgent",
+      "type": "inherits",
+      "direction": "forward",
+      "weight": 0.9
+    },
+    {
+      "source": "file:src/kvcompression/rl/environments/base_env.py",
+      "target": "class:src/kvcompression/rl/environments/base_env.py:BaseEnvironment",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/kvcompression/rl/environments/base_env.py",
+      "target": "class:src/kvcompression/rl/environments/base_env.py:BaseEnvironment",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/kvcompression/rl/trainers/compute_advantages.py",
+      "target": "function:src/kvcompression/rl/trainers/compute_advantages.py:compute_returns_and_advantage",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/kvcompression/rl/trainers/compute_advantages.py",
+      "target": "function:src/kvcompression/rl/trainers/compute_advantages.py:compute_returns_and_advantage_vec",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/kvcompression/rl/trainers/compute_advantages.py",
+      "target": "function:src/kvcompression/rl/trainers/compute_advantages.py:compute_returns_and_advantage",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/kvcompression/rl/trainers/compute_advantages.py",
+      "target": "function:src/kvcompression/rl/trainers/compute_advantages.py:compute_returns_and_advantage_vec",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/kvcompression/rl/trainers/rloo_gumbel_terminal_trainer.py",
+      "target": "file:src/kvcompression/rl/trainers/rloo_terminal_trainer.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:src/kvcompression/rl/trainers/rloo_gumbel_terminal_trainer.py",
+      "target": "class:src/kvcompression/rl/trainers/rloo_gumbel_terminal_trainer.py:RLOOGumbelTrainer",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/kvcompression/rl/trainers/rloo_gumbel_terminal_trainer.py",
+      "target": "class:src/kvcompression/rl/trainers/rloo_gumbel_terminal_trainer.py:RLOOGumbelTrainer",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "class:src/kvcompression/rl/trainers/rloo_gumbel_terminal_trainer.py:RLOOGumbelTrainer",
+      "target": "class:src/kvcompression/rl/trainers/rloo_terminal_trainer.py:RLOOTerminalTrainer",
+      "type": "inherits",
+      "direction": "forward",
+      "weight": 0.9
+    },
+    {
+      "source": "file:src/kvcompression/rl/trainers/rloo_terminal_trainer.py",
+      "target": "file:src/kvcompression/metrics/__init__.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:src/kvcompression/rl/trainers/rloo_terminal_trainer.py",
+      "target": "file:src/kvcompression/rl/agents/base_agent.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:src/kvcompression/rl/trainers/rloo_terminal_trainer.py",
+      "target": "file:src/kvcompression/rl/environments/base_env.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:src/kvcompression/rl/trainers/rloo_terminal_trainer.py",
+      "target": "file:src/kvcompression/rl/trainers/compute_advantages.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:src/kvcompression/rl/trainers/rloo_terminal_trainer.py",
+      "target": "file:src/kvcompression/utils/utils.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:src/kvcompression/rl/trainers/rloo_terminal_trainer.py",
+      "target": "class:src/kvcompression/rl/trainers/rloo_terminal_trainer.py:RLOOTerminalTrainer",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/kvcompression/rl/trainers/rloo_terminal_trainer.py",
+      "target": "class:src/kvcompression/rl/trainers/rloo_terminal_trainer.py:RLOOTerminalTrainer",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "class:src/kvcompression/rl/trainers/rloo_terminal_trainer.py:RLOOTerminalTrainer",
+      "target": "function:src/kvcompression/rl/trainers/compute_advantages.py:compute_returns_and_advantage_vec",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "class:src/kvcompression/rl/trainers/rloo_terminal_trainer.py:RLOOTerminalTrainer",
+      "target": "class:src/kvcompression/rl/agents/base_agent.py:BaseAgent",
+      "type": "depends_on",
+      "direction": "forward",
+      "weight": 0.6
+    },
+    {
+      "source": "class:src/kvcompression/rl/trainers/rloo_terminal_trainer.py:RLOOTerminalTrainer",
+      "target": "class:src/kvcompression/rl/environments/base_env.py:BaseEnvironment",
+      "type": "depends_on",
+      "direction": "forward",
+      "weight": 0.6
+    }
+  ]
+}

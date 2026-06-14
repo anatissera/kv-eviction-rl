@@ -1,0 +1,3236 @@
+{
+  "scriptCompleted": true,
+  "filesAnalyzed": 8,
+  "filesSkipped": [],
+  "results": [
+    {
+      "path": "src/kvcompression/__init__.py",
+      "language": "python",
+      "fileCategory": "code",
+      "totalLines": 67,
+      "nonEmptyLines": 48,
+      "functions": [
+        {
+          "name": "load_envs",
+          "startLine": 29,
+          "endLine": 41,
+          "params": [
+            "env_file"
+          ]
+        },
+        {
+          "name": "format_resolver",
+          "startLine": 59,
+          "endLine": 64,
+          "params": [
+            "value",
+            "format_spec"
+          ]
+        }
+      ],
+      "exports": [
+        {
+          "name": "load_envs",
+          "line": 29,
+          "isDefault": false
+        },
+        {
+          "name": "format_resolver",
+          "line": 59,
+          "isDefault": false
+        }
+      ],
+      "callGraph": [
+        {
+          "caller": "load_envs",
+          "callee": "dotenv.find_dotenv",
+          "lineNumber": 40
+        },
+        {
+          "caller": "load_envs",
+          "callee": "dotenv.load_dotenv",
+          "lineNumber": 41
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 2,
+        "functionCount": 2,
+        "classCount": 0
+      }
+    },
+    {
+      "path": "src/kvcompression/data/activations_dataset.py",
+      "language": "python",
+      "fileCategory": "code",
+      "totalLines": 189,
+      "nonEmptyLines": 157,
+      "classes": [
+        {
+          "name": "QKVDataset",
+          "startLine": 20,
+          "endLine": 189,
+          "methods": [
+            "__init__",
+            "_load_split_samples",
+            "_discover_data_dirs",
+            "__len__",
+            "__getitem__"
+          ],
+          "properties": []
+        }
+      ],
+      "exports": [
+        {
+          "name": "QKVDataset",
+          "line": 20,
+          "isDefault": false
+        }
+      ],
+      "callGraph": [
+        {
+          "caller": "__init__",
+          "callee": "Path",
+          "lineNumber": 59
+        },
+        {
+          "caller": "__init__",
+          "callee": "training.get_dtype",
+          "lineNumber": 60
+        },
+        {
+          "caller": "__init__",
+          "callee": "self.dataset_path.is_absolute",
+          "lineNumber": 70
+        },
+        {
+          "caller": "__init__",
+          "callee": "Path.cwd",
+          "lineNumber": 74
+        },
+        {
+          "caller": "__init__",
+          "callee": "self.dataset_path.exists",
+          "lineNumber": 76
+        },
+        {
+          "caller": "__init__",
+          "callee": "FileNotFoundError",
+          "lineNumber": 77
+        },
+        {
+          "caller": "__init__",
+          "callee": "self._load_split_samples",
+          "lineNumber": 79
+        },
+        {
+          "caller": "__init__",
+          "callee": "self._discover_data_dirs",
+          "lineNumber": 80
+        },
+        {
+          "caller": "__init__",
+          "callee": "len",
+          "lineNumber": 82
+        },
+        {
+          "caller": "__init__",
+          "callee": "ValueError",
+          "lineNumber": 83
+        },
+        {
+          "caller": "__init__",
+          "callee": "log_rank_zero",
+          "lineNumber": 93
+        },
+        {
+          "caller": "__init__",
+          "callee": "len",
+          "lineNumber": 96
+        },
+        {
+          "caller": "_load_split_samples",
+          "callee": "split_path.exists",
+          "lineNumber": 103
+        },
+        {
+          "caller": "_load_split_samples",
+          "callee": "FileNotFoundError",
+          "lineNumber": 104
+        },
+        {
+          "caller": "_load_split_samples",
+          "callee": "set",
+          "lineNumber": 106
+        },
+        {
+          "caller": "_load_split_samples",
+          "callee": "line.strip",
+          "lineNumber": 106
+        },
+        {
+          "caller": "_load_split_samples",
+          "callee": "split_path.read_text().splitlines",
+          "lineNumber": 106
+        },
+        {
+          "caller": "_load_split_samples",
+          "callee": "split_path.read_text",
+          "lineNumber": 106
+        },
+        {
+          "caller": "_load_split_samples",
+          "callee": "(self.dataset_path / sample).exists",
+          "lineNumber": 109
+        },
+        {
+          "caller": "_load_split_samples",
+          "callee": "FileNotFoundError",
+          "lineNumber": 110
+        },
+        {
+          "caller": "_discover_data_dirs",
+          "callee": "sorted",
+          "lineNumber": 122
+        },
+        {
+          "caller": "_discover_data_dirs",
+          "callee": "target_dir.exists",
+          "lineNumber": 126
+        },
+        {
+          "caller": "_discover_data_dirs",
+          "callee": "all",
+          "lineNumber": 128
+        },
+        {
+          "caller": "_discover_data_dirs",
+          "callee": "(target_dir / f).exists",
+          "lineNumber": 128
+        },
+        {
+          "caller": "_discover_data_dirs",
+          "callee": "data_dirs.append",
+          "lineNumber": 129
+        },
+        {
+          "caller": "__len__",
+          "callee": "len",
+          "lineNumber": 134
+        },
+        {
+          "caller": "__getitem__",
+          "callee": "safetensors.torch.load_file",
+          "lineNumber": 141
+        },
+        {
+          "caller": "__getitem__",
+          "callee": "safetensors.torch.load_file",
+          "lineNumber": 145
+        },
+        {
+          "caller": "__getitem__",
+          "callee": "torch.tensor",
+          "lineNumber": 160
+        },
+        {
+          "caller": "__getitem__",
+          "callee": "max",
+          "lineNumber": 160
+        },
+        {
+          "caller": "__getitem__",
+          "callee": "torch.randint",
+          "lineNumber": 163
+        },
+        {
+          "caller": "__getitem__",
+          "callee": "safetensors.torch.load_file",
+          "lineNumber": 165
+        },
+        {
+          "caller": "__getitem__",
+          "callee": "keys.unsqueeze",
+          "lineNumber": 174
+        },
+        {
+          "caller": "__getitem__",
+          "callee": "values.unsqueeze",
+          "lineNumber": 175
+        },
+        {
+          "caller": "__getitem__",
+          "callee": "queries.unsqueeze",
+          "lineNumber": 177
+        },
+        {
+          "caller": "__getitem__",
+          "callee": "torch.tensor",
+          "lineNumber": 180
+        },
+        {
+          "caller": "__getitem__",
+          "callee": "queries.to",
+          "lineNumber": 181
+        },
+        {
+          "caller": "__getitem__",
+          "callee": "keys.to",
+          "lineNumber": 182
+        },
+        {
+          "caller": "__getitem__",
+          "callee": "values.to",
+          "lineNumber": 183
+        },
+        {
+          "caller": "__getitem__",
+          "callee": "prompt_len.clone",
+          "lineNumber": 184
+        },
+        {
+          "caller": "__getitem__",
+          "callee": "isinstance",
+          "lineNumber": 185
+        },
+        {
+          "caller": "__getitem__",
+          "callee": "torch.tensor",
+          "lineNumber": 186
+        }
+      ],
+      "metrics": {
+        "importCount": 1,
+        "exportCount": 1,
+        "functionCount": 0,
+        "classCount": 1
+      }
+    },
+    {
+      "path": "src/kvcompression/data/pad_collate.py",
+      "language": "python",
+      "fileCategory": "code",
+      "totalLines": 69,
+      "nonEmptyLines": 58,
+      "functions": [
+        {
+          "name": "pad_collate_fn",
+          "startLine": 36,
+          "endLine": 69,
+          "params": [
+            "samples"
+          ]
+        }
+      ],
+      "exports": [
+        {
+          "name": "pad_collate_fn",
+          "line": 36,
+          "isDefault": false
+        }
+      ],
+      "callGraph": [
+        {
+          "caller": "pad_collate_fn",
+          "callee": "torch.tensor",
+          "lineNumber": 46
+        },
+        {
+          "caller": "pad_collate_fn",
+          "callee": "lengths.max().item",
+          "lineNumber": 47
+        },
+        {
+          "caller": "pad_collate_fn",
+          "callee": "lengths.max",
+          "lineNumber": 47
+        },
+        {
+          "caller": "pad_collate_fn",
+          "callee": "torch.arange",
+          "lineNumber": 48
+        },
+        {
+          "caller": "pad_collate_fn",
+          "callee": "torch.tensor",
+          "lineNumber": 50
+        },
+        {
+          "caller": "pad_collate_fn",
+          "callee": "prompt_lengths.max().item",
+          "lineNumber": 51
+        },
+        {
+          "caller": "pad_collate_fn",
+          "callee": "prompt_lengths.max",
+          "lineNumber": 51
+        },
+        {
+          "caller": "pad_collate_fn",
+          "callee": "torch.arange",
+          "lineNumber": 52
+        },
+        {
+          "caller": "pad_collate_fn",
+          "callee": "defaultdict",
+          "lineNumber": 59
+        },
+        {
+          "caller": "pad_collate_fn",
+          "callee": "sample.items",
+          "lineNumber": 61
+        },
+        {
+          "caller": "pad_collate_fn",
+          "callee": "F.pad",
+          "lineNumber": 66
+        },
+        {
+          "caller": "pad_collate_fn",
+          "callee": "padded_items[key].append",
+          "lineNumber": 67
+        },
+        {
+          "caller": "pad_collate_fn",
+          "callee": "torch.stack",
+          "lineNumber": 68
+        },
+        {
+          "caller": "pad_collate_fn",
+          "callee": "padded_items.items",
+          "lineNumber": 68
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 1,
+        "functionCount": 1,
+        "classCount": 0
+      }
+    },
+    {
+      "path": "src/kvcompression/entrypoints/rl/train_agent_sampler_distributed.py",
+      "language": "python",
+      "fileCategory": "code",
+      "totalLines": 991,
+      "nonEmptyLines": 847,
+      "functions": [
+        {
+          "name": "launch_training",
+          "startLine": 947,
+          "endLine": 978,
+          "params": [
+            "cfg",
+            "cleanup"
+          ]
+        },
+        {
+          "name": "main",
+          "startLine": 982,
+          "endLine": 985,
+          "params": [
+            "cfg"
+          ]
+        }
+      ],
+      "classes": [
+        {
+          "name": "RLOOTrainingRecipeDistributed",
+          "startLine": 42,
+          "endLine": 944,
+          "methods": [
+            "__init__",
+            "_setup_distributed",
+            "_fast_forward_to_step",
+            "_should_save_checkpoint",
+            "_safe_checkpoint_save",
+            "setup",
+            "_detect_and_load_resume",
+            "_setup_data_and_environments",
+            "_setup_model_and_agent",
+            "_setup_trainer",
+            "_apply_remaining_resume_state",
+            "train",
+            "plot_results",
+            "evaluate_best_model",
+            "upload",
+            "cleanup"
+          ],
+          "properties": []
+        }
+      ],
+      "exports": [
+        {
+          "name": "RLOOTrainingRecipeDistributed",
+          "line": 42,
+          "isDefault": false
+        },
+        {
+          "name": "launch_training",
+          "line": 947,
+          "isDefault": false
+        },
+        {
+          "name": "main",
+          "line": 981,
+          "isDefault": false
+        }
+      ],
+      "callGraph": [
+        {
+          "caller": "__init__",
+          "callee": "utils.get_device",
+          "lineNumber": 50
+        },
+        {
+          "caller": "__init__",
+          "callee": "training.get_dtype",
+          "lineNumber": 51
+        },
+        {
+          "caller": "__init__",
+          "callee": "torch.set_default_dtype",
+          "lineNumber": 53
+        },
+        {
+          "caller": "__init__",
+          "callee": "self._setup_distributed",
+          "lineNumber": 55
+        },
+        {
+          "caller": "__init__",
+          "callee": "training.set_seed",
+          "lineNumber": 57
+        },
+        {
+          "caller": "__init__",
+          "callee": "cfg.get",
+          "lineNumber": 58
+        },
+        {
+          "caller": "__init__",
+          "callee": "cfg.get",
+          "lineNumber": 61
+        },
+        {
+          "caller": "__init__",
+          "callee": "log_rank_zero",
+          "lineNumber": 63
+        },
+        {
+          "caller": "__init__",
+          "callee": "OmegaConf.select",
+          "lineNumber": 65
+        },
+        {
+          "caller": "__init__",
+          "callee": "load_remote_json_secrets",
+          "lineNumber": 69
+        },
+        {
+          "caller": "__init__",
+          "callee": "OmegaConf.select",
+          "lineNumber": 71
+        },
+        {
+          "caller": "__init__",
+          "callee": "TrainingCheckpointer",
+          "lineNumber": 75
+        },
+        {
+          "caller": "__init__",
+          "callee": "Path",
+          "lineNumber": 76
+        },
+        {
+          "caller": "_setup_distributed",
+          "callee": "dist.is_available",
+          "lineNumber": 87
+        },
+        {
+          "caller": "_setup_distributed",
+          "callee": "training.get_distributed_backend",
+          "lineNumber": 88
+        },
+        {
+          "caller": "_setup_distributed",
+          "callee": "dist.init_process_group",
+          "lineNumber": 89
+        },
+        {
+          "caller": "_setup_distributed",
+          "callee": "datetime.timedelta",
+          "lineNumber": 90
+        },
+        {
+          "caller": "_setup_distributed",
+          "callee": "log_rank_zero",
+          "lineNumber": 94
+        },
+        {
+          "caller": "_setup_distributed",
+          "callee": "utils.get_world_size_and_rank",
+          "lineNumber": 96
+        },
+        {
+          "caller": "_setup_distributed",
+          "callee": "torch.device",
+          "lineNumber": 100
+        },
+        {
+          "caller": "_setup_distributed",
+          "callee": "torch.cuda.set_device",
+          "lineNumber": 101
+        },
+        {
+          "caller": "_setup_distributed",
+          "callee": "log_rank_zero",
+          "lineNumber": 104
+        },
+        {
+          "caller": "_setup_distributed",
+          "callee": "log_rank_zero",
+          "lineNumber": 109
+        },
+        {
+          "caller": "_fast_forward_to_step",
+          "callee": "hasattr",
+          "lineNumber": 121
+        },
+        {
+          "caller": "_fast_forward_to_step",
+          "callee": "len",
+          "lineNumber": 125
+        },
+        {
+          "caller": "_fast_forward_to_step",
+          "callee": "self._train_loader.sampler.set_epoch",
+          "lineNumber": 131
+        },
+        {
+          "caller": "_fast_forward_to_step",
+          "callee": "hasattr",
+          "lineNumber": 134
+        },
+        {
+          "caller": "_fast_forward_to_step",
+          "callee": "self._trainer.env.recreate_iterator",
+          "lineNumber": 135
+        },
+        {
+          "caller": "_fast_forward_to_step",
+          "callee": "range",
+          "lineNumber": 138
+        },
+        {
+          "caller": "_fast_forward_to_step",
+          "callee": "next",
+          "lineNumber": 140
+        },
+        {
+          "caller": "_fast_forward_to_step",
+          "callee": "log_rank_zero",
+          "lineNumber": 145
+        },
+        {
+          "caller": "_fast_forward_to_step",
+          "callee": "min",
+          "lineNumber": 148
+        },
+        {
+          "caller": "_fast_forward_to_step",
+          "callee": "len",
+          "lineNumber": 148
+        },
+        {
+          "caller": "_should_save_checkpoint",
+          "callee": "self.checkpointer.should_save_checkpoint",
+          "lineNumber": 164
+        },
+        {
+          "caller": "_safe_checkpoint_save",
+          "callee": "self.checkpointer.save_checkpoint",
+          "lineNumber": 181
+        },
+        {
+          "caller": "_safe_checkpoint_save",
+          "callee": "self._train_loader.sampler.state_dict",
+          "lineNumber": 188
+        },
+        {
+          "caller": "_safe_checkpoint_save",
+          "callee": "self.checkpointer.cleanup_old_checkpoints",
+          "lineNumber": 192
+        },
+        {
+          "caller": "_safe_checkpoint_save",
+          "callee": "log_rank_zero",
+          "lineNumber": 194
+        },
+        {
+          "caller": "setup",
+          "callee": "log_rank_zero",
+          "lineNumber": 202
+        },
+        {
+          "caller": "setup",
+          "callee": "OmegaConf.select",
+          "lineNumber": 204
+        },
+        {
+          "caller": "setup",
+          "callee": "ValueError",
+          "lineNumber": 205
+        },
+        {
+          "caller": "setup",
+          "callee": "self._detect_and_load_resume",
+          "lineNumber": 211
+        },
+        {
+          "caller": "setup",
+          "callee": "self._setup_data_and_environments",
+          "lineNumber": 214
+        },
+        {
+          "caller": "setup",
+          "callee": "self._setup_model_and_agent",
+          "lineNumber": 217
+        },
+        {
+          "caller": "setup",
+          "callee": "self._setup_trainer",
+          "lineNumber": 222
+        },
+        {
+          "caller": "setup",
+          "callee": "self.checkpointer.restore_best_checkpoint_if_exists",
+          "lineNumber": 226
+        },
+        {
+          "caller": "setup",
+          "callee": "self._apply_remaining_resume_state",
+          "lineNumber": 232
+        },
+        {
+          "caller": "setup",
+          "callee": "float",
+          "lineNumber": 242
+        },
+        {
+          "caller": "setup",
+          "callee": "self._train_loader.sampler.load_state_dict",
+          "lineNumber": 253
+        },
+        {
+          "caller": "setup",
+          "callee": "log_rank_zero",
+          "lineNumber": 256
+        },
+        {
+          "caller": "setup",
+          "callee": "self._fast_forward_to_step",
+          "lineNumber": 258
+        },
+        {
+          "caller": "setup",
+          "callee": "log_rank_zero",
+          "lineNumber": 261
+        },
+        {
+          "caller": "setup",
+          "callee": "dist.is_initialized",
+          "lineNumber": 263
+        },
+        {
+          "caller": "setup",
+          "callee": "dist.barrier",
+          "lineNumber": 264
+        },
+        {
+          "caller": "setup",
+          "callee": "log_rank_zero",
+          "lineNumber": 265
+        },
+        {
+          "caller": "_detect_and_load_resume",
+          "callee": "log_rank_zero",
+          "lineNumber": 269
+        },
+        {
+          "caller": "_detect_and_load_resume",
+          "callee": "log_rank_zero",
+          "lineNumber": 272
+        },
+        {
+          "caller": "_detect_and_load_resume",
+          "callee": "ResumeInfo",
+          "lineNumber": 273
+        },
+        {
+          "caller": "_detect_and_load_resume",
+          "callee": "self.checkpointer.check_for_resume",
+          "lineNumber": 276
+        },
+        {
+          "caller": "_detect_and_load_resume",
+          "callee": "self.checkpointer.broadcast_checkpoint_path",
+          "lineNumber": 277
+        },
+        {
+          "caller": "_detect_and_load_resume",
+          "callee": "log_rank_zero",
+          "lineNumber": 280
+        },
+        {
+          "caller": "_detect_and_load_resume",
+          "callee": "ResumeInfo",
+          "lineNumber": 283
+        },
+        {
+          "caller": "_detect_and_load_resume",
+          "callee": "self.checkpointer.load_checkpoint",
+          "lineNumber": 286
+        },
+        {
+          "caller": "_detect_and_load_resume",
+          "callee": "log_rank_zero",
+          "lineNumber": 288
+        },
+        {
+          "caller": "_detect_and_load_resume",
+          "callee": "RuntimeError",
+          "lineNumber": 294
+        },
+        {
+          "caller": "_detect_and_load_resume",
+          "callee": "ResumeInfo",
+          "lineNumber": 297
+        },
+        {
+          "caller": "_detect_and_load_resume",
+          "callee": "checkpoint_data.get",
+          "lineNumber": 300
+        },
+        {
+          "caller": "_detect_and_load_resume",
+          "callee": "checkpoint_data.get",
+          "lineNumber": 302
+        },
+        {
+          "caller": "_detect_and_load_resume",
+          "callee": "float",
+          "lineNumber": 302
+        },
+        {
+          "caller": "_detect_and_load_resume",
+          "callee": "checkpoint_data.get",
+          "lineNumber": 304
+        },
+        {
+          "caller": "_detect_and_load_resume",
+          "callee": "checkpoint_data.get",
+          "lineNumber": 305
+        },
+        {
+          "caller": "_detect_and_load_resume",
+          "callee": "checkpoint_data.get",
+          "lineNumber": 306
+        },
+        {
+          "caller": "_detect_and_load_resume",
+          "callee": "checkpoint_data.get",
+          "lineNumber": 307
+        },
+        {
+          "caller": "_detect_and_load_resume",
+          "callee": "checkpoint_data.get",
+          "lineNumber": 309
+        },
+        {
+          "caller": "_detect_and_load_resume",
+          "callee": "checkpoint_data.get",
+          "lineNumber": 310
+        },
+        {
+          "caller": "_detect_and_load_resume",
+          "callee": "checkpoint_data.get",
+          "lineNumber": 311
+        },
+        {
+          "caller": "_detect_and_load_resume",
+          "callee": "checkpoint_data.get",
+          "lineNumber": 312
+        },
+        {
+          "caller": "_detect_and_load_resume",
+          "callee": "log_rank_zero",
+          "lineNumber": 316
+        },
+        {
+          "caller": "_detect_and_load_resume",
+          "callee": "self.checkpointer.apply_random_states",
+          "lineNumber": 323
+        },
+        {
+          "caller": "_detect_and_load_resume",
+          "callee": "training.set_seed",
+          "lineNumber": 325
+        },
+        {
+          "caller": "_detect_and_load_resume",
+          "callee": "self._cfg.get",
+          "lineNumber": 326
+        },
+        {
+          "caller": "_setup_data_and_environments",
+          "callee": "hasattr",
+          "lineNumber": 337
+        },
+        {
+          "caller": "_setup_data_and_environments",
+          "callee": "logger.info",
+          "lineNumber": 338
+        },
+        {
+          "caller": "_setup_data_and_environments",
+          "callee": "config.instantiate",
+          "lineNumber": 339
+        },
+        {
+          "caller": "_setup_data_and_environments",
+          "callee": "config.instantiate",
+          "lineNumber": 340
+        },
+        {
+          "caller": "_setup_data_and_environments",
+          "callee": "len",
+          "lineNumber": 341
+        },
+        {
+          "caller": "_setup_data_and_environments",
+          "callee": "len",
+          "lineNumber": 342
+        },
+        {
+          "caller": "_setup_data_and_environments",
+          "callee": "InfiniteDistributedSampler",
+          "lineNumber": 345
+        },
+        {
+          "caller": "_setup_data_and_environments",
+          "callee": "DistributedSampler",
+          "lineNumber": 349
+        },
+        {
+          "caller": "_setup_data_and_environments",
+          "callee": "DataLoader",
+          "lineNumber": 357
+        },
+        {
+          "caller": "_setup_data_and_environments",
+          "callee": "DataLoader",
+          "lineNumber": 370
+        },
+        {
+          "caller": "_setup_data_and_environments",
+          "callee": "log_rank_zero",
+          "lineNumber": 383
+        },
+        {
+          "caller": "_setup_data_and_environments",
+          "callee": "log_rank_zero",
+          "lineNumber": 388
+        },
+        {
+          "caller": "_setup_data_and_environments",
+          "callee": "log_rank_zero",
+          "lineNumber": 393
+        },
+        {
+          "caller": "_setup_data_and_environments",
+          "callee": "torch.device",
+          "lineNumber": 394
+        },
+        {
+          "caller": "_setup_data_and_environments",
+          "callee": "config.instantiate",
+          "lineNumber": 395
+        },
+        {
+          "caller": "_setup_data_and_environments",
+          "callee": "log_rank_zero",
+          "lineNumber": 397
+        },
+        {
+          "caller": "_setup_data_and_environments",
+          "callee": "config.instantiate",
+          "lineNumber": 405
+        },
+        {
+          "caller": "_setup_data_and_environments",
+          "callee": "log_rank_zero",
+          "lineNumber": 407
+        },
+        {
+          "caller": "_setup_data_and_environments",
+          "callee": "config.instantiate",
+          "lineNumber": 415
+        },
+        {
+          "caller": "_setup_model_and_agent",
+          "callee": "log_rank_zero",
+          "lineNumber": 419
+        },
+        {
+          "caller": "_setup_model_and_agent",
+          "callee": "training.set_default_dtype",
+          "lineNumber": 420
+        },
+        {
+          "caller": "_setup_model_and_agent",
+          "callee": "torch.device",
+          "lineNumber": 420
+        },
+        {
+          "caller": "_setup_model_and_agent",
+          "callee": "config.instantiate",
+          "lineNumber": 421
+        },
+        {
+          "caller": "_setup_model_and_agent",
+          "callee": "config.instantiate",
+          "lineNumber": 426
+        },
+        {
+          "caller": "_setup_model_and_agent",
+          "callee": "ema_model_instance.load_state_dict",
+          "lineNumber": 429
+        },
+        {
+          "caller": "_setup_model_and_agent",
+          "callee": "model_to_wrap.state_dict",
+          "lineNumber": 429
+        },
+        {
+          "caller": "_setup_model_and_agent",
+          "callee": "AveragedModel",
+          "lineNumber": 431
+        },
+        {
+          "caller": "_setup_model_and_agent",
+          "callee": "torch.optim.swa_utils.get_ema_avg_fn",
+          "lineNumber": 433
+        },
+        {
+          "caller": "_setup_model_and_agent",
+          "callee": "log_rank_zero",
+          "lineNumber": 439
+        },
+        {
+          "caller": "_setup_model_and_agent",
+          "callee": "model_to_wrap.load_state_dict",
+          "lineNumber": 441
+        },
+        {
+          "caller": "_setup_model_and_agent",
+          "callee": "log_rank_zero",
+          "lineNumber": 442
+        },
+        {
+          "caller": "_setup_model_and_agent",
+          "callee": "RuntimeError",
+          "lineNumber": 444
+        },
+        {
+          "caller": "_setup_model_and_agent",
+          "callee": "is_torch_compile_disabled",
+          "lineNumber": 447
+        },
+        {
+          "caller": "_setup_model_and_agent",
+          "callee": "log_rank_zero",
+          "lineNumber": 448
+        },
+        {
+          "caller": "_setup_model_and_agent",
+          "callee": "model_to_wrap.compile",
+          "lineNumber": 449
+        },
+        {
+          "caller": "_setup_model_and_agent",
+          "callee": "log_rank_zero",
+          "lineNumber": 450
+        },
+        {
+          "caller": "_setup_model_and_agent",
+          "callee": "dist.is_initialized",
+          "lineNumber": 452
+        },
+        {
+          "caller": "_setup_model_and_agent",
+          "callee": "self._cfg.get",
+          "lineNumber": 453
+        },
+        {
+          "caller": "_setup_model_and_agent",
+          "callee": "DDP",
+          "lineNumber": 455
+        },
+        {
+          "caller": "_setup_model_and_agent",
+          "callee": "log_rank_zero",
+          "lineNumber": 462
+        },
+        {
+          "caller": "_setup_trainer",
+          "callee": "MetricsManager",
+          "lineNumber": 474
+        },
+        {
+          "caller": "_setup_trainer",
+          "callee": "OmegaConf.select",
+          "lineNumber": 475
+        },
+        {
+          "caller": "_setup_trainer",
+          "callee": "OmegaConf.select",
+          "lineNumber": 476
+        },
+        {
+          "caller": "_setup_trainer",
+          "callee": "OmegaConf.select",
+          "lineNumber": 477
+        },
+        {
+          "caller": "_setup_trainer",
+          "callee": "OmegaConf.select",
+          "lineNumber": 478
+        },
+        {
+          "caller": "_setup_trainer",
+          "callee": "training.setup_torch_profiler",
+          "lineNumber": 492
+        },
+        {
+          "caller": "_setup_trainer",
+          "callee": "log_rank_zero",
+          "lineNumber": 496
+        },
+        {
+          "caller": "_setup_trainer",
+          "callee": "Path(profiler_output_dir).mkdir",
+          "lineNumber": 499
+        },
+        {
+          "caller": "_setup_trainer",
+          "callee": "Path",
+          "lineNumber": 499
+        },
+        {
+          "caller": "_setup_trainer",
+          "callee": "log_rank_zero",
+          "lineNumber": 501
+        },
+        {
+          "caller": "_setup_trainer",
+          "callee": "config.instantiate",
+          "lineNumber": 502
+        },
+        {
+          "caller": "_setup_trainer",
+          "callee": "metrics_manager.log_hparams",
+          "lineNumber": 512
+        },
+        {
+          "caller": "_setup_trainer",
+          "callee": "OmegaConf.to_container",
+          "lineNumber": 512
+        },
+        {
+          "caller": "_apply_remaining_resume_state",
+          "callee": "log_rank_zero",
+          "lineNumber": 518
+        },
+        {
+          "caller": "_apply_remaining_resume_state",
+          "callee": "self._ema_agent.load_state_dict",
+          "lineNumber": 525
+        },
+        {
+          "caller": "_apply_remaining_resume_state",
+          "callee": "log_rank_zero",
+          "lineNumber": 526
+        },
+        {
+          "caller": "_apply_remaining_resume_state",
+          "callee": "log_rank_zero",
+          "lineNumber": 528
+        },
+        {
+          "caller": "_apply_remaining_resume_state",
+          "callee": "self._trainer.optimizer.load_state_dict",
+          "lineNumber": 534
+        },
+        {
+          "caller": "_apply_remaining_resume_state",
+          "callee": "log_rank_zero",
+          "lineNumber": 537
+        },
+        {
+          "caller": "_apply_remaining_resume_state",
+          "callee": "RuntimeError",
+          "lineNumber": 539
+        },
+        {
+          "caller": "_apply_remaining_resume_state",
+          "callee": "self._trainer.scheduler.load_state_dict",
+          "lineNumber": 547
+        },
+        {
+          "caller": "_apply_remaining_resume_state",
+          "callee": "log_rank_zero",
+          "lineNumber": 550
+        },
+        {
+          "caller": "_apply_remaining_resume_state",
+          "callee": "log_rank_zero",
+          "lineNumber": 555
+        },
+        {
+          "caller": "_apply_remaining_resume_state",
+          "callee": "log_rank_zero",
+          "lineNumber": 557
+        },
+        {
+          "caller": "train",
+          "callee": "log_rank_zero",
+          "lineNumber": 565
+        },
+        {
+          "caller": "train",
+          "callee": "OmegaConf.select",
+          "lineNumber": 572
+        },
+        {
+          "caller": "train",
+          "callee": "OmegaConf.select",
+          "lineNumber": 573
+        },
+        {
+          "caller": "train",
+          "callee": "self._trainer.metrics_manager.best_ckpt_path",
+          "lineNumber": 578
+        },
+        {
+          "caller": "train",
+          "callee": "OmegaConf.select",
+          "lineNumber": 579
+        },
+        {
+          "caller": "train",
+          "callee": "OmegaConf.select",
+          "lineNumber": 582
+        },
+        {
+          "caller": "train",
+          "callee": "self._cfg.get",
+          "lineNumber": 587
+        },
+        {
+          "caller": "train",
+          "callee": "log_cfg.get",
+          "lineNumber": 588
+        },
+        {
+          "caller": "train",
+          "callee": "log_cfg.get",
+          "lineNumber": 591
+        },
+        {
+          "caller": "train",
+          "callee": "log_cfg.get",
+          "lineNumber": 594
+        },
+        {
+          "caller": "train",
+          "callee": "log_rank_zero",
+          "lineNumber": 602
+        },
+        {
+          "caller": "train",
+          "callee": "tqdm",
+          "lineNumber": 609
+        },
+        {
+          "caller": "train",
+          "callee": "range",
+          "lineNumber": 610
+        },
+        {
+          "caller": "train",
+          "callee": "range",
+          "lineNumber": 617
+        },
+        {
+          "caller": "train",
+          "callee": "self._trainer.train_batch",
+          "lineNumber": 634
+        },
+        {
+          "caller": "train",
+          "callee": "self._should_save_checkpoint",
+          "lineNumber": 637
+        },
+        {
+          "caller": "train",
+          "callee": "self._safe_checkpoint_save",
+          "lineNumber": 638
+        },
+        {
+          "caller": "train",
+          "callee": "self._trainer.metrics_manager.format_for_tqdm",
+          "lineNumber": 645
+        },
+        {
+          "caller": "train",
+          "callee": "float",
+          "lineNumber": 652
+        },
+        {
+          "caller": "train",
+          "callee": "progress_bar.set_postfix_str",
+          "lineNumber": 654
+        },
+        {
+          "caller": "train",
+          "callee": "progress_bar.update",
+          "lineNumber": 655
+        },
+        {
+          "caller": "train",
+          "callee": "prof.step",
+          "lineNumber": 658
+        },
+        {
+          "caller": "train",
+          "callee": "hasattr",
+          "lineNumber": 662
+        },
+        {
+          "caller": "train",
+          "callee": "len",
+          "lineNumber": 666
+        },
+        {
+          "caller": "train",
+          "callee": "len",
+          "lineNumber": 667
+        },
+        {
+          "caller": "train",
+          "callee": "self._eval_loader.sampler.set_epoch",
+          "lineNumber": 670
+        },
+        {
+          "caller": "train",
+          "callee": "log_rank_zero",
+          "lineNumber": 672
+        },
+        {
+          "caller": "train",
+          "callee": "self._agent.eval",
+          "lineNumber": 678
+        },
+        {
+          "caller": "train",
+          "callee": "torch.no_grad",
+          "lineNumber": 679
+        },
+        {
+          "caller": "train",
+          "callee": "self._trainer.evaluate",
+          "lineNumber": 680
+        },
+        {
+          "caller": "train",
+          "callee": "self._agent.train",
+          "lineNumber": 684
+        },
+        {
+          "caller": "train",
+          "callee": "log_rank_zero",
+          "lineNumber": 688
+        },
+        {
+          "caller": "train",
+          "callee": "self._trainer.metrics_manager.format_for_tqdm",
+          "lineNumber": 695
+        },
+        {
+          "caller": "train",
+          "callee": "log_rank_zero",
+          "lineNumber": 699
+        },
+        {
+          "caller": "train",
+          "callee": "self._trainer.metrics_manager.get_latest",
+          "lineNumber": 707
+        },
+        {
+          "caller": "train",
+          "callee": "log_rank_zero",
+          "lineNumber": 713
+        },
+        {
+          "caller": "train",
+          "callee": "log_rank_zero",
+          "lineNumber": 719
+        },
+        {
+          "caller": "train",
+          "callee": "self.checkpointer.save_best_checkpoint",
+          "lineNumber": 725
+        },
+        {
+          "caller": "train",
+          "callee": "self._train_loader.sampler.state_dict",
+          "lineNumber": 733
+        },
+        {
+          "caller": "train",
+          "callee": "self._trainer.metrics_manager.add_batch",
+          "lineNumber": 738
+        },
+        {
+          "caller": "train",
+          "callee": "self._safe_checkpoint_save",
+          "lineNumber": 749
+        },
+        {
+          "caller": "train",
+          "callee": "dist.is_initialized",
+          "lineNumber": 755
+        },
+        {
+          "caller": "train",
+          "callee": "dist.barrier",
+          "lineNumber": 756
+        },
+        {
+          "caller": "train",
+          "callee": "progress_bar.close",
+          "lineNumber": 759
+        },
+        {
+          "caller": "train",
+          "callee": "log_rank_zero",
+          "lineNumber": 760
+        },
+        {
+          "caller": "train",
+          "callee": "OmegaConf.select",
+          "lineNumber": 763
+        },
+        {
+          "caller": "train",
+          "callee": "log_rank_zero",
+          "lineNumber": 766
+        },
+        {
+          "caller": "plot_results",
+          "callee": "OmegaConf.select",
+          "lineNumber": 773
+        },
+        {
+          "caller": "plot_results",
+          "callee": "logger.info",
+          "lineNumber": 774
+        },
+        {
+          "caller": "plot_results",
+          "callee": "logger.info",
+          "lineNumber": 777
+        },
+        {
+          "caller": "plot_results",
+          "callee": "OmegaConf.select",
+          "lineNumber": 779
+        },
+        {
+          "caller": "plot_results",
+          "callee": "OmegaConf.select",
+          "lineNumber": 781
+        },
+        {
+          "caller": "plot_results",
+          "callee": "self._trainer.plot_training_curves",
+          "lineNumber": 782
+        },
+        {
+          "caller": "plot_results",
+          "callee": "OmegaConf.select",
+          "lineNumber": 783
+        },
+        {
+          "caller": "plot_results",
+          "callee": "self._trainer.plot_loss_curves",
+          "lineNumber": 784
+        },
+        {
+          "caller": "plot_results",
+          "callee": "OmegaConf.select",
+          "lineNumber": 785
+        },
+        {
+          "caller": "plot_results",
+          "callee": "self._trainer.plot_eval_metrics",
+          "lineNumber": 786
+        },
+        {
+          "caller": "plot_results",
+          "callee": "OmegaConf.select",
+          "lineNumber": 788
+        },
+        {
+          "caller": "plot_results",
+          "callee": "OmegaConf.select",
+          "lineNumber": 791
+        },
+        {
+          "caller": "plot_results",
+          "callee": "OmegaConf.select",
+          "lineNumber": 792
+        },
+        {
+          "caller": "plot_results",
+          "callee": "logger.info",
+          "lineNumber": 794
+        },
+        {
+          "caller": "plot_results",
+          "callee": "self._trainer.metrics_manager.plot_metric_grid",
+          "lineNumber": 795
+        },
+        {
+          "caller": "plot_results",
+          "callee": "logger.info",
+          "lineNumber": 802
+        },
+        {
+          "caller": "evaluate_best_model",
+          "callee": "OmegaConf.select",
+          "lineNumber": 807
+        },
+        {
+          "caller": "evaluate_best_model",
+          "callee": "logger.info",
+          "lineNumber": 808
+        },
+        {
+          "caller": "evaluate_best_model",
+          "callee": "OmegaConf.select",
+          "lineNumber": 810
+        },
+        {
+          "caller": "evaluate_best_model",
+          "callee": "logger.warning",
+          "lineNumber": 811
+        },
+        {
+          "caller": "evaluate_best_model",
+          "callee": "self._trainer.metrics_manager.best_ckpt_path",
+          "lineNumber": 816
+        },
+        {
+          "caller": "evaluate_best_model",
+          "callee": "OmegaConf.select",
+          "lineNumber": 817
+        },
+        {
+          "caller": "evaluate_best_model",
+          "callee": "Path(best_model_path).exists",
+          "lineNumber": 821
+        },
+        {
+          "caller": "evaluate_best_model",
+          "callee": "Path",
+          "lineNumber": 821
+        },
+        {
+          "caller": "evaluate_best_model",
+          "callee": "logger.warning",
+          "lineNumber": 822
+        },
+        {
+          "caller": "evaluate_best_model",
+          "callee": "logger.info",
+          "lineNumber": 827
+        },
+        {
+          "caller": "evaluate_best_model",
+          "callee": "logger.info",
+          "lineNumber": 828
+        },
+        {
+          "caller": "evaluate_best_model",
+          "callee": "torch.load",
+          "lineNumber": 836
+        },
+        {
+          "caller": "evaluate_best_model",
+          "callee": "get_underlying_model",
+          "lineNumber": 840
+        },
+        {
+          "caller": "evaluate_best_model",
+          "callee": "hasattr",
+          "lineNumber": 843
+        },
+        {
+          "caller": "evaluate_best_model",
+          "callee": "model_to_load.load_state_dict",
+          "lineNumber": 847
+        },
+        {
+          "caller": "evaluate_best_model",
+          "callee": "self._ema_agent.load_state_dict",
+          "lineNumber": 848
+        },
+        {
+          "caller": "evaluate_best_model",
+          "callee": "log_rank_zero",
+          "lineNumber": 849
+        },
+        {
+          "caller": "evaluate_best_model",
+          "callee": "log_rank_zero",
+          "lineNumber": 851
+        },
+        {
+          "caller": "evaluate_best_model",
+          "callee": "checkpoint.get",
+          "lineNumber": 853
+        },
+        {
+          "caller": "evaluate_best_model",
+          "callee": "dist.is_initialized",
+          "lineNumber": 856
+        },
+        {
+          "caller": "evaluate_best_model",
+          "callee": "dist.barrier",
+          "lineNumber": 857
+        },
+        {
+          "caller": "evaluate_best_model",
+          "callee": "logger.info",
+          "lineNumber": 861
+        },
+        {
+          "caller": "evaluate_best_model",
+          "callee": "self._trainer.evaluate",
+          "lineNumber": 863
+        },
+        {
+          "caller": "evaluate_best_model",
+          "callee": "dist.is_initialized",
+          "lineNumber": 867
+        },
+        {
+          "caller": "evaluate_best_model",
+          "callee": "dist.barrier",
+          "lineNumber": 868
+        },
+        {
+          "caller": "evaluate_best_model",
+          "callee": "log_rank_zero",
+          "lineNumber": 871
+        },
+        {
+          "caller": "evaluate_best_model",
+          "callee": "self._trainer.metrics_manager.get_latest",
+          "lineNumber": 876
+        },
+        {
+          "caller": "evaluate_best_model",
+          "callee": "isinstance",
+          "lineNumber": 877
+        },
+        {
+          "caller": "evaluate_best_model",
+          "callee": "log_rank_zero",
+          "lineNumber": 878
+        },
+        {
+          "caller": "evaluate_best_model",
+          "callee": "log_rank_zero",
+          "lineNumber": 880
+        },
+        {
+          "caller": "evaluate_best_model",
+          "callee": "logger.error",
+          "lineNumber": 883
+        },
+        {
+          "caller": "evaluate_best_model",
+          "callee": "logger.error",
+          "lineNumber": 887
+        },
+        {
+          "caller": "upload",
+          "callee": "dist.is_initialized",
+          "lineNumber": 890
+        },
+        {
+          "caller": "upload",
+          "callee": "dist.barrier",
+          "lineNumber": 891
+        },
+        {
+          "caller": "upload",
+          "callee": "os.environ.get",
+          "lineNumber": 896
+        },
+        {
+          "caller": "upload",
+          "callee": "log_rank_zero",
+          "lineNumber": 900
+        },
+        {
+          "caller": "upload",
+          "callee": "OmegaConf.select",
+          "lineNumber": 908
+        },
+        {
+          "caller": "upload",
+          "callee": "self._trainer.metrics_manager.default_run_dir",
+          "lineNumber": 911
+        },
+        {
+          "caller": "upload",
+          "callee": "get_corresponding_remote_path",
+          "lineNumber": 914
+        },
+        {
+          "caller": "upload",
+          "callee": "upload_directory",
+          "lineNumber": 919
+        },
+        {
+          "caller": "upload",
+          "callee": "log_rank_zero",
+          "lineNumber": 924
+        },
+        {
+          "caller": "upload",
+          "callee": "log_rank_zero",
+          "lineNumber": 930
+        },
+        {
+          "caller": "upload",
+          "callee": "\"Upload of the run directory successful: {} -> {}\".format",
+          "lineNumber": 932
+        },
+        {
+          "caller": "cleanup",
+          "callee": "self._trainer.metrics_manager.finalize",
+          "lineNumber": 940
+        },
+        {
+          "caller": "cleanup",
+          "callee": "dist.is_initialized",
+          "lineNumber": 942
+        },
+        {
+          "caller": "cleanup",
+          "callee": "dist.destroy_process_group",
+          "lineNumber": 943
+        },
+        {
+          "caller": "cleanup",
+          "callee": "log_rank_zero",
+          "lineNumber": 944
+        },
+        {
+          "caller": "launch_training",
+          "callee": "torch.cuda.is_available",
+          "lineNumber": 948
+        },
+        {
+          "caller": "launch_training",
+          "callee": "cfg.get",
+          "lineNumber": 948
+        },
+        {
+          "caller": "launch_training",
+          "callee": "log_rank_zero",
+          "lineNumber": 949
+        },
+        {
+          "caller": "launch_training",
+          "callee": "torch.set_float32_matmul_precision",
+          "lineNumber": 950
+        },
+        {
+          "caller": "launch_training",
+          "callee": "RLOOTrainingRecipeDistributed",
+          "lineNumber": 952
+        },
+        {
+          "caller": "launch_training",
+          "callee": "recipe.setup",
+          "lineNumber": 954
+        },
+        {
+          "caller": "launch_training",
+          "callee": "config.log_config",
+          "lineNumber": 959
+        },
+        {
+          "caller": "launch_training",
+          "callee": "OmegaConf.select",
+          "lineNumber": 960
+        },
+        {
+          "caller": "launch_training",
+          "callee": "logger.info",
+          "lineNumber": 963
+        },
+        {
+          "caller": "launch_training",
+          "callee": "metrics_manager.default_run_dir",
+          "lineNumber": 964
+        },
+        {
+          "caller": "launch_training",
+          "callee": "recipe.train",
+          "lineNumber": 967
+        },
+        {
+          "caller": "launch_training",
+          "callee": "recipe.plot_results",
+          "lineNumber": 968
+        },
+        {
+          "caller": "launch_training",
+          "callee": "recipe.evaluate_best_model",
+          "lineNumber": 969
+        },
+        {
+          "caller": "launch_training",
+          "callee": "recipe.upload",
+          "lineNumber": 970
+        },
+        {
+          "caller": "launch_training",
+          "callee": "recipe.cleanup",
+          "lineNumber": 973
+        },
+        {
+          "caller": "launch_training",
+          "callee": "dist.is_initialized",
+          "lineNumber": 975
+        },
+        {
+          "caller": "launch_training",
+          "callee": "dist.barrier",
+          "lineNumber": 976
+        },
+        {
+          "caller": "main",
+          "callee": "launch_training",
+          "lineNumber": 984
+        },
+        {
+          "caller": "main",
+          "callee": "metrics_manager.finalize",
+          "lineNumber": 985
+        }
+      ],
+      "metrics": {
+        "importCount": 8,
+        "exportCount": 3,
+        "functionCount": 2,
+        "classCount": 1
+      }
+    },
+    {
+      "path": "src/kvcompression/metrics/__init__.py",
+      "language": "python",
+      "fileCategory": "code",
+      "totalLines": 10,
+      "nonEmptyLines": 8,
+      "metrics": {
+        "importCount": 1,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0
+      }
+    },
+    {
+      "path": "src/kvcompression/metrics/_metrics_manager.py",
+      "language": "python",
+      "fileCategory": "code",
+      "totalLines": 598,
+      "nonEmptyLines": 508,
+      "classes": [
+        {
+          "name": "MetricsManager",
+          "startLine": 21,
+          "endLine": 598,
+          "methods": [
+            "__init__",
+            "_gather_and_sum_metric_on_rank0",
+            "default_run_dir",
+            "default_figures_dir",
+            "best_ckpt_path",
+            "is_wandb_enabled",
+            "increment_step",
+            "add_metric_group",
+            "add",
+            "add_batch",
+            "get_latest",
+            "get_running_average",
+            "get_all",
+            "plot_metric",
+            "plot_metrics",
+            "plot_metric_grid",
+            "format_for_tqdm",
+            "log_hparams",
+            "finalize"
+          ],
+          "properties": []
+        }
+      ],
+      "exports": [
+        {
+          "name": "MetricsManager",
+          "line": 21,
+          "isDefault": false
+        }
+      ],
+      "callGraph": [
+        {
+          "caller": "__init__",
+          "callee": "dist.is_available",
+          "lineNumber": 62
+        },
+        {
+          "caller": "__init__",
+          "callee": "dist.is_initialized",
+          "lineNumber": 62
+        },
+        {
+          "caller": "__init__",
+          "callee": "dist.get_rank",
+          "lineNumber": 63
+        },
+        {
+          "caller": "__init__",
+          "callee": "dist.get_world_size",
+          "lineNumber": 64
+        },
+        {
+          "caller": "__init__",
+          "callee": "wandb.login",
+          "lineNumber": 72
+        },
+        {
+          "caller": "__init__",
+          "callee": "pylogger.warning",
+          "lineNumber": 73
+        },
+        {
+          "caller": "__init__",
+          "callee": "pylogger.warning",
+          "lineNumber": 77
+        },
+        {
+          "caller": "__init__",
+          "callee": "wandb.init",
+          "lineNumber": 84
+        },
+        {
+          "caller": "__init__",
+          "callee": "pylogger.info",
+          "lineNumber": 92
+        },
+        {
+          "caller": "__init__",
+          "callee": "wandb.init",
+          "lineNumber": 96
+        },
+        {
+          "caller": "__init__",
+          "callee": "pylogger.info",
+          "lineNumber": 102
+        },
+        {
+          "caller": "__init__",
+          "callee": "pylogger.warning",
+          "lineNumber": 106
+        },
+        {
+          "caller": "__init__",
+          "callee": "pylogger.warning",
+          "lineNumber": 109
+        },
+        {
+          "caller": "__init__",
+          "callee": "pylogger.warning",
+          "lineNumber": 114
+        },
+        {
+          "caller": "_gather_and_sum_metric_on_rank0",
+          "callee": "float",
+          "lineNumber": 126
+        },
+        {
+          "caller": "_gather_and_sum_metric_on_rank0",
+          "callee": "value.item",
+          "lineNumber": 126
+        },
+        {
+          "caller": "_gather_and_sum_metric_on_rank0",
+          "callee": "isinstance",
+          "lineNumber": 126
+        },
+        {
+          "caller": "_gather_and_sum_metric_on_rank0",
+          "callee": "float",
+          "lineNumber": 128
+        },
+        {
+          "caller": "_gather_and_sum_metric_on_rank0",
+          "callee": "value.item",
+          "lineNumber": 128
+        },
+        {
+          "caller": "_gather_and_sum_metric_on_rank0",
+          "callee": "isinstance",
+          "lineNumber": 128
+        },
+        {
+          "caller": "_gather_and_sum_metric_on_rank0",
+          "callee": "dist.gather_object",
+          "lineNumber": 135
+        },
+        {
+          "caller": "_gather_and_sum_metric_on_rank0",
+          "callee": "pylogger.warning",
+          "lineNumber": 144
+        },
+        {
+          "caller": "_gather_and_sum_metric_on_rank0",
+          "callee": "sum",
+          "lineNumber": 146
+        },
+        {
+          "caller": "default_run_dir",
+          "callee": "pylogger.warning",
+          "lineNumber": 156
+        },
+        {
+          "caller": "default_run_dir",
+          "callee": "Path",
+          "lineNumber": 160
+        },
+        {
+          "caller": "default_run_dir",
+          "callee": "self.is_wandb_enabled",
+          "lineNumber": 165
+        },
+        {
+          "caller": "default_run_dir",
+          "callee": "datetime.datetime.now",
+          "lineNumber": 168
+        },
+        {
+          "caller": "default_run_dir",
+          "callee": "now.strftime",
+          "lineNumber": 169
+        },
+        {
+          "caller": "default_run_dir",
+          "callee": "run_path.mkdir",
+          "lineNumber": 172
+        },
+        {
+          "caller": "default_run_dir",
+          "callee": "pylogger.info",
+          "lineNumber": 176
+        },
+        {
+          "caller": "default_run_dir",
+          "callee": "dist.get_rank",
+          "lineNumber": 177
+        },
+        {
+          "caller": "default_run_dir",
+          "callee": "dist.broadcast_object_list",
+          "lineNumber": 179
+        },
+        {
+          "caller": "default_figures_dir",
+          "callee": "self.default_run_dir",
+          "lineNumber": 187
+        },
+        {
+          "caller": "default_figures_dir",
+          "callee": "figures_dir.mkdir",
+          "lineNumber": 189
+        },
+        {
+          "caller": "best_ckpt_path",
+          "callee": "self.default_run_dir",
+          "lineNumber": 193
+        },
+        {
+          "caller": "add",
+          "callee": "ValueError",
+          "lineNumber": 222
+        },
+        {
+          "caller": "add",
+          "callee": "self._gather_and_sum_metric_on_rank0",
+          "lineNumber": 227
+        },
+        {
+          "caller": "add",
+          "callee": "self._gather_and_sum_metric_on_rank0",
+          "lineNumber": 228
+        },
+        {
+          "caller": "add",
+          "callee": "self.metrics[metric_name].append",
+          "lineNumber": 241
+        },
+        {
+          "caller": "add",
+          "callee": "self.is_wandb_enabled",
+          "lineNumber": 243
+        },
+        {
+          "caller": "add",
+          "callee": "self.wandb.log",
+          "lineNumber": 244
+        },
+        {
+          "caller": "add_batch",
+          "callee": "ValueError",
+          "lineNumber": 258
+        },
+        {
+          "caller": "add_batch",
+          "callee": "self._gather_and_sum_metric_on_rank0",
+          "lineNumber": 263
+        },
+        {
+          "caller": "add_batch",
+          "callee": "metric_dict.items",
+          "lineNumber": 269
+        },
+        {
+          "caller": "add_batch",
+          "callee": "self._gather_and_sum_metric_on_rank0",
+          "lineNumber": 271
+        },
+        {
+          "caller": "add_batch",
+          "callee": "self.metrics[metric_name].append",
+          "lineNumber": 283
+        },
+        {
+          "caller": "add_batch",
+          "callee": "self.is_wandb_enabled",
+          "lineNumber": 287
+        },
+        {
+          "caller": "add_batch",
+          "callee": "self.wandb.log",
+          "lineNumber": 288
+        },
+        {
+          "caller": "get_latest",
+          "callee": "self.metrics.get",
+          "lineNumber": 299
+        },
+        {
+          "caller": "get_running_average",
+          "callee": "self.metrics.get",
+          "lineNumber": 308
+        },
+        {
+          "caller": "get_running_average",
+          "callee": "len",
+          "lineNumber": 309
+        },
+        {
+          "caller": "get_running_average",
+          "callee": "sum",
+          "lineNumber": 312
+        },
+        {
+          "caller": "get_running_average",
+          "callee": "len",
+          "lineNumber": 312
+        },
+        {
+          "caller": "get_all",
+          "callee": "self.metrics.get",
+          "lineNumber": 318
+        },
+        {
+          "caller": "plot_metric",
+          "callee": "self.get_all",
+          "lineNumber": 334
+        },
+        {
+          "caller": "plot_metric",
+          "callee": "pylogger.warning",
+          "lineNumber": 336
+        },
+        {
+          "caller": "plot_metric",
+          "callee": "plt.subplots",
+          "lineNumber": 341
+        },
+        {
+          "caller": "plot_metric",
+          "callee": "metric_name.startswith",
+          "lineNumber": 346
+        },
+        {
+          "caller": "plot_metric",
+          "callee": "self.get_all",
+          "lineNumber": 347
+        },
+        {
+          "caller": "plot_metric",
+          "callee": "len",
+          "lineNumber": 348
+        },
+        {
+          "caller": "plot_metric",
+          "callee": "len",
+          "lineNumber": 348
+        },
+        {
+          "caller": "plot_metric",
+          "callee": "pylogger.warning",
+          "lineNumber": 349
+        },
+        {
+          "caller": "plot_metric",
+          "callee": "len",
+          "lineNumber": 350
+        },
+        {
+          "caller": "plot_metric",
+          "callee": "len",
+          "lineNumber": 350
+        },
+        {
+          "caller": "plot_metric",
+          "callee": "np.arange",
+          "lineNumber": 352
+        },
+        {
+          "caller": "plot_metric",
+          "callee": "len",
+          "lineNumber": 352
+        },
+        {
+          "caller": "plot_metric",
+          "callee": "np.arange",
+          "lineNumber": 354
+        },
+        {
+          "caller": "plot_metric",
+          "callee": "len",
+          "lineNumber": 354
+        },
+        {
+          "caller": "plot_metric",
+          "callee": "ax.plot",
+          "lineNumber": 356
+        },
+        {
+          "caller": "plot_metric",
+          "callee": "len",
+          "lineNumber": 365
+        },
+        {
+          "caller": "plot_metric",
+          "callee": "len",
+          "lineNumber": 367
+        },
+        {
+          "caller": "plot_metric",
+          "callee": "np.convolve",
+          "lineNumber": 368
+        },
+        {
+          "caller": "plot_metric",
+          "callee": "np.ones",
+          "lineNumber": 369
+        },
+        {
+          "caller": "plot_metric",
+          "callee": "ax.plot",
+          "lineNumber": 371
+        },
+        {
+          "caller": "plot_metric",
+          "callee": "ax.set_title",
+          "lineNumber": 377
+        },
+        {
+          "caller": "plot_metric",
+          "callee": "ax.set_xlabel",
+          "lineNumber": 378
+        },
+        {
+          "caller": "plot_metric",
+          "callee": "ax.set_ylabel",
+          "lineNumber": 379
+        },
+        {
+          "caller": "plot_metric",
+          "callee": "ax.legend",
+          "lineNumber": 380
+        },
+        {
+          "caller": "plot_metric",
+          "callee": "ax.grid",
+          "lineNumber": 381
+        },
+        {
+          "caller": "plot_metric",
+          "callee": "ax.ticklabel_format",
+          "lineNumber": 382
+        },
+        {
+          "caller": "plot_metric",
+          "callee": "fig.savefig",
+          "lineNumber": 387
+        },
+        {
+          "caller": "plot_metric",
+          "callee": "self.default_figures_dir",
+          "lineNumber": 387
+        },
+        {
+          "caller": "plot_metric",
+          "callee": "self.is_wandb_enabled",
+          "lineNumber": 389
+        },
+        {
+          "caller": "plot_metric",
+          "callee": "self.wandb.log",
+          "lineNumber": 391
+        },
+        {
+          "caller": "plot_metric",
+          "callee": "self.wandb.Image",
+          "lineNumber": 391
+        },
+        {
+          "caller": "plot_metric",
+          "callee": "pylogger.error",
+          "lineNumber": 394
+        },
+        {
+          "caller": "plot_metric",
+          "callee": "plt.close",
+          "lineNumber": 397
+        },
+        {
+          "caller": "plot_metric",
+          "callee": "plt.close",
+          "lineNumber": 400
+        },
+        {
+          "caller": "plot_metrics",
+          "callee": "plt.subplots",
+          "lineNumber": 418
+        },
+        {
+          "caller": "plot_metrics",
+          "callee": "self.get_all",
+          "lineNumber": 423
+        },
+        {
+          "caller": "plot_metrics",
+          "callee": "pylogger.warning",
+          "lineNumber": 425
+        },
+        {
+          "caller": "plot_metrics",
+          "callee": "np.arange",
+          "lineNumber": 428
+        },
+        {
+          "caller": "plot_metrics",
+          "callee": "len",
+          "lineNumber": 428
+        },
+        {
+          "caller": "plot_metrics",
+          "callee": "ax.plot",
+          "lineNumber": 430
+        },
+        {
+          "caller": "plot_metrics",
+          "callee": "len",
+          "lineNumber": 434
+        },
+        {
+          "caller": "plot_metrics",
+          "callee": "len",
+          "lineNumber": 436
+        },
+        {
+          "caller": "plot_metrics",
+          "callee": "np.convolve",
+          "lineNumber": 437
+        },
+        {
+          "caller": "plot_metrics",
+          "callee": "np.ones",
+          "lineNumber": 438
+        },
+        {
+          "caller": "plot_metrics",
+          "callee": "ax.plot",
+          "lineNumber": 440
+        },
+        {
+          "caller": "plot_metrics",
+          "callee": "ax.set_title",
+          "lineNumber": 446
+        },
+        {
+          "caller": "plot_metrics",
+          "callee": "ax.set_xlabel",
+          "lineNumber": 447
+        },
+        {
+          "caller": "plot_metrics",
+          "callee": "ax.set_ylabel",
+          "lineNumber": 448
+        },
+        {
+          "caller": "plot_metrics",
+          "callee": "ax.legend",
+          "lineNumber": 449
+        },
+        {
+          "caller": "plot_metrics",
+          "callee": "ax.grid",
+          "lineNumber": 450
+        },
+        {
+          "caller": "plot_metrics",
+          "callee": "\"_\".join",
+          "lineNumber": 452
+        },
+        {
+          "caller": "plot_metrics",
+          "callee": "fig.savefig",
+          "lineNumber": 455
+        },
+        {
+          "caller": "plot_metrics",
+          "callee": "self.default_figures_dir",
+          "lineNumber": 455
+        },
+        {
+          "caller": "plot_metrics",
+          "callee": "self.is_wandb_enabled",
+          "lineNumber": 457
+        },
+        {
+          "caller": "plot_metrics",
+          "callee": "self.wandb.log",
+          "lineNumber": 459
+        },
+        {
+          "caller": "plot_metrics",
+          "callee": "self.wandb.Image",
+          "lineNumber": 459
+        },
+        {
+          "caller": "plot_metrics",
+          "callee": "pylogger.error",
+          "lineNumber": 461
+        },
+        {
+          "caller": "plot_metrics",
+          "callee": "plt.close",
+          "lineNumber": 464
+        },
+        {
+          "caller": "plot_metrics",
+          "callee": "plt.close",
+          "lineNumber": 467
+        },
+        {
+          "caller": "plot_metric_grid",
+          "callee": "list",
+          "lineNumber": 489
+        },
+        {
+          "caller": "plot_metric_grid",
+          "callee": "list",
+          "lineNumber": 491
+        },
+        {
+          "caller": "plot_metric_grid",
+          "callee": "self.metrics.keys",
+          "lineNumber": 491
+        },
+        {
+          "caller": "plot_metric_grid",
+          "callee": "self.get_all",
+          "lineNumber": 494
+        },
+        {
+          "caller": "plot_metric_grid",
+          "callee": "len",
+          "lineNumber": 495
+        },
+        {
+          "caller": "plot_metric_grid",
+          "callee": "pylogger.warning",
+          "lineNumber": 497
+        },
+        {
+          "caller": "plot_metric_grid",
+          "callee": "' '.join",
+          "lineNumber": 498
+        },
+        {
+          "caller": "plot_metric_grid",
+          "callee": "min",
+          "lineNumber": 502
+        },
+        {
+          "caller": "plot_metric_grid",
+          "callee": "plt.subplots",
+          "lineNumber": 507
+        },
+        {
+          "caller": "plot_metric_grid",
+          "callee": "axes.flatten",
+          "lineNumber": 508
+        },
+        {
+          "caller": "plot_metric_grid",
+          "callee": "enumerate",
+          "lineNumber": 510
+        },
+        {
+          "caller": "plot_metric_grid",
+          "callee": "self.plot_metric",
+          "lineNumber": 511
+        },
+        {
+          "caller": "plot_metric_grid",
+          "callee": "range",
+          "lineNumber": 522
+        },
+        {
+          "caller": "plot_metric_grid",
+          "callee": "len",
+          "lineNumber": 522
+        },
+        {
+          "caller": "plot_metric_grid",
+          "callee": "fig.delaxes",
+          "lineNumber": 523
+        },
+        {
+          "caller": "plot_metric_grid",
+          "callee": "fig.suptitle",
+          "lineNumber": 526
+        },
+        {
+          "caller": "plot_metric_grid",
+          "callee": "plt.tight_layout",
+          "lineNumber": 528
+        },
+        {
+          "caller": "plot_metric_grid",
+          "callee": "\"_\".join",
+          "lineNumber": 530
+        },
+        {
+          "caller": "plot_metric_grid",
+          "callee": "fig.savefig",
+          "lineNumber": 532
+        },
+        {
+          "caller": "plot_metric_grid",
+          "callee": "self.default_figures_dir",
+          "lineNumber": 532
+        },
+        {
+          "caller": "plot_metric_grid",
+          "callee": "self.is_wandb_enabled",
+          "lineNumber": 534
+        },
+        {
+          "caller": "plot_metric_grid",
+          "callee": "self.wandb.log",
+          "lineNumber": 536
+        },
+        {
+          "caller": "plot_metric_grid",
+          "callee": "self.wandb.Image",
+          "lineNumber": 536
+        },
+        {
+          "caller": "plot_metric_grid",
+          "callee": "pylogger.error",
+          "lineNumber": 538
+        },
+        {
+          "caller": "plot_metric_grid",
+          "callee": "plt.close",
+          "lineNumber": 540
+        },
+        {
+          "caller": "plot_metric_grid",
+          "callee": "plt.close",
+          "lineNumber": 542
+        },
+        {
+          "caller": "format_for_tqdm",
+          "callee": "self.get_running_average",
+          "lineNumber": 556
+        },
+        {
+          "caller": "format_for_tqdm",
+          "callee": "parts.append",
+          "lineNumber": 558
+        },
+        {
+          "caller": "format_for_tqdm",
+          "callee": "self.get_latest",
+          "lineNumber": 560
+        },
+        {
+          "caller": "format_for_tqdm",
+          "callee": "parts.append",
+          "lineNumber": 562
+        },
+        {
+          "caller": "format_for_tqdm",
+          "callee": "self.get_latest",
+          "lineNumber": 564
+        },
+        {
+          "caller": "format_for_tqdm",
+          "callee": "parts.append",
+          "lineNumber": 566
+        },
+        {
+          "caller": "format_for_tqdm",
+          "callee": "\", \".join",
+          "lineNumber": 567
+        },
+        {
+          "caller": "log_hparams",
+          "callee": "self._gather_and_sum_metric_on_rank0",
+          "lineNumber": 573
+        },
+        {
+          "caller": "log_hparams",
+          "callee": "metrics.items",
+          "lineNumber": 577
+        },
+        {
+          "caller": "log_hparams",
+          "callee": "self._gather_and_sum_metric_on_rank0",
+          "lineNumber": 578
+        },
+        {
+          "caller": "log_hparams",
+          "callee": "self.is_wandb_enabled",
+          "lineNumber": 584
+        },
+        {
+          "caller": "log_hparams",
+          "callee": "self.wandb.config.update",
+          "lineNumber": 585
+        },
+        {
+          "caller": "log_hparams",
+          "callee": "pylogger.info",
+          "lineNumber": 587
+        },
+        {
+          "caller": "log_hparams",
+          "callee": "self.wandb.log",
+          "lineNumber": 590
+        },
+        {
+          "caller": "log_hparams",
+          "callee": "pylogger.info",
+          "lineNumber": 592
+        },
+        {
+          "caller": "finalize",
+          "callee": "self.is_wandb_enabled",
+          "lineNumber": 596
+        },
+        {
+          "caller": "finalize",
+          "callee": "self.wandb.finish",
+          "lineNumber": 597
+        },
+        {
+          "caller": "finalize",
+          "callee": "pylogger.info",
+          "lineNumber": 598
+        }
+      ],
+      "metrics": {
+        "importCount": 1,
+        "exportCount": 1,
+        "functionCount": 0,
+        "classCount": 1
+      }
+    },
+    {
+      "path": "src/kvcompression/utils/infinite_distributed_sampler.py",
+      "language": "python",
+      "fileCategory": "code",
+      "totalLines": 99,
+      "nonEmptyLines": 82,
+      "classes": [
+        {
+          "name": "InfiniteDistributedSampler",
+          "startLine": 22,
+          "endLine": 99,
+          "methods": [
+            "__init__",
+            "__iter__",
+            "state_dict",
+            "load_state_dict"
+          ],
+          "properties": []
+        }
+      ],
+      "exports": [
+        {
+          "name": "InfiniteDistributedSampler",
+          "line": 22,
+          "isDefault": false
+        }
+      ],
+      "callGraph": [
+        {
+          "caller": "__init__",
+          "callee": "dist.is_initialized",
+          "lineNumber": 52
+        },
+        {
+          "caller": "__init__",
+          "callee": "super().__init__",
+          "lineNumber": 56
+        },
+        {
+          "caller": "__init__",
+          "callee": "super",
+          "lineNumber": 56
+        },
+        {
+          "caller": "__init__",
+          "callee": "logger.info",
+          "lineNumber": 65
+        },
+        {
+          "caller": "__iter__",
+          "callee": "super().__iter__",
+          "lineNumber": 76
+        },
+        {
+          "caller": "__iter__",
+          "callee": "super",
+          "lineNumber": 76
+        },
+        {
+          "caller": "__iter__",
+          "callee": "self.set_epoch",
+          "lineNumber": 78
+        },
+        {
+          "caller": "load_state_dict",
+          "callee": "self.set_epoch",
+          "lineNumber": 96
+        },
+        {
+          "caller": "load_state_dict",
+          "callee": "logger.info",
+          "lineNumber": 97
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 1,
+        "functionCount": 0,
+        "classCount": 1
+      }
+    },
+    {
+      "path": "src/kvcompression/utils/training_checkpointer.py",
+      "language": "python",
+      "fileCategory": "code",
+      "totalLines": 462,
+      "nonEmptyLines": 384,
+      "classes": [
+        {
+          "name": "ResumeInfo",
+          "startLine": 36,
+          "endLine": 46,
+          "methods": [],
+          "properties": [
+            "resume_success",
+            "step",
+            "best_eval_metric_value",
+            "last_eval_step",
+            "wandb_run_id",
+            "metrics_history",
+            "step_counter",
+            "random_states"
+          ]
+        },
+        {
+          "name": "TrainingCheckpointer",
+          "startLine": 49,
+          "endLine": 462,
+          "methods": [
+            "__init__",
+            "_get_local_checkpoint_dir",
+            "_get_latest_checkpoint",
+            "check_for_resume",
+            "restore_best_checkpoint_if_exists",
+            "load_checkpoint",
+            "_save_to_file",
+            "save_checkpoint",
+            "save_best_checkpoint",
+            "_create_checkpoint_dict",
+            "cleanup_old_checkpoints",
+            "should_save_checkpoint",
+            "broadcast_checkpoint_path",
+            "apply_random_states",
+            "sync_after_checkpoint"
+          ],
+          "properties": [
+            "DIR_NAME",
+            "FILE_MATCH",
+            "FILE_FORMAT"
+          ]
+        }
+      ],
+      "exports": [
+        {
+          "name": "ResumeInfo",
+          "line": 35,
+          "isDefault": false
+        },
+        {
+          "name": "TrainingCheckpointer",
+          "line": 49,
+          "isDefault": false
+        }
+      ],
+      "callGraph": [
+        {
+          "caller": "__init__",
+          "callee": "Path",
+          "lineNumber": 81
+        },
+        {
+          "caller": "__init__",
+          "callee": "OmegaConf.select",
+          "lineNumber": 88
+        },
+        {
+          "caller": "__init__",
+          "callee": "OmegaConf.select",
+          "lineNumber": 91
+        },
+        {
+          "caller": "__init__",
+          "callee": "OmegaConf.select",
+          "lineNumber": 94
+        },
+        {
+          "caller": "_get_local_checkpoint_dir",
+          "callee": "metrics_manager.default_run_dir",
+          "lineNumber": 98
+        },
+        {
+          "caller": "_get_latest_checkpoint",
+          "callee": "directory.exists",
+          "lineNumber": 103
+        },
+        {
+          "caller": "_get_latest_checkpoint",
+          "callee": "list",
+          "lineNumber": 106
+        },
+        {
+          "caller": "_get_latest_checkpoint",
+          "callee": "directory.glob",
+          "lineNumber": 106
+        },
+        {
+          "caller": "_get_latest_checkpoint",
+          "callee": "int",
+          "lineNumber": 113
+        },
+        {
+          "caller": "_get_latest_checkpoint",
+          "callee": "valid_checkpoints.append",
+          "lineNumber": 114
+        },
+        {
+          "caller": "_get_latest_checkpoint",
+          "callee": "max",
+          "lineNumber": 122
+        },
+        {
+          "caller": "check_for_resume",
+          "callee": "logger.info",
+          "lineNumber": 136
+        },
+        {
+          "caller": "restore_best_checkpoint_if_exists",
+          "callee": "metrics_manager.best_ckpt_path",
+          "lineNumber": 155
+        },
+        {
+          "caller": "restore_best_checkpoint_if_exists",
+          "callee": "local_best_path.exists",
+          "lineNumber": 159
+        },
+        {
+          "caller": "restore_best_checkpoint_if_exists",
+          "callee": "logger.info",
+          "lineNumber": 162
+        },
+        {
+          "caller": "restore_best_checkpoint_if_exists",
+          "callee": "logger.warning",
+          "lineNumber": 166
+        },
+        {
+          "caller": "load_checkpoint",
+          "callee": "torch.cuda.is_available",
+          "lineNumber": 185
+        },
+        {
+          "caller": "load_checkpoint",
+          "callee": "torch.load",
+          "lineNumber": 188
+        },
+        {
+          "caller": "load_checkpoint",
+          "callee": "logger.error",
+          "lineNumber": 193
+        },
+        {
+          "caller": "_save_to_file",
+          "callee": "path.parent.mkdir",
+          "lineNumber": 200
+        },
+        {
+          "caller": "_save_to_file",
+          "callee": "torch.save",
+          "lineNumber": 201
+        },
+        {
+          "caller": "save_checkpoint",
+          "callee": "self._create_checkpoint_dict",
+          "lineNumber": 231
+        },
+        {
+          "caller": "save_checkpoint",
+          "callee": "self._get_local_checkpoint_dir",
+          "lineNumber": 242
+        },
+        {
+          "caller": "save_checkpoint",
+          "callee": "self._save_to_file",
+          "lineNumber": 244
+        },
+        {
+          "caller": "save_checkpoint",
+          "callee": "logger.info",
+          "lineNumber": 246
+        },
+        {
+          "caller": "save_checkpoint",
+          "callee": "logger.error",
+          "lineNumber": 251
+        },
+        {
+          "caller": "save_best_checkpoint",
+          "callee": "self._create_checkpoint_dict",
+          "lineNumber": 269
+        },
+        {
+          "caller": "save_best_checkpoint",
+          "callee": "best_model_path.parent.mkdir",
+          "lineNumber": 282
+        },
+        {
+          "caller": "save_best_checkpoint",
+          "callee": "torch.save",
+          "lineNumber": 283
+        },
+        {
+          "caller": "save_best_checkpoint",
+          "callee": "logger.info",
+          "lineNumber": 285
+        },
+        {
+          "caller": "save_best_checkpoint",
+          "callee": "logger.error",
+          "lineNumber": 288
+        },
+        {
+          "caller": "_create_checkpoint_dict",
+          "callee": "get_underlying_model",
+          "lineNumber": 301
+        },
+        {
+          "caller": "_create_checkpoint_dict",
+          "callee": "underlying_model._orig_mod.state_dict",
+          "lineNumber": 303
+        },
+        {
+          "caller": "_create_checkpoint_dict",
+          "callee": "hasattr",
+          "lineNumber": 304
+        },
+        {
+          "caller": "_create_checkpoint_dict",
+          "callee": "underlying_model.state_dict",
+          "lineNumber": 306
+        },
+        {
+          "caller": "_create_checkpoint_dict",
+          "callee": "hasattr",
+          "lineNumber": 311
+        },
+        {
+          "caller": "_create_checkpoint_dict",
+          "callee": "trainer.ema_agent.state_dict",
+          "lineNumber": 312
+        },
+        {
+          "caller": "_create_checkpoint_dict",
+          "callee": "hasattr",
+          "lineNumber": 316
+        },
+        {
+          "caller": "_create_checkpoint_dict",
+          "callee": "hasattr",
+          "lineNumber": 317
+        },
+        {
+          "caller": "_create_checkpoint_dict",
+          "callee": "hasattr",
+          "lineNumber": 319
+        },
+        {
+          "caller": "_create_checkpoint_dict",
+          "callee": "trainer.optimizer.state_dict",
+          "lineNumber": 329
+        },
+        {
+          "caller": "_create_checkpoint_dict",
+          "callee": "trainer.scheduler.state_dict",
+          "lineNumber": 330
+        },
+        {
+          "caller": "_create_checkpoint_dict",
+          "callee": "torch.get_rng_state",
+          "lineNumber": 342
+        },
+        {
+          "caller": "_create_checkpoint_dict",
+          "callee": "torch.cuda.get_rng_state",
+          "lineNumber": 343
+        },
+        {
+          "caller": "_create_checkpoint_dict",
+          "callee": "torch.cuda.is_available",
+          "lineNumber": 344
+        },
+        {
+          "caller": "_create_checkpoint_dict",
+          "callee": "torch.cuda.current_device",
+          "lineNumber": 344
+        },
+        {
+          "caller": "_create_checkpoint_dict",
+          "callee": "np.random.get_state",
+          "lineNumber": 346
+        },
+        {
+          "caller": "_create_checkpoint_dict",
+          "callee": "random.getstate",
+          "lineNumber": 347
+        },
+        {
+          "caller": "_create_checkpoint_dict",
+          "callee": "OmegaConf.to_container",
+          "lineNumber": 349
+        },
+        {
+          "caller": "cleanup_old_checkpoints",
+          "callee": "self._get_local_checkpoint_dir",
+          "lineNumber": 367
+        },
+        {
+          "caller": "cleanup_old_checkpoints",
+          "callee": "local_checkpoint_dir.exists",
+          "lineNumber": 368
+        },
+        {
+          "caller": "cleanup_old_checkpoints",
+          "callee": "logger.warning",
+          "lineNumber": 372
+        },
+        {
+          "caller": "cleanup_old_checkpoints",
+          "callee": "list",
+          "lineNumber": 377
+        },
+        {
+          "caller": "cleanup_old_checkpoints",
+          "callee": "local_checkpoint_dir.glob",
+          "lineNumber": 377
+        },
+        {
+          "caller": "cleanup_old_checkpoints",
+          "callee": "len",
+          "lineNumber": 378
+        },
+        {
+          "caller": "cleanup_old_checkpoints",
+          "callee": "sorted",
+          "lineNumber": 383
+        },
+        {
+          "caller": "cleanup_old_checkpoints",
+          "callee": "int",
+          "lineNumber": 384
+        },
+        {
+          "caller": "cleanup_old_checkpoints",
+          "callee": "sorted",
+          "lineNumber": 388
+        },
+        {
+          "caller": "cleanup_old_checkpoints",
+          "callee": "p.stat",
+          "lineNumber": 389
+        },
+        {
+          "caller": "cleanup_old_checkpoints",
+          "callee": "old_checkpoint.unlink",
+          "lineNumber": 396
+        },
+        {
+          "caller": "cleanup_old_checkpoints",
+          "callee": "logger.warning",
+          "lineNumber": 398
+        },
+        {
+          "caller": "cleanup_old_checkpoints",
+          "callee": "logger.warning",
+          "lineNumber": 403
+        },
+        {
+          "caller": "broadcast_checkpoint_path",
+          "callee": "dist.broadcast_object_list",
+          "lineNumber": 429
+        },
+        {
+          "caller": "apply_random_states",
+          "callee": "random_states.get",
+          "lineNumber": 446
+        },
+        {
+          "caller": "apply_random_states",
+          "callee": "torch.set_rng_state",
+          "lineNumber": 447
+        },
+        {
+          "caller": "apply_random_states",
+          "callee": "random_states.get",
+          "lineNumber": 448
+        },
+        {
+          "caller": "apply_random_states",
+          "callee": "torch.cuda.is_available",
+          "lineNumber": 448
+        },
+        {
+          "caller": "apply_random_states",
+          "callee": "torch.cuda.set_rng_state",
+          "lineNumber": 449
+        },
+        {
+          "caller": "apply_random_states",
+          "callee": "random_states.get",
+          "lineNumber": 450
+        },
+        {
+          "caller": "apply_random_states",
+          "callee": "np.random.set_state",
+          "lineNumber": 451
+        },
+        {
+          "caller": "apply_random_states",
+          "callee": "random_states.get",
+          "lineNumber": 452
+        },
+        {
+          "caller": "apply_random_states",
+          "callee": "random.setstate",
+          "lineNumber": 453
+        },
+        {
+          "caller": "apply_random_states",
+          "callee": "logger.info",
+          "lineNumber": 455
+        },
+        {
+          "caller": "apply_random_states",
+          "callee": "logger.warning",
+          "lineNumber": 457
+        },
+        {
+          "caller": "sync_after_checkpoint",
+          "callee": "dist.barrier",
+          "lineNumber": 462
+        }
+      ],
+      "metrics": {
+        "importCount": 1,
+        "exportCount": 2,
+        "functionCount": 0,
+        "classCount": 2
+      }
+    }
+  ]
+}

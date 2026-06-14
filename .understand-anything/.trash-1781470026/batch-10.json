@@ -1,0 +1,270 @@
+{
+  "nodes": [
+    {
+      "id": "file:src/kvcompression/rl/trainers/triton_policy_entropy_loss.py",
+      "type": "file",
+      "name": "triton_policy_entropy_loss.py",
+      "filePath": "src/kvcompression/rl/trainers/triton_policy_entropy_loss.py",
+      "summary": "Implements a fused Triton GPU kernel for computing the combined policy gradient and entropy regularization loss in a single pass, including both forward and backward custom autograd functions for efficient RL training.",
+      "tags": ["service", "utility", "gpu-kernel", "reinforcement-learning", "performance"],
+      "complexity": "complex",
+      "languageNotes": "Uses Triton JIT kernels (triton.jit) with tl (triton.language) intrinsics for massively parallel per-batch computation; the custom PyTorch autograd Function (PolicyEntropyLossTriton) manually implements both forward and backward passes, bypassing PyTorch's autograd graph for numerical precision and performance."
+    },
+    {
+      "id": "class:src/kvcompression/rl/trainers/triton_policy_entropy_loss.py:PolicyEntropyLossTriton",
+      "type": "class",
+      "name": "PolicyEntropyLossTriton",
+      "filePath": "src/kvcompression/rl/trainers/triton_policy_entropy_loss.py",
+      "lineRange": [290, 562],
+      "summary": "Custom torch.autograd.Function that dispatches policy entropy loss computation to Triton GPU kernels, handling forward loss accumulation and backward gradient propagation through policy logits.",
+      "tags": ["service", "gpu-kernel", "reinforcement-learning", "autograd"],
+      "complexity": "complex"
+    },
+    {
+      "id": "function:src/kvcompression/rl/trainers/triton_policy_entropy_loss.py:_policy_entropy_loss_forward_kernel",
+      "type": "function",
+      "name": "_policy_entropy_loss_forward_kernel",
+      "filePath": "src/kvcompression/rl/trainers/triton_policy_entropy_loss.py",
+      "lineRange": [17, 138],
+      "summary": "Triton JIT kernel that computes per-step log probabilities and entropies from policy logits in the forward pass, writing results to flat output buffers for later loss aggregation.",
+      "tags": ["gpu-kernel", "reinforcement-learning", "utility"],
+      "complexity": "complex"
+    },
+    {
+      "id": "function:src/kvcompression/rl/trainers/triton_policy_entropy_loss.py:_policy_entropy_loss_backward_kernel",
+      "type": "function",
+      "name": "_policy_entropy_loss_backward_kernel",
+      "filePath": "src/kvcompression/rl/trainers/triton_policy_entropy_loss.py",
+      "lineRange": [142, 287],
+      "summary": "Triton JIT kernel that computes and accumulates gradients with respect to policy logits for the combined policy loss and entropy regularization term in the backward pass.",
+      "tags": ["gpu-kernel", "reinforcement-learning", "utility"],
+      "complexity": "complex"
+    },
+    {
+      "id": "function:src/kvcompression/rl/trainers/triton_policy_entropy_loss.py:compute_policy_entropy_loss_triton",
+      "type": "function",
+      "name": "compute_policy_entropy_loss_triton",
+      "filePath": "src/kvcompression/rl/trainers/triton_policy_entropy_loss.py",
+      "lineRange": [565, 639],
+      "summary": "Public entry point that validates inputs, prepares tensors on the correct device, and invokes PolicyEntropyLossTriton.apply to compute the differentiable policy entropy loss using Triton kernels.",
+      "tags": ["api-handler", "reinforcement-learning", "utility"],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:src/kvcompression/utils/__init__.py",
+      "type": "file",
+      "name": "__init__.py",
+      "filePath": "src/kvcompression/utils/__init__.py",
+      "summary": "Package initializer for the kvcompression utils module, re-exporting generation utilities for external consumers.",
+      "tags": ["entry-point", "barrel", "utility"],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:src/kvcompression/utils/generation.py",
+      "type": "file",
+      "name": "generation.py",
+      "filePath": "src/kvcompression/utils/generation.py",
+      "summary": "Provides token generation utilities for inference with KV cache compression, implementing a torchtune-compatible sampling function and a full autoregressive generation loop that interleaves model forward passes with cache compression steps.",
+      "tags": ["utility", "service", "inference", "api-handler"],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:src/kvcompression/utils/generation.py:generate_with_compression",
+      "type": "function",
+      "name": "generate_with_compression",
+      "filePath": "src/kvcompression/utils/generation.py",
+      "lineRange": [30, 133],
+      "summary": "Autoregressive generation loop that runs a prefill step followed by per-token decode steps, calling the provided kv_compressor to compress the KV cache between decode steps until stop tokens are generated or the token budget is exhausted.",
+      "tags": ["utility", "inference", "api-handler"],
+      "complexity": "complex"
+    },
+    {
+      "id": "file:src/kvcompression/utils/scheduler_factory.py",
+      "type": "file",
+      "name": "scheduler_factory.py",
+      "filePath": "src/kvcompression/utils/scheduler_factory.py",
+      "summary": "Defines a SequentialScheduler that chains a linear warmup scheduler with a cosine annealing scheduler for learning rate scheduling in RL training.",
+      "tags": ["utility", "factory", "configuration"],
+      "complexity": "simple"
+    },
+    {
+      "id": "class:src/kvcompression/utils/scheduler_factory.py:SequentialWarmupCosineScheduler",
+      "type": "class",
+      "name": "SequentialWarmupCosineScheduler",
+      "filePath": "src/kvcompression/utils/scheduler_factory.py",
+      "lineRange": [12, 40],
+      "summary": "Learning rate scheduler combining linear warmup followed by cosine annealing decay, implemented as a SequentialLR wrapping PyTorch's LinearLR and CosineAnnealingLR.",
+      "tags": ["utility", "configuration"],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:tests/__init__.py",
+      "type": "file",
+      "name": "__init__.py",
+      "filePath": "tests/__init__.py",
+      "summary": "Empty package initializer marking the tests directory as a Python package.",
+      "tags": ["entry-point", "test"],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:tests/conftest.py",
+      "type": "file",
+      "name": "conftest.py",
+      "filePath": "tests/conftest.py",
+      "summary": "Pytest configuration file that registers a custom 'cuda' marker, provides a session-scoped fixture to skip CUDA tests when no GPU is available, and a base model config fixture used across KV cache tests.",
+      "tags": ["test", "configuration", "fixture"],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:tests/data/test_chunk_sampler.py",
+      "type": "file",
+      "name": "test_chunk_sampler.py",
+      "filePath": "tests/data/test_chunk_sampler.py",
+      "summary": "Unit tests for the ChunkSampler data utility, verifying validation logic, complete dataset coverage, uneven chunk distribution, and shuffle determinism across epochs.",
+      "tags": ["test", "data", "validation"],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:tests/rl/test_compute_advantages.py",
+      "type": "file",
+      "name": "test_compute_advantages.py",
+      "filePath": "tests/rl/test_compute_advantages.py",
+      "summary": "Parametrized tests comparing a reference loop-based advantage computation against the vectorized implementation, verifying numerical equivalence across various batch sizes, sequence lengths, and normalization settings.",
+      "tags": ["test", "reinforcement-learning", "validation"],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:tests/rl/test_masked_logprob_entropy.py",
+      "type": "file",
+      "name": "test_masked_logprob_entropy.py",
+      "filePath": "tests/rl/test_masked_logprob_entropy.py",
+      "summary": "Tests verifying the Triton-accelerated policy entropy loss against a naive Python reference implementation, checking forward loss values, entropy, policy loss components, and backward gradients for numerical equivalence.",
+      "tags": ["test", "reinforcement-learning", "gpu-kernel", "validation"],
+      "complexity": "complex"
+    },
+    {
+      "id": "file:tests/test_attention_utils.py",
+      "type": "file",
+      "name": "test_attention_utils.py",
+      "filePath": "tests/test_attention_utils.py",
+      "summary": "Tests for the materialize_attention_weights utility, verifying its output against scaled dot-product attention across combinations of causal masking, padded sequences, and explicit attention masks.",
+      "tags": ["test", "validation", "utility"],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:tests/test_costs.py",
+      "type": "file",
+      "name": "test_costs.py",
+      "filePath": "tests/test_costs.py",
+      "summary": "Tests for the batched_compute_cost function covering regression values, output structure, oracle ranking correctness, GQA support, padding handling, device transfer, and cost decomposition by cache size.",
+      "tags": ["test", "validation", "data-model"],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:tests/test_kv_cache/test_compressible_kv_cache.py",
+      "type": "file",
+      "name": "test_compressible_kv_cache.py",
+      "filePath": "tests/test_kv_cache/test_compressible_kv_cache.py",
+      "summary": "Comprehensive test suite for CompressibleKVCache covering initialization, reset, update (simple, multiple, overflow, zero-length), compress (empty, target-zero, logic, invalid sizes), get_k_v_and_mask_for_attention, GQA query group extraction, query storage, and compression strategy dispatch.",
+      "tags": ["test", "validation", "data-model"],
+      "complexity": "complex"
+    },
+    {
+      "id": "file:tests/test_kv_cache/test_flexattention_bfloat16.py",
+      "type": "file",
+      "name": "test_flexattention_bfloat16.py",
+      "filePath": "tests/test_kv_cache/test_flexattention_bfloat16.py",
+      "summary": "Tests verifying numerical equivalence between PyTorch's flex_attention and scaled_dot_product_attention under bfloat16 precision, covering both random large-scale and small deterministic examples.",
+      "tags": ["test", "validation", "gpu-kernel"],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:tests/test_kv_cache/test_patched_attention.py",
+      "type": "file",
+      "name": "test_patched_attention.py",
+      "filePath": "tests/test_kv_cache/test_patched_attention.py",
+      "summary": "Tests for patched multi-head attention equivalence, verifying that patched and original MHA produce identical outputs during prefill and decode phases, and that the compressible MHA variant behaves correctly when the cache is at capacity.",
+      "tags": ["test", "validation", "middleware"],
+      "complexity": "complex"
+    }
+  ],
+  "edges": [
+    {
+      "source": "file:src/kvcompression/rl/trainers/triton_policy_entropy_loss.py",
+      "target": "class:src/kvcompression/rl/trainers/triton_policy_entropy_loss.py:PolicyEntropyLossTriton",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/kvcompression/rl/trainers/triton_policy_entropy_loss.py",
+      "target": "function:src/kvcompression/rl/trainers/triton_policy_entropy_loss.py:_policy_entropy_loss_forward_kernel",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/kvcompression/rl/trainers/triton_policy_entropy_loss.py",
+      "target": "function:src/kvcompression/rl/trainers/triton_policy_entropy_loss.py:_policy_entropy_loss_backward_kernel",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/kvcompression/rl/trainers/triton_policy_entropy_loss.py",
+      "target": "function:src/kvcompression/rl/trainers/triton_policy_entropy_loss.py:compute_policy_entropy_loss_triton",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/kvcompression/rl/trainers/triton_policy_entropy_loss.py",
+      "target": "class:src/kvcompression/rl/trainers/triton_policy_entropy_loss.py:PolicyEntropyLossTriton",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/kvcompression/rl/trainers/triton_policy_entropy_loss.py",
+      "target": "function:src/kvcompression/rl/trainers/triton_policy_entropy_loss.py:compute_policy_entropy_loss_triton",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/kvcompression/utils/__init__.py",
+      "target": "file:src/kvcompression/utils/generation.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:src/kvcompression/utils/generation.py",
+      "target": "function:src/kvcompression/utils/generation.py:generate_with_compression",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/kvcompression/utils/generation.py",
+      "target": "function:src/kvcompression/utils/generation.py:generate_with_compression",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/kvcompression/utils/scheduler_factory.py",
+      "target": "class:src/kvcompression/utils/scheduler_factory.py:SequentialWarmupCosineScheduler",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/kvcompression/utils/scheduler_factory.py",
+      "target": "class:src/kvcompression/utils/scheduler_factory.py:SequentialWarmupCosineScheduler",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    }
+  ]
+}

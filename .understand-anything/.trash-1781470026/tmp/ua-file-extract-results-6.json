@@ -1,0 +1,940 @@
+{
+  "scriptCompleted": true,
+  "filesAnalyzed": 5,
+  "filesSkipped": [],
+  "results": [
+    {
+      "path": "src/kvcompression/data/chunk_sampler.py",
+      "language": "python",
+      "fileCategory": "code",
+      "totalLines": 69,
+      "nonEmptyLines": 54,
+      "classes": [
+        {
+          "name": "ChunkSampler",
+          "startLine": 12,
+          "endLine": 69,
+          "methods": [
+            "__init__",
+            "_get_indices",
+            "__iter__",
+            "__len__"
+          ],
+          "properties": []
+        }
+      ],
+      "exports": [
+        {
+          "name": "ChunkSampler",
+          "line": 12,
+          "isDefault": false
+        }
+      ],
+      "callGraph": [
+        {
+          "caller": "__init__",
+          "callee": "ValueError",
+          "lineNumber": 42
+        },
+        {
+          "caller": "__init__",
+          "callee": "len",
+          "lineNumber": 46
+        },
+        {
+          "caller": "__init__",
+          "callee": "self._get_indices",
+          "lineNumber": 47
+        },
+        {
+          "caller": "_get_indices",
+          "callee": "min",
+          "lineNumber": 55
+        },
+        {
+          "caller": "_get_indices",
+          "callee": "list",
+          "lineNumber": 57
+        },
+        {
+          "caller": "_get_indices",
+          "callee": "range",
+          "lineNumber": 57
+        },
+        {
+          "caller": "_get_indices",
+          "callee": "np.random.RandomState",
+          "lineNumber": 60
+        },
+        {
+          "caller": "_get_indices",
+          "callee": "rng.shuffle",
+          "lineNumber": 61
+        },
+        {
+          "caller": "__iter__",
+          "callee": "iter",
+          "lineNumber": 66
+        },
+        {
+          "caller": "__len__",
+          "callee": "len",
+          "lineNumber": 69
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 1,
+        "functionCount": 0,
+        "classCount": 1
+      }
+    },
+    {
+      "path": "src/kvcompression/data/kvpress_dataset.py",
+      "language": "python",
+      "fileCategory": "code",
+      "totalLines": 51,
+      "nonEmptyLines": 39,
+      "functions": [
+        {
+          "name": "_add_row_id",
+          "startLine": 19,
+          "endLine": 22,
+          "params": [
+            "example",
+            "idx"
+          ]
+        }
+      ],
+      "classes": [
+        {
+          "name": "KVPressPreprocessingDataset",
+          "startLine": 25,
+          "endLine": 51,
+          "methods": [
+            "__init__",
+            "__len__",
+            "__getitem__"
+          ],
+          "properties": []
+        }
+      ],
+      "exports": [
+        {
+          "name": "_add_row_id",
+          "line": 19,
+          "isDefault": false
+        },
+        {
+          "name": "KVPressPreprocessingDataset",
+          "line": 25,
+          "isDefault": false
+        }
+      ],
+      "callGraph": [
+        {
+          "caller": "__init__",
+          "callee": "super().__init__",
+          "lineNumber": 27
+        },
+        {
+          "caller": "__init__",
+          "callee": "super",
+          "lineNumber": 27
+        },
+        {
+          "caller": "__init__",
+          "callee": "load_dataset",
+          "lineNumber": 30
+        },
+        {
+          "caller": "__init__",
+          "callee": "self.hf_dataset.map",
+          "lineNumber": 31
+        },
+        {
+          "caller": "__len__",
+          "callee": "len",
+          "lineNumber": 37
+        },
+        {
+          "caller": "__getitem__",
+          "callee": "Message",
+          "lineNumber": 43
+        },
+        {
+          "caller": "__getitem__",
+          "callee": "Message",
+          "lineNumber": 44
+        },
+        {
+          "caller": "__getitem__",
+          "callee": "self.tokenizer.tokenize_messages",
+          "lineNumber": 47
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 2,
+        "functionCount": 1,
+        "classCount": 1
+      }
+    },
+    {
+      "path": "src/kvcompression/entrypoints/datagen/unroll_and_store.py",
+      "language": "python",
+      "fileCategory": "code",
+      "totalLines": 254,
+      "nonEmptyLines": 215,
+      "functions": [
+        {
+          "name": "main",
+          "startLine": 245,
+          "endLine": 250,
+          "params": [
+            "cfg"
+          ]
+        }
+      ],
+      "classes": [
+        {
+          "name": "InferenceRecipe",
+          "startLine": 30,
+          "endLine": 241,
+          "methods": [
+            "__init__",
+            "setup",
+            "_setup_data",
+            "_setup_model",
+            "generate",
+            "save_generation"
+          ],
+          "properties": []
+        }
+      ],
+      "exports": [
+        {
+          "name": "InferenceRecipe",
+          "line": 30,
+          "isDefault": false
+        },
+        {
+          "name": "main",
+          "line": 244,
+          "isDefault": false
+        }
+      ],
+      "callGraph": [
+        {
+          "caller": "__init__",
+          "callee": "utils.get_device",
+          "lineNumber": 32
+        },
+        {
+          "caller": "__init__",
+          "callee": "training.get_dtype",
+          "lineNumber": 33
+        },
+        {
+          "caller": "__init__",
+          "callee": "training.set_seed",
+          "lineNumber": 36
+        },
+        {
+          "caller": "__init__",
+          "callee": "cfg.get",
+          "lineNumber": 37
+        },
+        {
+          "caller": "setup",
+          "callee": "config.instantiate",
+          "lineNumber": 41
+        },
+        {
+          "caller": "setup",
+          "callee": "checkpointer.load_checkpoint",
+          "lineNumber": 42
+        },
+        {
+          "caller": "setup",
+          "callee": "self._setup_model",
+          "lineNumber": 44
+        },
+        {
+          "caller": "setup",
+          "callee": "config.instantiate",
+          "lineNumber": 49
+        },
+        {
+          "caller": "setup",
+          "callee": "self._setup_data",
+          "lineNumber": 51
+        },
+        {
+          "caller": "_setup_data",
+          "callee": "KVPressPreprocessingDataset",
+          "lineNumber": 55
+        },
+        {
+          "caller": "_setup_data",
+          "callee": "config.instantiate",
+          "lineNumber": 62
+        },
+        {
+          "caller": "_setup_data",
+          "callee": "ChunkSampler",
+          "lineNumber": 67
+        },
+        {
+          "caller": "_setup_data",
+          "callee": "DataLoader",
+          "lineNumber": 73
+        },
+        {
+          "caller": "_setup_data",
+          "callee": "partial",
+          "lineNumber": 77
+        },
+        {
+          "caller": "_setup_model",
+          "callee": "training.set_default_dtype",
+          "lineNumber": 94
+        },
+        {
+          "caller": "_setup_model",
+          "callee": "config.instantiate",
+          "lineNumber": 95
+        },
+        {
+          "caller": "_setup_model",
+          "callee": "training.compile_model",
+          "lineNumber": 98
+        },
+        {
+          "caller": "_setup_model",
+          "callee": "model.load_state_dict",
+          "lineNumber": 100
+        },
+        {
+          "caller": "_setup_model",
+          "callee": "training.validate_expected_param_dtype",
+          "lineNumber": 103
+        },
+        {
+          "caller": "_setup_model",
+          "callee": "model.named_parameters",
+          "lineNumber": 104
+        },
+        {
+          "caller": "_setup_model",
+          "callee": "logger.info",
+          "lineNumber": 106
+        },
+        {
+          "caller": "generate",
+          "callee": "self._model.setup_caches",
+          "lineNumber": 115
+        },
+        {
+          "caller": "generate",
+          "callee": "Path",
+          "lineNumber": 121
+        },
+        {
+          "caller": "generate",
+          "callee": "cfg.dataset_name.replace",
+          "lineNumber": 124
+        },
+        {
+          "caller": "generate",
+          "callee": "concurrent.futures.ThreadPoolExecutor",
+          "lineNumber": 134
+        },
+        {
+          "caller": "generate",
+          "callee": "tqdm",
+          "lineNumber": 137
+        },
+        {
+          "caller": "generate",
+          "callee": "len",
+          "lineNumber": 137
+        },
+        {
+          "caller": "generate",
+          "callee": "batch.pop(\"id\").item",
+          "lineNumber": 138
+        },
+        {
+          "caller": "generate",
+          "callee": "batch.pop",
+          "lineNumber": 138
+        },
+        {
+          "caller": "generate",
+          "callee": "utils.batch_to_device",
+          "lineNumber": 140
+        },
+        {
+          "caller": "generate",
+          "callee": "sample_outputpath.mkdir",
+          "lineNumber": 145
+        },
+        {
+          "caller": "generate",
+          "callee": "generation.generate",
+          "lineNumber": 147
+        },
+        {
+          "caller": "generate",
+          "callee": "self._model.reset_caches",
+          "lineNumber": 157
+        },
+        {
+          "caller": "generate",
+          "callee": "ExtractAttentionTensors",
+          "lineNumber": 159
+        },
+        {
+          "caller": "generate",
+          "callee": "torch.tril(\n                    torch.ones(\n                        generated_tokens.shape[1],\n                        generated_tokens.shape[1],\n                        dtype=torch.bool,\n                        device=prompt_tokens.device,\n                    )\n                ).unsqueeze",
+          "lineNumber": 167
+        },
+        {
+          "caller": "generate",
+          "callee": "torch.tril",
+          "lineNumber": 167
+        },
+        {
+          "caller": "generate",
+          "callee": "torch.ones",
+          "lineNumber": 168
+        },
+        {
+          "caller": "generate",
+          "callee": "torch.arange(\n                    0, generated_tokens.shape[1], device=generated_tokens.device\n                ).unsqueeze",
+          "lineNumber": 175
+        },
+        {
+          "caller": "generate",
+          "callee": "torch.arange",
+          "lineNumber": 175
+        },
+        {
+          "caller": "generate",
+          "callee": "self._model",
+          "lineNumber": 179
+        },
+        {
+          "caller": "generate",
+          "callee": "executor.submit",
+          "lineNumber": 181
+        },
+        {
+          "caller": "generate",
+          "callee": "generated_tokens.cpu",
+          "lineNumber": 183
+        },
+        {
+          "caller": "generate",
+          "callee": "prompt_tokens.numel",
+          "lineNumber": 184
+        },
+        {
+          "caller": "generate",
+          "callee": "Path",
+          "lineNumber": 186
+        },
+        {
+          "caller": "generate",
+          "callee": "executor.shutdown",
+          "lineNumber": 190
+        },
+        {
+          "caller": "save_generation",
+          "callee": "(local_sample_dir_path / \"all_text.txt\").write_text",
+          "lineNumber": 200
+        },
+        {
+          "caller": "save_generation",
+          "callee": "self._tokenizer.decode",
+          "lineNumber": 201
+        },
+        {
+          "caller": "save_generation",
+          "callee": "generated_tokens[0].tolist",
+          "lineNumber": 201
+        },
+        {
+          "caller": "save_generation",
+          "callee": "(local_sample_dir_path / \"generated_text.txt\").write_text",
+          "lineNumber": 203
+        },
+        {
+          "caller": "save_generation",
+          "callee": "self._tokenizer.decode",
+          "lineNumber": 204
+        },
+        {
+          "caller": "save_generation",
+          "callee": "generated_tokens[0].tolist",
+          "lineNumber": 204
+        },
+        {
+          "caller": "save_generation",
+          "callee": "safetensors.torch.save_file",
+          "lineNumber": 206
+        },
+        {
+          "caller": "save_generation",
+          "callee": "safetensors.torch.save_file",
+          "lineNumber": 210
+        },
+        {
+          "caller": "save_generation",
+          "callee": "torch.tensor",
+          "lineNumber": 211
+        },
+        {
+          "caller": "save_generation",
+          "callee": "hasattr",
+          "lineNumber": 216
+        },
+        {
+          "caller": "save_generation",
+          "callee": "self._ds.get_ground_truth_info",
+          "lineNumber": 217
+        },
+        {
+          "caller": "save_generation",
+          "callee": "isinstance",
+          "lineNumber": 220
+        },
+        {
+          "caller": "save_generation",
+          "callee": "torch.tensor",
+          "lineNumber": 221
+        },
+        {
+          "caller": "save_generation",
+          "callee": "safetensors.torch.save_file",
+          "lineNumber": 223
+        },
+        {
+          "caller": "save_generation",
+          "callee": "safetensors.torch.save_file",
+          "lineNumber": 227
+        },
+        {
+          "caller": "save_generation",
+          "callee": "torch.tensor",
+          "lineNumber": 228
+        },
+        {
+          "caller": "save_generation",
+          "callee": "upload_directory",
+          "lineNumber": 232
+        },
+        {
+          "caller": "save_generation",
+          "callee": "shutil.rmtree",
+          "lineNumber": 236
+        },
+        {
+          "caller": "save_generation",
+          "callee": "logger.warning",
+          "lineNumber": 238
+        },
+        {
+          "caller": "main",
+          "callee": "config.log_config",
+          "lineNumber": 246
+        },
+        {
+          "caller": "main",
+          "callee": "InferenceRecipe",
+          "lineNumber": 248
+        },
+        {
+          "caller": "main",
+          "callee": "recipe.setup",
+          "lineNumber": 249
+        },
+        {
+          "caller": "main",
+          "callee": "recipe.generate",
+          "lineNumber": 250
+        }
+      ],
+      "metrics": {
+        "importCount": 4,
+        "exportCount": 2,
+        "functionCount": 1,
+        "classCount": 1
+      }
+    },
+    {
+      "path": "src/kvcompression/hooks/extractors.py",
+      "language": "python",
+      "fileCategory": "code",
+      "totalLines": 167,
+      "nonEmptyLines": 141,
+      "classes": [
+        {
+          "name": "ExtractAttentionTensors",
+          "startLine": 18,
+          "endLine": 167,
+          "methods": [
+            "__init__",
+            "__enter__",
+            "__exit__",
+            "wrapped_attention_call",
+            "_store_attention_tensors",
+            "store_attention_tensors"
+          ],
+          "properties": []
+        }
+      ],
+      "exports": [
+        {
+          "name": "ExtractAttentionTensors",
+          "line": 18,
+          "isDefault": false
+        }
+      ],
+      "callGraph": [
+        {
+          "caller": "__init__",
+          "callee": "register_attention_forward_hook",
+          "lineNumber": 30
+        },
+        {
+          "caller": "__init__",
+          "callee": "self.output_path.mkdir",
+          "lineNumber": 40
+        },
+        {
+          "caller": "__enter__",
+          "callee": "self._context_manager.__enter__",
+          "lineNumber": 47
+        },
+        {
+          "caller": "__exit__",
+          "callee": "self._context_manager.__exit__",
+          "lineNumber": 53
+        },
+        {
+          "caller": "wrapped_attention_call",
+          "callee": "original_attention_call",
+          "lineNumber": 69
+        },
+        {
+          "caller": "_store_attention_tensors",
+          "callee": "save_path.mkdir",
+          "lineNumber": 92
+        },
+        {
+          "caller": "_store_attention_tensors",
+          "callee": "safetensors.torch.save_file",
+          "lineNumber": 95
+        },
+        {
+          "caller": "_store_attention_tensors",
+          "callee": "list",
+          "lineNumber": 101
+        },
+        {
+          "caller": "_store_attention_tensors",
+          "callee": "range",
+          "lineNumber": 101
+        },
+        {
+          "caller": "_store_attention_tensors",
+          "callee": "range",
+          "lineNumber": 103
+        },
+        {
+          "caller": "_store_attention_tensors",
+          "callee": "kv_head_path.mkdir",
+          "lineNumber": 105
+        },
+        {
+          "caller": "_store_attention_tensors",
+          "callee": "k[start_q_idx].contiguous",
+          "lineNumber": 108
+        },
+        {
+          "caller": "_store_attention_tensors",
+          "callee": "v[start_q_idx].contiguous",
+          "lineNumber": 109
+        },
+        {
+          "caller": "_store_attention_tensors",
+          "callee": "q[start_q_idx:end_q_idx].contiguous",
+          "lineNumber": 112
+        },
+        {
+          "caller": "_store_attention_tensors",
+          "callee": "safetensors.torch.save_file",
+          "lineNumber": 115
+        },
+        {
+          "caller": "_store_attention_tensors",
+          "callee": "range",
+          "lineNumber": 127
+        },
+        {
+          "caller": "_store_attention_tensors",
+          "callee": "kv_head_path.mkdir",
+          "lineNumber": 129
+        },
+        {
+          "caller": "_store_attention_tensors",
+          "callee": "k[kv_head_idx].clone",
+          "lineNumber": 131
+        },
+        {
+          "caller": "_store_attention_tensors",
+          "callee": "v[kv_head_idx].clone",
+          "lineNumber": 132
+        },
+        {
+          "caller": "_store_attention_tensors",
+          "callee": "q[start_q_idx:end_q_idx].clone",
+          "lineNumber": 136
+        },
+        {
+          "caller": "_store_attention_tensors",
+          "callee": "safetensors.torch.save_file",
+          "lineNumber": 139
+        },
+        {
+          "caller": "store_attention_tensors",
+          "callee": "torch.allclose",
+          "lineNumber": 147
+        },
+        {
+          "caller": "store_attention_tensors",
+          "callee": "input_pos.detach().to(\"cpu\").squeeze",
+          "lineNumber": 155
+        },
+        {
+          "caller": "store_attention_tensors",
+          "callee": "input_pos.detach().to",
+          "lineNumber": 155
+        },
+        {
+          "caller": "store_attention_tensors",
+          "callee": "input_pos.detach",
+          "lineNumber": 155
+        },
+        {
+          "caller": "store_attention_tensors",
+          "callee": "q.detach().to(\"cpu\").squeeze",
+          "lineNumber": 156
+        },
+        {
+          "caller": "store_attention_tensors",
+          "callee": "q.detach().to",
+          "lineNumber": 156
+        },
+        {
+          "caller": "store_attention_tensors",
+          "callee": "q.detach",
+          "lineNumber": 156
+        },
+        {
+          "caller": "store_attention_tensors",
+          "callee": "k.detach().to(\"cpu\").squeeze",
+          "lineNumber": 157
+        },
+        {
+          "caller": "store_attention_tensors",
+          "callee": "k.detach().to",
+          "lineNumber": 157
+        },
+        {
+          "caller": "store_attention_tensors",
+          "callee": "k.detach",
+          "lineNumber": 157
+        },
+        {
+          "caller": "store_attention_tensors",
+          "callee": "v.detach().to(\"cpu\").squeeze",
+          "lineNumber": 158
+        },
+        {
+          "caller": "store_attention_tensors",
+          "callee": "v.detach().to",
+          "lineNumber": 158
+        },
+        {
+          "caller": "store_attention_tensors",
+          "callee": "v.detach",
+          "lineNumber": 158
+        },
+        {
+          "caller": "store_attention_tensors",
+          "callee": "self._store_attention_tensors",
+          "lineNumber": 160
+        }
+      ],
+      "metrics": {
+        "importCount": 1,
+        "exportCount": 1,
+        "functionCount": 0,
+        "classCount": 1
+      }
+    },
+    {
+      "path": "src/kvcompression/hooks/registrar.py",
+      "language": "python",
+      "fileCategory": "code",
+      "totalLines": 157,
+      "nonEmptyLines": 135,
+      "functions": [
+        {
+          "name": "register_attention_forward_hook",
+          "startLine": 14,
+          "endLine": 68,
+          "params": [
+            "model",
+            "hook",
+            "attention_wrapper"
+          ]
+        },
+        {
+          "name": "monkeypatch_multihead_attention",
+          "startLine": 71,
+          "endLine": 157,
+          "params": [
+            "model",
+            "forward_post_hook",
+            "monkeypatch_mh_attention_forward",
+            "monkeypatch_mh_attention_setup_cache"
+          ]
+        }
+      ],
+      "exports": [
+        {
+          "name": "register_attention_forward_hook",
+          "line": 14,
+          "isDefault": false
+        },
+        {
+          "name": "monkeypatch_multihead_attention",
+          "line": 71,
+          "isDefault": false
+        }
+      ],
+      "callGraph": [
+        {
+          "caller": "_register_attention_forward_hook",
+          "callee": "enumerate",
+          "lineNumber": 45
+        },
+        {
+          "caller": "_register_attention_forward_hook",
+          "callee": "original_attentions_fn.append",
+          "lineNumber": 47
+        },
+        {
+          "caller": "_register_attention_forward_hook",
+          "callee": "partial",
+          "lineNumber": 48
+        },
+        {
+          "caller": "_register_attention_forward_hook",
+          "callee": "hooks.append",
+          "lineNumber": 53
+        },
+        {
+          "caller": "_register_attention_forward_hook",
+          "callee": "layer.attn.register_forward_hook",
+          "lineNumber": 54
+        },
+        {
+          "caller": "_register_attention_forward_hook",
+          "callee": "partial",
+          "lineNumber": 55
+        },
+        {
+          "caller": "_register_attention_forward_hook",
+          "callee": "zip",
+          "lineNumber": 62
+        },
+        {
+          "caller": "_register_attention_forward_hook",
+          "callee": "forward_hook.remove",
+          "lineNumber": 66
+        },
+        {
+          "caller": "register_attention_forward_hook",
+          "callee": "_register_attention_forward_hook",
+          "lineNumber": 68
+        },
+        {
+          "caller": "_monkeypatch_multihead_attention",
+          "callee": "enumerate",
+          "lineNumber": 128
+        },
+        {
+          "caller": "_monkeypatch_multihead_attention",
+          "callee": "original_mh_attentions_fn.append",
+          "lineNumber": 129
+        },
+        {
+          "caller": "_monkeypatch_multihead_attention",
+          "callee": "original_mh_setup_cache.append",
+          "lineNumber": 130
+        },
+        {
+          "caller": "_monkeypatch_multihead_attention",
+          "callee": "types.MethodType",
+          "lineNumber": 132
+        },
+        {
+          "caller": "_monkeypatch_multihead_attention",
+          "callee": "types.MethodType",
+          "lineNumber": 135
+        },
+        {
+          "caller": "_monkeypatch_multihead_attention",
+          "callee": "hooks.append",
+          "lineNumber": 138
+        },
+        {
+          "caller": "_monkeypatch_multihead_attention",
+          "callee": "layer.attn.register_forward_hook",
+          "lineNumber": 139
+        },
+        {
+          "caller": "_monkeypatch_multihead_attention",
+          "callee": "partial",
+          "lineNumber": 140
+        },
+        {
+          "caller": "_monkeypatch_multihead_attention",
+          "callee": "zip",
+          "lineNumber": 146
+        },
+        {
+          "caller": "_monkeypatch_multihead_attention",
+          "callee": "forward_hook.remove",
+          "lineNumber": 153
+        },
+        {
+          "caller": "monkeypatch_multihead_attention",
+          "callee": "_monkeypatch_multihead_attention",
+          "lineNumber": 155
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 2,
+        "functionCount": 2,
+        "classCount": 0
+      }
+    }
+  ]
+}

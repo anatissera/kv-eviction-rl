@@ -1,0 +1,75 @@
+{
+  "batchIndex": 6,
+  "files": [
+    {
+      "path": "src/kvcompression/data/chunk_sampler.py",
+      "language": "python",
+      "sizeLines": 69,
+      "fileCategory": "code"
+    },
+    {
+      "path": "src/kvcompression/data/kvpress_dataset.py",
+      "language": "python",
+      "sizeLines": 51,
+      "fileCategory": "code"
+    },
+    {
+      "path": "src/kvcompression/entrypoints/datagen/unroll_and_store.py",
+      "language": "python",
+      "sizeLines": 254,
+      "fileCategory": "code"
+    },
+    {
+      "path": "src/kvcompression/hooks/extractors.py",
+      "language": "python",
+      "sizeLines": 167,
+      "fileCategory": "code"
+    },
+    {
+      "path": "src/kvcompression/hooks/registrar.py",
+      "language": "python",
+      "sizeLines": 157,
+      "fileCategory": "code"
+    }
+  ],
+  "batchImportData": {
+    "src/kvcompression/data/chunk_sampler.py": [],
+    "src/kvcompression/data/kvpress_dataset.py": [],
+    "src/kvcompression/entrypoints/datagen/unroll_and_store.py": [
+      "src/kvcompression/data/chunk_sampler.py",
+      "src/kvcompression/data/kvpress_dataset.py",
+      "src/kvcompression/hooks/extractors.py",
+      "src/kvcompression/utils/s3_utils.py"
+    ],
+    "src/kvcompression/hooks/extractors.py": [
+      "src/kvcompression/hooks/registrar.py"
+    ],
+    "src/kvcompression/hooks/registrar.py": []
+  },
+  "neighborMap": {
+    "src/kvcompression/entrypoints/datagen/unroll_and_store.py": [
+      {
+        "path": "src/kvcompression/utils/s3_utils.py",
+        "batchIndex": 4,
+        "symbols": [
+          "get_s3_filesystem",
+          "upload_directory",
+          "download_file",
+          "get_corresponding_remote_path",
+          "load_remote_json_secrets",
+          "ls_remote_folder"
+        ]
+      }
+    ],
+    "src/kvcompression/hooks/registrar.py": [
+      {
+        "path": "src/kvcompression/hooks/compressor.py",
+        "batchIndex": 2,
+        "symbols": [
+          "LayerHeadCompressionConfig",
+          "KVCompressor"
+        ]
+      }
+    ]
+  }
+}

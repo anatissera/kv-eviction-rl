@@ -1,0 +1,147 @@
+{
+  "batchIndex": 1,
+  "files": [
+    {
+      "path": "src/kvcompression/__init__.py",
+      "language": "python",
+      "sizeLines": 67,
+      "fileCategory": "code"
+    },
+    {
+      "path": "src/kvcompression/data/activations_dataset.py",
+      "language": "python",
+      "sizeLines": 189,
+      "fileCategory": "code"
+    },
+    {
+      "path": "src/kvcompression/data/pad_collate.py",
+      "language": "python",
+      "sizeLines": 69,
+      "fileCategory": "code"
+    },
+    {
+      "path": "src/kvcompression/entrypoints/rl/train_agent_sampler_distributed.py",
+      "language": "python",
+      "sizeLines": 991,
+      "fileCategory": "code"
+    },
+    {
+      "path": "src/kvcompression/metrics/__init__.py",
+      "language": "python",
+      "sizeLines": 10,
+      "fileCategory": "code"
+    },
+    {
+      "path": "src/kvcompression/metrics/_metrics_manager.py",
+      "language": "python",
+      "sizeLines": 598,
+      "fileCategory": "code"
+    },
+    {
+      "path": "src/kvcompression/utils/infinite_distributed_sampler.py",
+      "language": "python",
+      "sizeLines": 99,
+      "fileCategory": "code"
+    },
+    {
+      "path": "src/kvcompression/utils/training_checkpointer.py",
+      "language": "python",
+      "sizeLines": 462,
+      "fileCategory": "code"
+    }
+  ],
+  "batchImportData": {
+    "src/kvcompression/__init__.py": [],
+    "src/kvcompression/data/activations_dataset.py": [
+      "src/kvcompression/__init__.py"
+    ],
+    "src/kvcompression/data/pad_collate.py": [],
+    "src/kvcompression/entrypoints/rl/train_agent_sampler_distributed.py": [
+      "src/kvcompression/__init__.py",
+      "src/kvcompression/data/pad_collate.py",
+      "src/kvcompression/metrics/_metrics_manager.py",
+      "src/kvcompression/rl/trainers/rloo_terminal_trainer.py",
+      "src/kvcompression/utils/infinite_distributed_sampler.py",
+      "src/kvcompression/utils/s3_utils.py",
+      "src/kvcompression/utils/training_checkpointer.py",
+      "src/kvcompression/utils/utils.py"
+    ],
+    "src/kvcompression/metrics/__init__.py": [
+      "src/kvcompression/metrics/_metrics_manager.py"
+    ],
+    "src/kvcompression/metrics/_metrics_manager.py": [
+      "src/kvcompression/__init__.py"
+    ],
+    "src/kvcompression/utils/infinite_distributed_sampler.py": [],
+    "src/kvcompression/utils/training_checkpointer.py": [
+      "src/kvcompression/utils/utils.py"
+    ]
+  },
+  "neighborMap": {
+    "src/kvcompression/__init__.py": [
+      {
+        "path": "src/kvcompression/presses/sampler_agent_press.py",
+        "batchIndex": 4,
+        "symbols": [
+          "SamplerAgentPress"
+        ]
+      }
+    ],
+    "src/kvcompression/entrypoints/rl/train_agent_sampler_distributed.py": [
+      {
+        "path": "src/kvcompression/rl/trainers/rloo_terminal_trainer.py",
+        "batchIndex": 5,
+        "symbols": [
+          "RLOOTerminalTrainer"
+        ]
+      },
+      {
+        "path": "src/kvcompression/utils/s3_utils.py",
+        "batchIndex": 4,
+        "symbols": [
+          "get_s3_filesystem",
+          "upload_directory",
+          "download_file",
+          "get_corresponding_remote_path",
+          "load_remote_json_secrets",
+          "ls_remote_folder"
+        ]
+      },
+      {
+        "path": "src/kvcompression/utils/utils.py",
+        "batchIndex": 3,
+        "symbols": [
+          "get_underlying_model",
+          "instantiate_agent_from_ckpt",
+          "_select_seed_randomly",
+          "seed_everything",
+          "is_torch_compile_disabled",
+          "batch_to_device"
+        ]
+      }
+    ],
+    "src/kvcompression/metrics/__init__.py": [
+      {
+        "path": "src/kvcompression/rl/trainers/rloo_terminal_trainer.py",
+        "batchIndex": 5,
+        "symbols": [
+          "RLOOTerminalTrainer"
+        ]
+      }
+    ],
+    "src/kvcompression/utils/training_checkpointer.py": [
+      {
+        "path": "src/kvcompression/utils/utils.py",
+        "batchIndex": 3,
+        "symbols": [
+          "get_underlying_model",
+          "instantiate_agent_from_ckpt",
+          "_select_seed_randomly",
+          "seed_everything",
+          "is_torch_compile_disabled",
+          "batch_to_device"
+        ]
+      }
+    ]
+  }
+}

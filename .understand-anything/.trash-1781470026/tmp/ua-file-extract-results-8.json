@@ -1,0 +1,245 @@
+{
+  "scriptCompleted": true,
+  "filesAnalyzed": 6,
+  "filesSkipped": [],
+  "results": [
+    {
+      "path": ".env.template",
+      "language": "config",
+      "fileCategory": "config",
+      "totalLines": 29,
+      "nonEmptyLines": 23,
+      "metrics": {}
+    },
+    {
+      "path": ".pre-commit-config.yaml",
+      "language": "yaml",
+      "fileCategory": "config",
+      "totalLines": 18,
+      "nonEmptyLines": 18,
+      "sections": [
+        {
+          "heading": "repos",
+          "level": 1,
+          "line": 2
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0,
+        "sectionCount": 1
+      }
+    },
+    {
+      "path": "CODE_OF_CONDUCT.md",
+      "language": "markdown",
+      "fileCategory": "docs",
+      "totalLines": 70,
+      "nonEmptyLines": 53,
+      "sections": [
+        {
+          "heading": "Code of Conduct",
+          "level": 1,
+          "line": 1
+        },
+        {
+          "heading": "Our Pledge",
+          "level": 2,
+          "line": 3
+        },
+        {
+          "heading": "Our Standards",
+          "level": 2,
+          "line": 12
+        },
+        {
+          "heading": "Our Responsibilities",
+          "level": 2,
+          "line": 34
+        },
+        {
+          "heading": "Scope",
+          "level": 2,
+          "line": 46
+        },
+        {
+          "heading": "Enforcement",
+          "level": 2,
+          "line": 55
+        },
+        {
+          "heading": "Attribution",
+          "level": 2,
+          "line": 68
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0,
+        "sectionCount": 7
+      }
+    },
+    {
+      "path": "CONTRIBUTING.md",
+      "language": "markdown",
+      "fileCategory": "docs",
+      "totalLines": 7,
+      "nonEmptyLines": 4,
+      "sections": [
+        {
+          "heading": "Contribution Guide",
+          "level": 1,
+          "line": 1
+        },
+        {
+          "heading": "Before you get started",
+          "level": 2,
+          "line": 5
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0,
+        "sectionCount": 2
+      }
+    },
+    {
+      "path": "README.md",
+      "language": "markdown",
+      "fileCategory": "docs",
+      "totalLines": 106,
+      "nonEmptyLines": 71,
+      "sections": [
+        {
+          "heading": "Learning to Evict from Key-Value Cache",
+          "level": 1,
+          "line": 1
+        },
+        {
+          "heading": "Getting Started",
+          "level": 2,
+          "line": 15
+        },
+        {
+          "heading": "Dataset Generation",
+          "level": 2,
+          "line": 31
+        },
+        {
+          "heading": "Training",
+          "level": 2,
+          "line": 50
+        },
+        {
+          "heading": "Inference",
+          "level": 2,
+          "line": 73
+        },
+        {
+          "heading": "Citation",
+          "level": 2,
+          "line": 85
+        },
+        {
+          "heading": "Acknowledgements",
+          "level": 2,
+          "line": 100
+        },
+        {
+          "heading": "License",
+          "level": 2,
+          "line": 104
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0,
+        "sectionCount": 8
+      }
+    },
+    {
+      "path": "pyproject.toml",
+      "language": "toml",
+      "fileCategory": "config",
+      "totalLines": 79,
+      "nonEmptyLines": 67,
+      "sections": [
+        {
+          "heading": "build-system",
+          "level": 1,
+          "line": 1
+        },
+        {
+          "heading": "tool.setuptools-git-versioning",
+          "level": 2,
+          "line": 5
+        },
+        {
+          "heading": "project",
+          "level": 1,
+          "line": 8
+        },
+        {
+          "heading": "tool.uv.extra-build-dependencies",
+          "level": 3,
+          "line": 38
+        },
+        {
+          "heading": "tool.uv.extra-build-variables",
+          "level": 3,
+          "line": 42
+        },
+        {
+          "heading": "project.optional-dependencies",
+          "level": 2,
+          "line": 45
+        },
+        {
+          "heading": "tool.uv.sources",
+          "level": 3,
+          "line": 49
+        },
+        {
+          "heading": "[[tool.uv.index]]",
+          "level": 3,
+          "line": 56
+        },
+        {
+          "heading": "[[tool.uv.index]]",
+          "level": 3,
+          "line": 61
+        },
+        {
+          "heading": "tool.pytest.ini_options",
+          "level": 3,
+          "line": 66
+        },
+        {
+          "heading": "tool.mypy",
+          "level": 2,
+          "line": 71
+        },
+        {
+          "heading": "tool.ruff",
+          "level": 2,
+          "line": 75
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0,
+        "sectionCount": 12
+      }
+    }
+  ]
+}

@@ -1,0 +1,17 @@
+{
+  "projectRoot": "/Users/alexanderbodner/Documents/Udesa/5to/aprendizaje reforzado/tp final/ml-learning-to-evict",
+  "batchFiles": [
+    {"path": "src/kvcompression/data/chunk_sampler.py", "language": "python", "sizeLines": 69, "fileCategory": "code"},
+    {"path": "src/kvcompression/data/kvpress_dataset.py", "language": "python", "sizeLines": 51, "fileCategory": "code"},
+    {"path": "src/kvcompression/entrypoints/datagen/unroll_and_store.py", "language": "python", "sizeLines": 254, "fileCategory": "code"},
+    {"path": "src/kvcompression/hooks/extractors.py", "language": "python", "sizeLines": 167, "fileCategory": "code"},
+    {"path": "src/kvcompression/hooks/registrar.py", "language": "python", "sizeLines": 157, "fileCategory": "code"}
+  ],
+  "batchImportData": {
+    "src/kvcompression/data/chunk_sampler.py": [],
+    "src/kvcompression/data/kvpress_dataset.py": [],
+    "src/kvcompression/entrypoints/datagen/unroll_and_store.py": ["src/kvcompression/data/chunk_sampler.py","src/kvcompression/data/kvpress_dataset.py","src/kvcompression/hooks/extractors.py","src/kvcompression/utils/s3_utils.py"],
+    "src/kvcompression/hooks/extractors.py": ["src/kvcompression/hooks/registrar.py"],
+    "src/kvcompression/hooks/registrar.py": []
+  }
+}

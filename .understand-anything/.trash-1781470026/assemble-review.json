@@ -1,0 +1,14 @@
+{
+  "fixedSectionOk": true,
+  "nodesRecovered": 1,
+  "edgesRestored": 1,
+  "crossBatchEdgesAdded": 0,
+  "typesRemapped": 0,
+  "complexityRemapped": 0,
+  "notes": [
+    "The merge script report had no 'Fixed' section — no mechanical fixes were applied upstream, so there are no prefix normalization counts to evaluate.",
+    "One dropped edge was reported: TrainingCheckpointer -> get_underlying_model (calls). The function get_underlying_model exists in source at src/kvcompression/utils/utils.py line 25 but was omitted by batch-3 during analysis of that file. The node was recovered with summary and line range from source, and the edge was restored.",
+    "Cross-batch import edge verification: all 4 key dependency hubs (utils/utils.py, costs.py, attention_utils.py, s3_utils.py) were cross-checked against grep results from source. All expected file->file import edges were already present in the assembled graph. No gaps found.",
+    "Batch-3 analyzed utils/utils.py but produced only 3 of 5 functions defined there (missing get_underlying_model and is_torch_compile_disabled). The latter has no known edges referencing it so it remains absent. This is a minor upstream analysis gap."
+  ]
+}

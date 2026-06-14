@@ -1,0 +1,21 @@
+{
+  "projectRoot": "/Users/alexanderbodner/Documents/Udesa/5to/aprendizaje reforzado/tp final/ml-learning-to-evict",
+  "batchFiles": [
+    {"path": "src/kvcompression/attention_utils.py", "language": "python", "sizeLines": 220, "fileCategory": "code"},
+    {"path": "src/kvcompression/hooks/compressor.py", "language": "python", "sizeLines": 272, "fileCategory": "code"},
+    {"path": "src/kvcompression/kv_cache/__init__.py", "language": "python", "sizeLines": 12, "fileCategory": "code"},
+    {"path": "src/kvcompression/kv_cache/compressible_attention.py", "language": "python", "sizeLines": 270, "fileCategory": "code"},
+    {"path": "src/kvcompression/kv_cache/compressible_kv_cache.py", "language": "python", "sizeLines": 298, "fileCategory": "code"},
+    {"path": "src/kvcompression/kv_cache/compressible_mha_layer.py", "language": "python", "sizeLines": 96, "fileCategory": "code"},
+    {"path": "src/kvcompression/kv_cache/compression_strategy_protocol.py", "language": "python", "sizeLines": 197, "fileCategory": "code"}
+  ],
+  "batchImportData": {
+    "src/kvcompression/attention_utils.py": [],
+    "src/kvcompression/hooks/compressor.py": ["src/kvcompression/hooks/registrar.py","src/kvcompression/kv_cache/compressible_attention.py","src/kvcompression/kv_cache/compressible_kv_cache.py","src/kvcompression/kv_cache/compression_strategy_protocol.py"],
+    "src/kvcompression/kv_cache/__init__.py": ["src/kvcompression/kv_cache/compressible_kv_cache.py","src/kvcompression/kv_cache/compression_strategy_protocol.py"],
+    "src/kvcompression/kv_cache/compressible_attention.py": ["src/kvcompression/attention_utils.py","src/kvcompression/kv_cache/compressible_kv_cache.py","src/kvcompression/kv_cache/compression_strategy_protocol.py"],
+    "src/kvcompression/kv_cache/compressible_kv_cache.py": ["src/kvcompression/kv_cache/compression_strategy_protocol.py"],
+    "src/kvcompression/kv_cache/compressible_mha_layer.py": ["src/kvcompression/kv_cache/compressible_attention.py"],
+    "src/kvcompression/kv_cache/compression_strategy_protocol.py": ["src/kvcompression/attention_utils.py","src/kvcompression/presses/base_press.py"]
+  }
+}

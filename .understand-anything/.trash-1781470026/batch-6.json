@@ -1,0 +1,290 @@
+{
+  "nodes": [
+    {
+      "id": "file:src/kvcompression/data/chunk_sampler.py",
+      "type": "file",
+      "name": "chunk_sampler.py",
+      "filePath": "src/kvcompression/data/chunk_sampler.py",
+      "summary": "Defines ChunkSampler, a PyTorch-compatible sampler that partitions a dataset into fixed-size sequential chunks and optionally shuffles indices within those chunks for reproducible batched data loading.",
+      "tags": ["utility", "data-model", "service"],
+      "complexity": "moderate"
+    },
+    {
+      "id": "class:src/kvcompression/data/chunk_sampler.py:ChunkSampler",
+      "type": "class",
+      "name": "ChunkSampler",
+      "filePath": "src/kvcompression/data/chunk_sampler.py",
+      "lineRange": [12, 69],
+      "summary": "A sampler that yields dataset indices in fixed-size chunks, with optional shuffling controlled by a random seed for reproducibility.",
+      "tags": ["utility", "data-model", "service"],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:src/kvcompression/data/kvpress_dataset.py",
+      "type": "file",
+      "name": "kvpress_dataset.py",
+      "filePath": "src/kvcompression/data/kvpress_dataset.py",
+      "summary": "Wraps a Hugging Face dataset for KVPress preprocessing, providing tokenized chat message pairs with row-level IDs used during KV cache data generation.",
+      "tags": ["data-model", "service", "utility"],
+      "complexity": "simple"
+    },
+    {
+      "id": "class:src/kvcompression/data/kvpress_dataset.py:KVPressPreprocessingDataset",
+      "type": "class",
+      "name": "KVPressPreprocessingDataset",
+      "filePath": "src/kvcompression/data/kvpress_dataset.py",
+      "lineRange": [25, 51],
+      "summary": "Dataset wrapper that loads a HuggingFace dataset, assigns row IDs, and tokenizes prompt/completion message pairs for use in KV cache generation pipelines.",
+      "tags": ["data-model", "service"],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:src/kvcompression/entrypoints/datagen/unroll_and_store.py",
+      "type": "file",
+      "name": "unroll_and_store.py",
+      "filePath": "src/kvcompression/entrypoints/datagen/unroll_and_store.py",
+      "summary": "Entry-point script for KV cache data generation: runs forward passes on a language model while intercepting attention tensors via hooks, then saves the resulting Q/K/V tensors and generated tokens to disk (and optionally S3) for downstream RL training.",
+      "tags": ["entry-point", "data-pipeline", "service"],
+      "complexity": "complex"
+    },
+    {
+      "id": "class:src/kvcompression/entrypoints/datagen/unroll_and_store.py:InferenceRecipe",
+      "type": "class",
+      "name": "InferenceRecipe",
+      "filePath": "src/kvcompression/entrypoints/datagen/unroll_and_store.py",
+      "lineRange": [30, 241],
+      "summary": "Orchestrates model loading, data setup, generation, and per-sample storage of attention tensors and tokens, using a thread pool for concurrent disk/S3 writes.",
+      "tags": ["service", "data-pipeline", "entry-point"],
+      "complexity": "complex"
+    },
+    {
+      "id": "function:src/kvcompression/entrypoints/datagen/unroll_and_store.py:main",
+      "type": "function",
+      "name": "main",
+      "filePath": "src/kvcompression/entrypoints/datagen/unroll_and_store.py",
+      "lineRange": [245, 250],
+      "summary": "Top-level entry function that logs the config, instantiates InferenceRecipe, and runs setup then generation.",
+      "tags": ["entry-point", "service"],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:src/kvcompression/hooks/extractors.py",
+      "type": "file",
+      "name": "extractors.py",
+      "filePath": "src/kvcompression/hooks/extractors.py",
+      "summary": "Provides the ExtractAttentionTensors context manager that intercepts attention module forward calls to capture and persist per-layer, per-head Q/K/V tensors to disk during model inference.",
+      "tags": ["middleware", "service", "utility"],
+      "complexity": "complex"
+    },
+    {
+      "id": "class:src/kvcompression/hooks/extractors.py:ExtractAttentionTensors",
+      "type": "class",
+      "name": "ExtractAttentionTensors",
+      "filePath": "src/kvcompression/hooks/extractors.py",
+      "lineRange": [18, 167],
+      "summary": "Context manager that registers forward hooks on attention modules to intercept Q/K/V tensors and save them as safetensors files organized by layer and head, handling both GQA and MHA layouts.",
+      "tags": ["middleware", "service", "event-handler"],
+      "complexity": "complex",
+      "languageNotes": "Handles both grouped-query attention (GQA) and multi-head attention (MHA) layouts by branching on the ratio of query heads to KV heads."
+    },
+    {
+      "id": "file:src/kvcompression/hooks/registrar.py",
+      "type": "file",
+      "name": "registrar.py",
+      "filePath": "src/kvcompression/hooks/registrar.py",
+      "summary": "Implements low-level hook registration utilities for attaching forward hooks and monkeypatching attention modules in a torchtune-style transformer, returning context managers that clean up hooks on exit.",
+      "tags": ["middleware", "utility", "event-handler"],
+      "complexity": "complex"
+    },
+    {
+      "id": "function:src/kvcompression/hooks/registrar.py:register_attention_forward_hook",
+      "type": "function",
+      "name": "register_attention_forward_hook",
+      "filePath": "src/kvcompression/hooks/registrar.py",
+      "lineRange": [14, 68],
+      "summary": "Registers a post-forward hook on every attention layer of the model, wrapping callee invocations so the hook receives Q/K/V tensors; returns a context manager that removes hooks on exit.",
+      "tags": ["middleware", "event-handler", "utility"],
+      "complexity": "complex"
+    },
+    {
+      "id": "function:src/kvcompression/hooks/registrar.py:monkeypatch_multihead_attention",
+      "type": "function",
+      "name": "monkeypatch_multihead_attention",
+      "filePath": "src/kvcompression/hooks/registrar.py",
+      "lineRange": [71, 157],
+      "summary": "Replaces attention forward and setup_cache methods via monkeypatching to intercept calls with custom implementations, and registers a forward hook; returns a context manager restoring original methods.",
+      "tags": ["middleware", "event-handler", "utility"],
+      "complexity": "complex"
+    }
+  ],
+  "edges": [
+    {
+      "source": "file:src/kvcompression/data/chunk_sampler.py",
+      "target": "class:src/kvcompression/data/chunk_sampler.py:ChunkSampler",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/kvcompression/data/chunk_sampler.py",
+      "target": "class:src/kvcompression/data/chunk_sampler.py:ChunkSampler",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/kvcompression/data/kvpress_dataset.py",
+      "target": "class:src/kvcompression/data/kvpress_dataset.py:KVPressPreprocessingDataset",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/kvcompression/data/kvpress_dataset.py",
+      "target": "class:src/kvcompression/data/kvpress_dataset.py:KVPressPreprocessingDataset",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/kvcompression/entrypoints/datagen/unroll_and_store.py",
+      "target": "class:src/kvcompression/entrypoints/datagen/unroll_and_store.py:InferenceRecipe",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/kvcompression/entrypoints/datagen/unroll_and_store.py",
+      "target": "function:src/kvcompression/entrypoints/datagen/unroll_and_store.py:main",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/kvcompression/entrypoints/datagen/unroll_and_store.py",
+      "target": "class:src/kvcompression/entrypoints/datagen/unroll_and_store.py:InferenceRecipe",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/kvcompression/entrypoints/datagen/unroll_and_store.py",
+      "target": "function:src/kvcompression/entrypoints/datagen/unroll_and_store.py:main",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/kvcompression/entrypoints/datagen/unroll_and_store.py",
+      "target": "file:src/kvcompression/data/chunk_sampler.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:src/kvcompression/entrypoints/datagen/unroll_and_store.py",
+      "target": "file:src/kvcompression/data/kvpress_dataset.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:src/kvcompression/entrypoints/datagen/unroll_and_store.py",
+      "target": "file:src/kvcompression/hooks/extractors.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:src/kvcompression/entrypoints/datagen/unroll_and_store.py",
+      "target": "file:src/kvcompression/utils/s3_utils.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "class:src/kvcompression/entrypoints/datagen/unroll_and_store.py:InferenceRecipe",
+      "target": "class:src/kvcompression/data/chunk_sampler.py:ChunkSampler",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "class:src/kvcompression/entrypoints/datagen/unroll_and_store.py:InferenceRecipe",
+      "target": "class:src/kvcompression/data/kvpress_dataset.py:KVPressPreprocessingDataset",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "class:src/kvcompression/entrypoints/datagen/unroll_and_store.py:InferenceRecipe",
+      "target": "class:src/kvcompression/hooks/extractors.py:ExtractAttentionTensors",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "class:src/kvcompression/entrypoints/datagen/unroll_and_store.py:InferenceRecipe",
+      "target": "function:src/kvcompression/utils/s3_utils.py:upload_directory",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/kvcompression/hooks/extractors.py",
+      "target": "class:src/kvcompression/hooks/extractors.py:ExtractAttentionTensors",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/kvcompression/hooks/extractors.py",
+      "target": "class:src/kvcompression/hooks/extractors.py:ExtractAttentionTensors",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/kvcompression/hooks/extractors.py",
+      "target": "file:src/kvcompression/hooks/registrar.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "class:src/kvcompression/hooks/extractors.py:ExtractAttentionTensors",
+      "target": "function:src/kvcompression/hooks/registrar.py:register_attention_forward_hook",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/kvcompression/hooks/registrar.py",
+      "target": "function:src/kvcompression/hooks/registrar.py:register_attention_forward_hook",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/kvcompression/hooks/registrar.py",
+      "target": "function:src/kvcompression/hooks/registrar.py:monkeypatch_multihead_attention",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/kvcompression/hooks/registrar.py",
+      "target": "function:src/kvcompression/hooks/registrar.py:register_attention_forward_hook",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/kvcompression/hooks/registrar.py",
+      "target": "function:src/kvcompression/hooks/registrar.py:monkeypatch_multihead_attention",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    }
+  ]
+}

@@ -1,0 +1,21 @@
+{
+  "projectRoot": "/Users/alexanderbodner/Documents/Udesa/5to/aprendizaje reforzado/tp final/ml-learning-to-evict",
+  "batchFiles": [
+    {"path": "src/kvcompression/presses/base_press.py", "language": "python", "sizeLines": 72, "fileCategory": "code"},
+    {"path": "src/kvcompression/presses/random_press.py", "language": "python", "sizeLines": 23, "fileCategory": "code"},
+    {"path": "src/kvcompression/presses/sampler_agent_press.py", "language": "python", "sizeLines": 342, "fileCategory": "code"},
+    {"path": "src/kvcompression/tools/__init__.py", "language": "python", "sizeLines": 18, "fileCategory": "code"},
+    {"path": "src/kvcompression/tools/agent_registry.py", "language": "python", "sizeLines": 286, "fileCategory": "code"},
+    {"path": "src/kvcompression/tools/assignment_generator.py", "language": "python", "sizeLines": 205, "fileCategory": "code"},
+    {"path": "src/kvcompression/utils/s3_utils.py", "language": "python", "sizeLines": 309, "fileCategory": "code"}
+  ],
+  "batchImportData": {
+    "src/kvcompression/presses/base_press.py": [],
+    "src/kvcompression/presses/random_press.py": ["src/kvcompression/presses/base_press.py"],
+    "src/kvcompression/presses/sampler_agent_press.py": ["src/kvcompression/__init__.py","src/kvcompression/presses/base_press.py","src/kvcompression/utils/s3_utils.py","src/kvcompression/utils/utils.py"],
+    "src/kvcompression/tools/__init__.py": ["src/kvcompression/tools/agent_registry.py","src/kvcompression/tools/assignment_generator.py"],
+    "src/kvcompression/tools/agent_registry.py": ["src/kvcompression/utils/s3_utils.py"],
+    "src/kvcompression/tools/assignment_generator.py": ["src/kvcompression/tools/agent_registry.py"],
+    "src/kvcompression/utils/s3_utils.py": []
+  }
+}

@@ -1,0 +1,467 @@
+{
+  "nodes": [
+    {
+      "id": "file:tests/test_generate_with_compression.py",
+      "type": "file",
+      "name": "test_generate_with_compression.py",
+      "filePath": "tests/test_generate_with_compression.py",
+      "summary": "End-to-end tests for the generate_with_compression function, verifying that the compressed generation matches torchtune baseline output when no compression or noop compression is applied, differs when real compression is used, and raises errors on invalid batch sizes.",
+      "tags": ["test", "generation", "kv-compression", "integration-test"],
+      "complexity": "complex"
+    },
+    {
+      "id": "function:tests/test_generate_with_compression.py:create_model",
+      "type": "function",
+      "name": "create_model",
+      "filePath": "tests/test_generate_with_compression.py",
+      "lineRange": [20, 36],
+      "summary": "Pytest fixture that constructs and returns a deterministically initialized test model on the appropriate device.",
+      "tags": ["test", "fixture", "model-setup"],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:tests/test_generate_with_compression.py:test_matches_torchtune_without_compression",
+      "type": "function",
+      "name": "test_matches_torchtune_without_compression",
+      "filePath": "tests/test_generate_with_compression.py",
+      "lineRange": [41, 80],
+      "summary": "Verifies that generate_with_compression without a compressor produces token sequences identical to the vanilla torchtune generation path.",
+      "tags": ["test", "generation", "equivalence"],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:tests/test_generate_with_compression.py:test_differs_from_torchtune_with_real_compression",
+      "type": "function",
+      "name": "test_differs_from_torchtune_with_real_compression",
+      "filePath": "tests/test_generate_with_compression.py",
+      "lineRange": [86, 133],
+      "summary": "Asserts that applying a real (RandomCompressionStrategy) KVCompressor causes generate_with_compression to diverge from the baseline torchtune output.",
+      "tags": ["test", "generation", "kv-compression", "divergence"],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:tests/test_generate_with_compression.py:test_matches_torchtune_with_noop_compression",
+      "type": "function",
+      "name": "test_matches_torchtune_with_noop_compression",
+      "filePath": "tests/test_generate_with_compression.py",
+      "lineRange": [139, 186],
+      "summary": "Confirms that a noop (DummyCompressionStrategy) compressor does not alter generation outputs relative to the torchtune baseline.",
+      "tags": ["test", "generation", "noop", "equivalence"],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:tests/test_generate_with_compression.py:test_batch_size_validation",
+      "type": "function",
+      "name": "test_batch_size_validation",
+      "filePath": "tests/test_generate_with_compression.py",
+      "lineRange": [189, 204],
+      "summary": "Checks that generate_with_compression raises an error when called with a batch size other than 1.",
+      "tags": ["test", "validation", "error-handling"],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:tests/test_kv_cache/test_compressor.py",
+      "type": "file",
+      "name": "test_compressor.py",
+      "filePath": "tests/test_kv_cache/test_compressor.py",
+      "summary": "Comprehensive test suite for the KVCompressor component, covering forward-pass output equivalence with noop strategies, generation-level equivalence, and divergence verification when non-trivial compression strategies (RandomPress, PressCompressionStrategy) are applied.",
+      "tags": ["test", "kv-compression", "compressor", "equivalence"],
+      "complexity": "complex"
+    },
+    {
+      "id": "class:tests/test_kv_cache/test_compressor.py:TestKVCompressorEquivalence",
+      "type": "class",
+      "name": "TestKVCompressorEquivalence",
+      "filePath": "tests/test_kv_cache/test_compressor.py",
+      "lineRange": [22, 476],
+      "summary": "Test class grouping three methods that validate KVCompressor output equivalence properties: noop output equivalence, generation equivalence, and non-equivalence under real compression.",
+      "tags": ["test", "kv-compression", "compressor", "equivalence"],
+      "complexity": "complex"
+    },
+    {
+      "id": "file:tests/test_kv_cache/test_patched_model_forward.py",
+      "type": "file",
+      "name": "test_patched_model_forward.py",
+      "filePath": "tests/test_kv_cache/test_patched_model_forward.py",
+      "summary": "Tests that a model patched with a KVCompressor using a noop compression strategy produces logits numerically close to those of the unpatched model during a forward pass.",
+      "tags": ["test", "kv-cache", "patched-model", "forward-pass"],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:tests/test_kv_cache/test_patched_model_forward.py:test_patched_model_forward",
+      "type": "function",
+      "name": "test_patched_model_forward",
+      "filePath": "tests/test_kv_cache/test_patched_model_forward.py",
+      "lineRange": [19, 84],
+      "summary": "Runs an unpatched and a KVCompressor-patched model forward pass on the same inputs and asserts logit closeness using torch.allclose.",
+      "tags": ["test", "forward-pass", "kv-cache", "numerical-equivalence"],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:tests/test_online_attention.py",
+      "type": "file",
+      "name": "test_online_attention.py",
+      "filePath": "tests/test_online_attention.py",
+      "summary": "Test suite for online attention mechanisms, validating attention weight rematerialization equivalence, GQA (grouped-query attention) key/value expansion correctness, and edge cases for the materialize_attention_weights utility.",
+      "tags": ["test", "attention", "gqa", "rematerialization"],
+      "complexity": "complex"
+    },
+    {
+      "id": "function:tests/test_online_attention.py:test_attention_rematerialization_equivalence",
+      "type": "function",
+      "name": "test_attention_rematerialization_equivalence",
+      "filePath": "tests/test_online_attention.py",
+      "lineRange": [24, 66],
+      "summary": "Verifies that attention weights computed via materialize_attention_weights match those from scaled_dot_product_attention for various batch, sequence, and head configurations.",
+      "tags": ["test", "attention", "rematerialization", "equivalence"],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:tests/test_online_attention.py:_setup_model_and_run_forward",
+      "type": "function",
+      "name": "_setup_model_and_run_forward",
+      "filePath": "tests/test_online_attention.py",
+      "lineRange": [69, 138],
+      "summary": "Helper that builds a deterministically initialized model with KVCompressor, runs a forward pass, and extracts KV cache contents and queries needed for attention rematerialization tests.",
+      "tags": ["test", "helper", "model-setup", "kv-cache"],
+      "complexity": "complex"
+    },
+    {
+      "id": "function:tests/test_online_attention.py:_verify_attention_outputs",
+      "type": "function",
+      "name": "_verify_attention_outputs",
+      "filePath": "tests/test_online_attention.py",
+      "lineRange": [141, 180],
+      "summary": "Asserts shape correctness, numerical closeness to SDPA output, and valid probability distribution of rematerialized attention weights.",
+      "tags": ["test", "helper", "attention", "validation"],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:tests/test_online_attention.py:test_gqa_expansion_correctness",
+      "type": "function",
+      "name": "test_gqa_expansion_correctness",
+      "filePath": "tests/test_online_attention.py",
+      "lineRange": [183, 207],
+      "summary": "Tests that expand_kv_for_gqa correctly tiles key/value tensors from KV-head count to query-head count for grouped-query attention.",
+      "tags": ["test", "gqa", "kv-expansion", "correctness"],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:tests/test_online_attention.py:test_edge_cases",
+      "type": "function",
+      "name": "test_edge_cases",
+      "filePath": "tests/test_online_attention.py",
+      "lineRange": [210, 230],
+      "summary": "Covers edge cases for materialize_attention_weights including single-token sequences and masked attention patterns.",
+      "tags": ["test", "edge-cases", "attention"],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:tests/test_utils.py",
+      "type": "file",
+      "name": "test_utils.py",
+      "filePath": "tests/test_utils.py",
+      "summary": "Shared test utilities providing deterministic tensor and model initialization helpers (fixed_init_tensor, fixed_init_model) and a base_test_model factory used across the entire test suite to ensure reproducible test setups.",
+      "tags": ["test", "utility", "fixture", "model-setup"],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:tests/test_utils.py:fixed_init_tensor",
+      "type": "function",
+      "name": "fixed_init_tensor",
+      "filePath": "tests/test_utils.py",
+      "lineRange": [14, 41],
+      "summary": "Creates a tensor with a deterministic, reproducible pattern based on element indices, supporting optional nonlinear (sin) transforms and configurable value ranges.",
+      "tags": ["utility", "tensor", "deterministic-init"],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:tests/test_utils.py:fixed_init_model",
+      "type": "function",
+      "name": "fixed_init_model",
+      "filePath": "tests/test_utils.py",
+      "lineRange": [45, 65],
+      "summary": "Initializes all parameters of a model in-place using fixed_init_tensor to ensure reproducible weight values for testing.",
+      "tags": ["utility", "model-setup", "deterministic-init"],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:tests/test_utils.py:base_test_model",
+      "type": "function",
+      "name": "base_test_model",
+      "filePath": "tests/test_utils.py",
+      "lineRange": [68, 83],
+      "summary": "Factory function that builds a Llama2-based test model via Llama2Builder, applies fixed initialization, and moves it to the specified device in eval mode.",
+      "tags": ["utility", "model-factory", "fixture"],
+      "complexity": "simple"
+    }
+  ],
+  "edges": [
+    {
+      "source": "file:tests/test_generate_with_compression.py",
+      "target": "file:tests/test_utils.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:tests/test_kv_cache/test_compressor.py",
+      "target": "file:tests/test_utils.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:tests/test_kv_cache/test_patched_model_forward.py",
+      "target": "file:tests/test_utils.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:tests/test_online_attention.py",
+      "target": "file:tests/test_utils.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:tests/test_generate_with_compression.py",
+      "target": "function:tests/test_generate_with_compression.py:create_model",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:tests/test_generate_with_compression.py",
+      "target": "function:tests/test_generate_with_compression.py:test_matches_torchtune_without_compression",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:tests/test_generate_with_compression.py",
+      "target": "function:tests/test_generate_with_compression.py:test_differs_from_torchtune_with_real_compression",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:tests/test_generate_with_compression.py",
+      "target": "function:tests/test_generate_with_compression.py:test_matches_torchtune_with_noop_compression",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:tests/test_generate_with_compression.py",
+      "target": "function:tests/test_generate_with_compression.py:test_batch_size_validation",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:tests/test_generate_with_compression.py",
+      "target": "function:tests/test_generate_with_compression.py:create_model",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:tests/test_generate_with_compression.py",
+      "target": "function:tests/test_generate_with_compression.py:test_matches_torchtune_without_compression",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:tests/test_generate_with_compression.py",
+      "target": "function:tests/test_generate_with_compression.py:test_differs_from_torchtune_with_real_compression",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:tests/test_generate_with_compression.py",
+      "target": "function:tests/test_generate_with_compression.py:test_matches_torchtune_with_noop_compression",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:tests/test_generate_with_compression.py",
+      "target": "function:tests/test_generate_with_compression.py:test_batch_size_validation",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:tests/test_kv_cache/test_compressor.py",
+      "target": "class:tests/test_kv_cache/test_compressor.py:TestKVCompressorEquivalence",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:tests/test_kv_cache/test_compressor.py",
+      "target": "class:tests/test_kv_cache/test_compressor.py:TestKVCompressorEquivalence",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:tests/test_kv_cache/test_patched_model_forward.py",
+      "target": "function:tests/test_kv_cache/test_patched_model_forward.py:test_patched_model_forward",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:tests/test_kv_cache/test_patched_model_forward.py",
+      "target": "function:tests/test_kv_cache/test_patched_model_forward.py:test_patched_model_forward",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:tests/test_online_attention.py",
+      "target": "function:tests/test_online_attention.py:test_attention_rematerialization_equivalence",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:tests/test_online_attention.py",
+      "target": "function:tests/test_online_attention.py:_setup_model_and_run_forward",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:tests/test_online_attention.py",
+      "target": "function:tests/test_online_attention.py:_verify_attention_outputs",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:tests/test_online_attention.py",
+      "target": "function:tests/test_online_attention.py:test_gqa_expansion_correctness",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:tests/test_online_attention.py",
+      "target": "function:tests/test_online_attention.py:test_edge_cases",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:tests/test_online_attention.py",
+      "target": "function:tests/test_online_attention.py:test_attention_rematerialization_equivalence",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:tests/test_online_attention.py",
+      "target": "function:tests/test_online_attention.py:test_gqa_expansion_correctness",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:tests/test_online_attention.py",
+      "target": "function:tests/test_online_attention.py:test_edge_cases",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:tests/test_utils.py",
+      "target": "function:tests/test_utils.py:fixed_init_tensor",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:tests/test_utils.py",
+      "target": "function:tests/test_utils.py:fixed_init_model",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:tests/test_utils.py",
+      "target": "function:tests/test_utils.py:base_test_model",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:tests/test_utils.py",
+      "target": "function:tests/test_utils.py:fixed_init_tensor",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:tests/test_utils.py",
+      "target": "function:tests/test_utils.py:fixed_init_model",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:tests/test_utils.py",
+      "target": "function:tests/test_utils.py:base_test_model",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:tests/test_utils.py:fixed_init_model",
+      "target": "function:tests/test_utils.py:fixed_init_tensor",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:tests/test_utils.py:base_test_model",
+      "target": "function:tests/test_utils.py:fixed_init_model",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:tests/test_online_attention.py:test_attention_rematerialization_equivalence",
+      "target": "function:tests/test_online_attention.py:_setup_model_and_run_forward",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:tests/test_online_attention.py:test_attention_rematerialization_equivalence",
+      "target": "function:tests/test_online_attention.py:_verify_attention_outputs",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:tests/test_online_attention.py:_setup_model_and_run_forward",
+      "target": "function:tests/test_utils.py:base_test_model",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:tests/test_online_attention.py:_setup_model_and_run_forward",
+      "target": "function:tests/test_utils.py:fixed_init_model",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    }
+  ]
+}

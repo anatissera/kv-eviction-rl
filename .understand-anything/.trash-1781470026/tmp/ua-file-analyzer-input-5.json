@@ -1,0 +1,19 @@
+{
+  "projectRoot": "/Users/alexanderbodner/Documents/Udesa/5to/aprendizaje reforzado/tp final/ml-learning-to-evict",
+  "batchFiles": [
+    {"path": "src/kvcompression/rl/agents/base_agent.py", "language": "python", "sizeLines": 125, "fileCategory": "code"},
+    {"path": "src/kvcompression/rl/agents/kv_sorting_agent.py", "language": "python", "sizeLines": 273, "fileCategory": "code"},
+    {"path": "src/kvcompression/rl/environments/base_env.py", "language": "python", "sizeLines": 27, "fileCategory": "code"},
+    {"path": "src/kvcompression/rl/trainers/compute_advantages.py", "language": "python", "sizeLines": 110, "fileCategory": "code"},
+    {"path": "src/kvcompression/rl/trainers/rloo_gumbel_terminal_trainer.py", "language": "python", "sizeLines": 300, "fileCategory": "code"},
+    {"path": "src/kvcompression/rl/trainers/rloo_terminal_trainer.py", "language": "python", "sizeLines": 747, "fileCategory": "code"}
+  ],
+  "batchImportData": {
+    "src/kvcompression/rl/agents/base_agent.py": [],
+    "src/kvcompression/rl/agents/kv_sorting_agent.py": ["src/kvcompression/rl/agents/base_agent.py"],
+    "src/kvcompression/rl/environments/base_env.py": [],
+    "src/kvcompression/rl/trainers/compute_advantages.py": [],
+    "src/kvcompression/rl/trainers/rloo_gumbel_terminal_trainer.py": ["src/kvcompression/rl/trainers/rloo_terminal_trainer.py"],
+    "src/kvcompression/rl/trainers/rloo_terminal_trainer.py": ["src/kvcompression/metrics/__init__.py","src/kvcompression/rl/agents/base_agent.py","src/kvcompression/rl/environments/base_env.py","src/kvcompression/rl/trainers/compute_advantages.py","src/kvcompression/utils/utils.py"]
+  }
+}

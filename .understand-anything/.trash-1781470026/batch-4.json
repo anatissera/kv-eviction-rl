@@ -1,0 +1,487 @@
+{
+  "nodes": [
+    {
+      "id": "file:src/kvcompression/presses/base_press.py",
+      "type": "file",
+      "name": "base_press.py",
+      "filePath": "src/kvcompression/presses/base_press.py",
+      "summary": "Defines BasePress, the abstract base class for all KV cache eviction strategies, specifying the sort/forward interface that concrete press implementations must fulfill.",
+      "tags": ["data-model", "service", "utility"],
+      "complexity": "moderate"
+    },
+    {
+      "id": "class:src/kvcompression/presses/base_press.py:BasePress",
+      "type": "class",
+      "name": "BasePress",
+      "filePath": "src/kvcompression/presses/base_press.py",
+      "lineRange": [13, 72],
+      "summary": "Abstract base class for KV cache compression presses; defines sort (must be implemented by subclasses), forward (applies eviction given a compression ratio), requires_attention_weights, and supports_gqa hooks.",
+      "tags": ["data-model", "service", "utility"],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:src/kvcompression/presses/random_press.py",
+      "type": "file",
+      "name": "random_press.py",
+      "filePath": "src/kvcompression/presses/random_press.py",
+      "summary": "Implements RandomPress, a baseline KV cache eviction strategy that assigns random scores to cache entries for shuffled eviction order.",
+      "tags": ["utility", "service"],
+      "complexity": "simple"
+    },
+    {
+      "id": "class:src/kvcompression/presses/random_press.py:RandomPress",
+      "type": "class",
+      "name": "RandomPress",
+      "filePath": "src/kvcompression/presses/random_press.py",
+      "lineRange": [11, 23],
+      "summary": "Concrete BasePress subclass that implements sort by generating random scores and returning their argsort, serving as a random-baseline eviction policy.",
+      "tags": ["utility", "service"],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:src/kvcompression/presses/sampler_agent_press.py",
+      "type": "file",
+      "name": "sampler_agent_press.py",
+      "filePath": "src/kvcompression/presses/sampler_agent_press.py",
+      "summary": "Implements SamplerAgentPress, the primary RL-based KV cache eviction press that loads a per-head sampler agent from a checkpoint (local or S3) and uses it to score cache entries for eviction.",
+      "tags": ["service", "api-handler", "middleware"],
+      "complexity": "complex"
+    },
+    {
+      "id": "class:src/kvcompression/presses/sampler_agent_press.py:SamplerAgentPress",
+      "type": "class",
+      "name": "SamplerAgentPress",
+      "filePath": "src/kvcompression/presses/sampler_agent_press.py",
+      "lineRange": [30, 342],
+      "summary": "Main press that instantiates a trained RL agent from a local or remote S3 checkpoint, applies sink-and-window masking, and produces per-head KV ranking scores; supports GQA and attention-weight-free operation.",
+      "tags": ["service", "api-handler", "middleware"],
+      "complexity": "complex"
+    },
+    {
+      "id": "file:src/kvcompression/tools/__init__.py",
+      "type": "file",
+      "name": "__init__.py",
+      "filePath": "src/kvcompression/tools/__init__.py",
+      "summary": "Package init for kvcompression.tools that re-exports AgentRegistry and assignment generator utilities for external consumers.",
+      "tags": ["entry-point", "barrel"],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:src/kvcompression/tools/agent_registry.py",
+      "type": "file",
+      "name": "agent_registry.py",
+      "filePath": "src/kvcompression/tools/agent_registry.py",
+      "summary": "Provides AgentRegistry, which discovers, validates, and resolves checkpoint paths for per-head RL agents stored in an S3 bucket under a structured group/sweep/layer/head hierarchy.",
+      "tags": ["service", "utility", "data-model"],
+      "complexity": "complex"
+    },
+    {
+      "id": "class:src/kvcompression/tools/agent_registry.py:AgentRegistry",
+      "type": "class",
+      "name": "AgentRegistry",
+      "filePath": "src/kvcompression/tools/agent_registry.py",
+      "lineRange": [21, 286],
+      "summary": "Registry class that uses an S3 filesystem to list sweeps, discover agents by layer/head, resolve and validate checkpoint paths, and print a structured summary of discovered agents.",
+      "tags": ["service", "utility", "data-model"],
+      "complexity": "complex"
+    },
+    {
+      "id": "file:src/kvcompression/tools/assignment_generator.py",
+      "type": "file",
+      "name": "assignment_generator.py",
+      "filePath": "src/kvcompression/tools/assignment_generator.py",
+      "summary": "Provides generate_composites and write_composites_file utilities that build composite agent assignment configurations mapping each transformer layer/head to its best available checkpoint path.",
+      "tags": ["utility", "factory", "configuration"],
+      "complexity": "complex"
+    },
+    {
+      "id": "function:src/kvcompression/tools/assignment_generator.py:generate_composites",
+      "type": "function",
+      "name": "generate_composites",
+      "filePath": "src/kvcompression/tools/assignment_generator.py",
+      "lineRange": [24, 167],
+      "summary": "Queries AgentRegistry to discover trained agents for all specified layers and heads, resolves their checkpoint paths, and returns a sorted list of composite agent assignment dicts.",
+      "tags": ["factory", "utility", "service"],
+      "complexity": "complex"
+    },
+    {
+      "id": "function:src/kvcompression/tools/assignment_generator.py:write_composites_file",
+      "type": "function",
+      "name": "write_composites_file",
+      "filePath": "src/kvcompression/tools/assignment_generator.py",
+      "lineRange": [170, 205],
+      "summary": "Wraps generate_composites and writes the resulting composite assignment list to a YAML file in the specified output directory.",
+      "tags": ["utility", "configuration", "serialization"],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:src/kvcompression/utils/s3_utils.py",
+      "type": "file",
+      "name": "s3_utils.py",
+      "filePath": "src/kvcompression/utils/s3_utils.py",
+      "summary": "Provides S3/fsspec utilities for the kvcompression framework: filesystem construction, directory upload, file download, path mapping, remote secret loading, and remote folder listing.",
+      "tags": ["utility", "service", "infrastructure"],
+      "complexity": "complex"
+    },
+    {
+      "id": "function:src/kvcompression/utils/s3_utils.py:get_s3_filesystem",
+      "type": "function",
+      "name": "get_s3_filesystem",
+      "filePath": "src/kvcompression/utils/s3_utils.py",
+      "lineRange": [20, 46],
+      "summary": "Constructs and returns an fsspec S3FileSystem configured from AWS environment variables including endpoint URL, credentials, and SSL verification settings.",
+      "tags": ["utility", "infrastructure", "factory"],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/kvcompression/utils/s3_utils.py:upload_directory",
+      "type": "function",
+      "name": "upload_directory",
+      "filePath": "src/kvcompression/utils/s3_utils.py",
+      "lineRange": [49, 117],
+      "summary": "Recursively uploads a local directory to an S3 remote path using fsspec, with logging of transfer duration and error handling.",
+      "tags": ["utility", "infrastructure"],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:src/kvcompression/utils/s3_utils.py:download_file",
+      "type": "function",
+      "name": "download_file",
+      "filePath": "src/kvcompression/utils/s3_utils.py",
+      "lineRange": [120, 167],
+      "summary": "Downloads a file or directory from an S3 remote path to a local destination using fsspec, with timing and error logging.",
+      "tags": ["utility", "infrastructure"],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:src/kvcompression/utils/s3_utils.py:load_remote_json_secrets",
+      "type": "function",
+      "name": "load_remote_json_secrets",
+      "filePath": "src/kvcompression/utils/s3_utils.py",
+      "lineRange": [183, 295],
+      "summary": "Downloads a JSON secrets file from S3 and sets its key-value pairs as environment variables, with distributed-training barrier synchronization between ranks.",
+      "tags": ["utility", "security", "infrastructure"],
+      "complexity": "complex"
+    },
+    {
+      "id": "function:src/kvcompression/utils/s3_utils.py:ls_remote_folder",
+      "type": "function",
+      "name": "ls_remote_folder",
+      "filePath": "src/kvcompression/utils/s3_utils.py",
+      "lineRange": [298, 309],
+      "summary": "Lists all files recursively under an S3 remote path using fsspec find, returning a sorted list of paths.",
+      "tags": ["utility", "infrastructure"],
+      "complexity": "simple"
+    }
+  ],
+  "edges": [
+    {
+      "source": "file:src/kvcompression/presses/base_press.py",
+      "target": "class:src/kvcompression/presses/base_press.py:BasePress",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/kvcompression/presses/base_press.py",
+      "target": "class:src/kvcompression/presses/base_press.py:BasePress",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/kvcompression/presses/random_press.py",
+      "target": "file:src/kvcompression/presses/base_press.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:src/kvcompression/presses/random_press.py",
+      "target": "class:src/kvcompression/presses/random_press.py:RandomPress",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/kvcompression/presses/random_press.py",
+      "target": "class:src/kvcompression/presses/random_press.py:RandomPress",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "class:src/kvcompression/presses/random_press.py:RandomPress",
+      "target": "class:src/kvcompression/presses/base_press.py:BasePress",
+      "type": "inherits",
+      "direction": "forward",
+      "weight": 0.9
+    },
+    {
+      "source": "file:src/kvcompression/presses/sampler_agent_press.py",
+      "target": "file:src/kvcompression/__init__.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:src/kvcompression/presses/sampler_agent_press.py",
+      "target": "file:src/kvcompression/presses/base_press.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:src/kvcompression/presses/sampler_agent_press.py",
+      "target": "file:src/kvcompression/utils/s3_utils.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:src/kvcompression/presses/sampler_agent_press.py",
+      "target": "file:src/kvcompression/utils/utils.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:src/kvcompression/presses/sampler_agent_press.py",
+      "target": "class:src/kvcompression/presses/sampler_agent_press.py:SamplerAgentPress",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/kvcompression/presses/sampler_agent_press.py",
+      "target": "class:src/kvcompression/presses/sampler_agent_press.py:SamplerAgentPress",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "class:src/kvcompression/presses/sampler_agent_press.py:SamplerAgentPress",
+      "target": "class:src/kvcompression/presses/base_press.py:BasePress",
+      "type": "inherits",
+      "direction": "forward",
+      "weight": 0.9
+    },
+    {
+      "source": "class:src/kvcompression/presses/sampler_agent_press.py:SamplerAgentPress",
+      "target": "function:src/kvcompression/utils/s3_utils.py:get_s3_filesystem",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "class:src/kvcompression/presses/sampler_agent_press.py:SamplerAgentPress",
+      "target": "function:src/kvcompression/utils/s3_utils.py:ls_remote_folder",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "class:src/kvcompression/presses/sampler_agent_press.py:SamplerAgentPress",
+      "target": "function:src/kvcompression/utils/s3_utils.py:download_file",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/kvcompression/tools/__init__.py",
+      "target": "file:src/kvcompression/tools/agent_registry.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:src/kvcompression/tools/__init__.py",
+      "target": "file:src/kvcompression/tools/assignment_generator.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:src/kvcompression/tools/agent_registry.py",
+      "target": "file:src/kvcompression/utils/s3_utils.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:src/kvcompression/tools/agent_registry.py",
+      "target": "class:src/kvcompression/tools/agent_registry.py:AgentRegistry",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/kvcompression/tools/agent_registry.py",
+      "target": "class:src/kvcompression/tools/agent_registry.py:AgentRegistry",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "class:src/kvcompression/tools/agent_registry.py:AgentRegistry",
+      "target": "function:src/kvcompression/utils/s3_utils.py:get_s3_filesystem",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "class:src/kvcompression/tools/agent_registry.py:AgentRegistry",
+      "target": "function:src/kvcompression/utils/s3_utils.py:ls_remote_folder",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/kvcompression/tools/assignment_generator.py",
+      "target": "file:src/kvcompression/tools/agent_registry.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:src/kvcompression/tools/assignment_generator.py",
+      "target": "function:src/kvcompression/tools/assignment_generator.py:generate_composites",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/kvcompression/tools/assignment_generator.py",
+      "target": "function:src/kvcompression/tools/assignment_generator.py:write_composites_file",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/kvcompression/tools/assignment_generator.py",
+      "target": "function:src/kvcompression/tools/assignment_generator.py:generate_composites",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/kvcompression/tools/assignment_generator.py",
+      "target": "function:src/kvcompression/tools/assignment_generator.py:write_composites_file",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:src/kvcompression/tools/assignment_generator.py:generate_composites",
+      "target": "class:src/kvcompression/tools/agent_registry.py:AgentRegistry",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:src/kvcompression/tools/assignment_generator.py:write_composites_file",
+      "target": "function:src/kvcompression/tools/assignment_generator.py:generate_composites",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/kvcompression/utils/s3_utils.py",
+      "target": "function:src/kvcompression/utils/s3_utils.py:get_s3_filesystem",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/kvcompression/utils/s3_utils.py",
+      "target": "function:src/kvcompression/utils/s3_utils.py:upload_directory",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/kvcompression/utils/s3_utils.py",
+      "target": "function:src/kvcompression/utils/s3_utils.py:download_file",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/kvcompression/utils/s3_utils.py",
+      "target": "function:src/kvcompression/utils/s3_utils.py:load_remote_json_secrets",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/kvcompression/utils/s3_utils.py",
+      "target": "function:src/kvcompression/utils/s3_utils.py:ls_remote_folder",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/kvcompression/utils/s3_utils.py",
+      "target": "function:src/kvcompression/utils/s3_utils.py:get_s3_filesystem",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/kvcompression/utils/s3_utils.py",
+      "target": "function:src/kvcompression/utils/s3_utils.py:upload_directory",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/kvcompression/utils/s3_utils.py",
+      "target": "function:src/kvcompression/utils/s3_utils.py:download_file",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/kvcompression/utils/s3_utils.py",
+      "target": "function:src/kvcompression/utils/s3_utils.py:load_remote_json_secrets",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/kvcompression/utils/s3_utils.py",
+      "target": "function:src/kvcompression/utils/s3_utils.py:ls_remote_folder",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:src/kvcompression/utils/s3_utils.py:upload_directory",
+      "target": "function:src/kvcompression/utils/s3_utils.py:get_s3_filesystem",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:src/kvcompression/utils/s3_utils.py:download_file",
+      "target": "function:src/kvcompression/utils/s3_utils.py:get_s3_filesystem",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:src/kvcompression/utils/s3_utils.py:load_remote_json_secrets",
+      "target": "function:src/kvcompression/utils/s3_utils.py:download_file",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:src/kvcompression/utils/s3_utils.py:ls_remote_folder",
+      "target": "function:src/kvcompression/utils/s3_utils.py:get_s3_filesystem",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    }
+  ]
+}

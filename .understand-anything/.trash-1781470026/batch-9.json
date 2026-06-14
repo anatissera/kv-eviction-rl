@@ -1,0 +1,460 @@
+{
+  "nodes": [
+    {
+      "id": "file:.understand-anything/.understandignore",
+      "type": "file",
+      "name": ".understandignore",
+      "filePath": ".understand-anything/.understandignore",
+      "summary": "Ignore rules for the understand-anything knowledge graph tool, listing paths and patterns that should be excluded from analysis (e.g., binary assets, generated files, large data splits).",
+      "tags": ["configuration", "tooling", "exclusion-rules"],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:ACKNOWLEDGEMENTS",
+      "type": "file",
+      "name": "ACKNOWLEDGEMENTS",
+      "filePath": "ACKNOWLEDGEMENTS",
+      "summary": "Credits and attribution notice listing third-party libraries, datasets, and prior work that the kvcompression project builds upon.",
+      "tags": ["documentation", "attribution", "license"],
+      "complexity": "moderate"
+    },
+    {
+      "id": "document:assets/ruler_split/train.txt",
+      "type": "document",
+      "name": "train.txt",
+      "filePath": "assets/ruler_split/train.txt",
+      "summary": "Training split index file for the RULER benchmark dataset, listing 6175 sample identifiers used to select KV cache training examples for RL agent learning.",
+      "tags": ["data", "dataset-split", "training", "benchmark"],
+      "complexity": "complex"
+    },
+    {
+      "id": "document:assets/ruler_split/val.txt",
+      "type": "document",
+      "name": "val.txt",
+      "filePath": "assets/ruler_split/val.txt",
+      "summary": "Validation split index file for the RULER benchmark dataset, listing 325 sample identifiers used to evaluate RL agent performance during and after training.",
+      "tags": ["data", "dataset-split", "validation", "benchmark"],
+      "complexity": "simple"
+    },
+    {
+      "id": "config:configs/preprocess_ruler.yaml",
+      "type": "config",
+      "name": "preprocess_ruler.yaml",
+      "filePath": "configs/preprocess_ruler.yaml",
+      "summary": "Configuration for the RULER dataset preprocessing pipeline, specifying the model, tokenizer, data directories, chunking parameters, device settings, and KV cache generation options used to produce training data.",
+      "tags": ["configuration", "preprocessing", "data-pipeline", "kv-cache"],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:configs/setups/agent_training_setup.sh",
+      "type": "file",
+      "name": "agent_training_setup.sh",
+      "filePath": "configs/setups/agent_training_setup.sh",
+      "summary": "Shell setup script for initializing a single RL agent training job: installs system and Python dependencies via uv, then downloads only the specific layer/head KV cache data needed for training to /dev/shm for fast in-memory access.",
+      "tags": ["script", "infrastructure", "training", "deployment"],
+      "complexity": "simple",
+      "languageNotes": "Uses /dev/shm for RAM-backed storage to maximize I/O throughput during training data loading."
+    },
+    {
+      "id": "file:configs/setups/preprocessing_setup.sh",
+      "type": "file",
+      "name": "preprocessing_setup.sh",
+      "filePath": "configs/setups/preprocessing_setup.sh",
+      "summary": "Shell setup script for the KV cache preprocessing stage: validates the KVCOMPRESSION_MODEL_ID environment variable, installs dependencies via uv, and downloads the target LLM from HuggingFace using torchtune.",
+      "tags": ["script", "infrastructure", "preprocessing", "deployment"],
+      "complexity": "simple"
+    },
+    {
+      "id": "config:configs/train_single_head.yaml",
+      "type": "config",
+      "name": "train_single_head.yaml",
+      "filePath": "configs/train_single_head.yaml",
+      "summary": "Primary training configuration for a single KV head RL agent, covering all aspects of the training loop: agent architecture, environment parameters, reward strategy, EMA, optimizer, learning rate schedule, logging, WandB integration, profiler, and final evaluation settings.",
+      "tags": ["configuration", "training", "rl", "agent"],
+      "complexity": "complex"
+    },
+    {
+      "id": "file:notebooks/inference_demo.ipynb",
+      "type": "file",
+      "name": "inference_demo.ipynb",
+      "filePath": "notebooks/inference_demo.ipynb",
+      "summary": "Jupyter notebook demonstrating end-to-end inference with a trained KV compression agent, walking through model loading, agent application, and evaluation of eviction quality.",
+      "tags": ["notebook", "demo", "inference", "documentation"],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:scripts/download_data.py",
+      "type": "file",
+      "name": "download_data.py",
+      "filePath": "scripts/download_data.py",
+      "summary": "CLI tool for downloading KV cache training data from an S3-compatible remote store; supports selective download by layer, head, and data split, with completeness verification of the downloaded hierarchy.",
+      "tags": ["script", "data-pipeline", "utility", "entry-point"],
+      "complexity": "complex"
+    },
+    {
+      "id": "class:scripts/download_data.py:DataDownloader",
+      "type": "class",
+      "name": "DataDownloader",
+      "filePath": "scripts/download_data.py",
+      "lineRange": [61, 522],
+      "summary": "Orchestrates selective AWS S3 data downloads for KV cache training datasets; handles pattern-based inclusion, split-based sample filtering, and hierarchical completeness verification.",
+      "tags": ["data-pipeline", "utility", "aws", "service"],
+      "complexity": "complex"
+    },
+    {
+      "id": "file:scripts/orchestration/agent_registry.py",
+      "type": "file",
+      "name": "agent_registry.py",
+      "filePath": "scripts/orchestration/agent_registry.py",
+      "summary": "CLI commands for discovering and validating trained RL agent checkpoints stored in a remote S3 bucket, providing sweep inventory, per-agent discovery, and completeness validation against expected layer/head counts.",
+      "tags": ["script", "orchestration", "utility", "cli"],
+      "complexity": "complex"
+    },
+    {
+      "id": "function:scripts/orchestration/agent_registry.py:list_sweeps",
+      "type": "function",
+      "name": "list_sweeps",
+      "filePath": "scripts/orchestration/agent_registry.py",
+      "lineRange": [28, 65],
+      "summary": "Typer CLI command that lists all training sweep names found in the configured S3 bucket group.",
+      "tags": ["cli", "orchestration", "utility"],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:scripts/orchestration/agent_registry.py:discover",
+      "type": "function",
+      "name": "discover",
+      "filePath": "scripts/orchestration/agent_registry.py",
+      "lineRange": [69, 110],
+      "summary": "Typer CLI command that discovers all agent checkpoints within a named sweep and prints a summary of what was found.",
+      "tags": ["cli", "orchestration", "utility"],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:scripts/orchestration/agent_registry.py:validate_sweep",
+      "type": "function",
+      "name": "validate_sweep",
+      "filePath": "scripts/orchestration/agent_registry.py",
+      "lineRange": [114, 292],
+      "summary": "Typer CLI command that validates a completed sweep by checking that all expected (layer, head) agent checkpoints are present and not corrupted, reporting missing or incomplete entries.",
+      "tags": ["cli", "validation", "orchestration", "quality-assurance"],
+      "complexity": "complex"
+    },
+    {
+      "id": "file:scripts/orchestration/assignment_generator.py",
+      "type": "file",
+      "name": "assignment_generator.py",
+      "filePath": "scripts/orchestration/assignment_generator.py",
+      "summary": "CLI tool that generates composite YAML assignment files for parallel RL agent training jobs, mapping sweep names to specific (layer, head) pairs and validating availability of required checkpoints.",
+      "tags": ["script", "orchestration", "cli", "training"],
+      "complexity": "complex"
+    },
+    {
+      "id": "function:scripts/orchestration/assignment_generator.py:write_composites",
+      "type": "function",
+      "name": "write_composites",
+      "filePath": "scripts/orchestration/assignment_generator.py",
+      "lineRange": [74, 198],
+      "summary": "Typer CLI command that writes composite job assignment YAML files for a set of sweep names, layers, and heads; validates agent registry completeness before emitting the assignment files.",
+      "tags": ["cli", "orchestration", "code-generation", "training"],
+      "complexity": "complex"
+    },
+    {
+      "id": "file:src/kvcompression/cli_logging.py",
+      "type": "file",
+      "name": "cli_logging.py",
+      "filePath": "src/kvcompression/cli_logging.py",
+      "summary": "Configures Rich-based logging for the kvcompression CLI, providing a custom handler that prints colorized log records to stdout and a setup function that wires it into the root logger.",
+      "tags": ["utility", "logging", "cli", "infrastructure"],
+      "complexity": "simple"
+    },
+    {
+      "id": "class:src/kvcompression/cli_logging.py:CLIRichHandler",
+      "type": "class",
+      "name": "CLIRichHandler",
+      "filePath": "src/kvcompression/cli_logging.py",
+      "lineRange": [14, 27],
+      "summary": "Custom logging.Handler subclass that uses a Rich Console to emit formatted log records with color and markup to the terminal.",
+      "tags": ["utility", "logging", "cli"],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/kvcompression/cli_logging.py:setup_cli_logging",
+      "type": "function",
+      "name": "setup_cli_logging",
+      "filePath": "src/kvcompression/cli_logging.py",
+      "lineRange": [30, 43],
+      "summary": "Installs the CLIRichHandler on the root logger and sets the logging level, replacing any previously registered handlers.",
+      "tags": ["utility", "logging", "setup"],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:src/kvcompression/data/__init__.py",
+      "type": "file",
+      "name": "__init__.py",
+      "filePath": "src/kvcompression/data/__init__.py",
+      "summary": "Package initializer for the kvcompression data module, marking it as a Python package and providing the public surface for data loading and processing components.",
+      "tags": ["barrel", "entry-point", "package"],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:src/kvcompression/entrypoints/__init__.py",
+      "type": "file",
+      "name": "__init__.py",
+      "filePath": "src/kvcompression/entrypoints/__init__.py",
+      "summary": "Package initializer for the kvcompression entrypoints module, marking it as a Python package that contains CLI and script entry points.",
+      "tags": ["barrel", "entry-point", "package"],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:src/kvcompression/entrypoints/datagen/__init__.py",
+      "type": "file",
+      "name": "__init__.py",
+      "filePath": "src/kvcompression/entrypoints/datagen/__init__.py",
+      "summary": "Package initializer for the data generation entrypoints sub-module, exposing CLI commands for dataset preprocessing and KV cache generation.",
+      "tags": ["barrel", "entry-point", "data-pipeline"],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:src/kvcompression/entrypoints/rl/__init__.py",
+      "type": "file",
+      "name": "__init__.py",
+      "filePath": "src/kvcompression/entrypoints/rl/__init__.py",
+      "summary": "Package initializer for the RL training entrypoints sub-module, exposing CLI commands for agent training and evaluation.",
+      "tags": ["barrel", "entry-point", "rl"],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:src/kvcompression/hooks/__init__.py",
+      "type": "file",
+      "name": "__init__.py",
+      "filePath": "src/kvcompression/hooks/__init__.py",
+      "summary": "Package initializer for the kvcompression hooks module, marking it as a Python package for transformer attention hook implementations.",
+      "tags": ["barrel", "entry-point", "package"],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:src/kvcompression/presses/__init__.py",
+      "type": "file",
+      "name": "__init__.py",
+      "filePath": "src/kvcompression/presses/__init__.py",
+      "summary": "Package initializer for the kvcompression presses module, marking it as a Python package for KV cache eviction policy implementations.",
+      "tags": ["barrel", "entry-point", "package"],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:src/kvcompression/rl/__init__.py",
+      "type": "file",
+      "name": "__init__.py",
+      "filePath": "src/kvcompression/rl/__init__.py",
+      "summary": "Package initializer for the kvcompression rl module, marking it as a Python package containing agents, environments, rewards, and trainers for RL-based KV cache compression.",
+      "tags": ["barrel", "entry-point", "rl"],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:src/kvcompression/rl/agents/__init__.py",
+      "type": "file",
+      "name": "__init__.py",
+      "filePath": "src/kvcompression/rl/agents/__init__.py",
+      "summary": "Package initializer for the RL agents sub-module, exposing the policy network implementations used to score and rank KV cache entries.",
+      "tags": ["barrel", "entry-point", "rl", "agent"],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:src/kvcompression/rl/environments/__init__.py",
+      "type": "file",
+      "name": "__init__.py",
+      "filePath": "src/kvcompression/rl/environments/__init__.py",
+      "summary": "Package initializer for the RL environments sub-module, exposing the KV cache eviction environment used to generate rollouts during agent training.",
+      "tags": ["barrel", "entry-point", "rl", "environment"],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:src/kvcompression/rl/rewards/__init__.py",
+      "type": "file",
+      "name": "__init__.py",
+      "filePath": "src/kvcompression/rl/rewards/__init__.py",
+      "summary": "Package initializer for the RL rewards sub-module, exposing reward function implementations that evaluate the quality of KV cache eviction decisions.",
+      "tags": ["barrel", "entry-point", "rl", "reward"],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:src/kvcompression/rl/trainers/__init__.py",
+      "type": "file",
+      "name": "__init__.py",
+      "filePath": "src/kvcompression/rl/trainers/__init__.py",
+      "summary": "Package initializer for the RL trainers sub-module, exposing the training loop and loss computation utilities for the KV eviction agents.",
+      "tags": ["barrel", "entry-point", "rl", "training"],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:src/kvcompression/rl/trainers/policy_entropy_loss.py",
+      "type": "file",
+      "name": "policy_entropy_loss.py",
+      "filePath": "src/kvcompression/rl/trainers/policy_entropy_loss.py",
+      "summary": "Implements the REINFORCE policy gradient loss with entropy regularization for KV cache eviction agents; reconstructs valid action masks from episode history and computes policy and entropy losses over valid episode steps.",
+      "tags": ["rl", "training", "loss-function", "policy-gradient"],
+      "complexity": "complex",
+      "languageNotes": "Uses masked Categorical distributions to correctly handle variable-length KV sequences and the progressive shrinking of the valid action set as entries are evicted."
+    },
+    {
+      "id": "function:src/kvcompression/rl/trainers/policy_entropy_loss.py:compute_policy_entropy_loss",
+      "type": "function",
+      "name": "compute_policy_entropy_loss",
+      "filePath": "src/kvcompression/rl/trainers/policy_entropy_loss.py",
+      "lineRange": [11, 100],
+      "summary": "Computes the REINFORCE policy gradient loss with entropy bonus by reconstructing per-step action masks from episode trajectories, applying masked Categorical distributions, and returning total, entropy, policy, and average entropy losses.",
+      "tags": ["rl", "loss-function", "policy-gradient", "entropy-regularization"],
+      "complexity": "complex"
+    }
+  ],
+  "edges": [
+    {
+      "source": "file:scripts/download_data.py",
+      "target": "class:scripts/download_data.py:DataDownloader",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:scripts/download_data.py",
+      "target": "class:scripts/download_data.py:DataDownloader",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:scripts/orchestration/agent_registry.py",
+      "target": "function:scripts/orchestration/agent_registry.py:list_sweeps",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:scripts/orchestration/agent_registry.py",
+      "target": "function:scripts/orchestration/agent_registry.py:discover",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:scripts/orchestration/agent_registry.py",
+      "target": "function:scripts/orchestration/agent_registry.py:validate_sweep",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:scripts/orchestration/agent_registry.py",
+      "target": "function:scripts/orchestration/agent_registry.py:list_sweeps",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:scripts/orchestration/agent_registry.py",
+      "target": "function:scripts/orchestration/agent_registry.py:discover",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:scripts/orchestration/agent_registry.py",
+      "target": "function:scripts/orchestration/agent_registry.py:validate_sweep",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:scripts/orchestration/assignment_generator.py",
+      "target": "function:scripts/orchestration/assignment_generator.py:write_composites",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:scripts/orchestration/assignment_generator.py",
+      "target": "function:scripts/orchestration/assignment_generator.py:write_composites",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/kvcompression/cli_logging.py",
+      "target": "class:src/kvcompression/cli_logging.py:CLIRichHandler",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/kvcompression/cli_logging.py",
+      "target": "function:src/kvcompression/cli_logging.py:setup_cli_logging",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/kvcompression/cli_logging.py",
+      "target": "class:src/kvcompression/cli_logging.py:CLIRichHandler",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/kvcompression/cli_logging.py",
+      "target": "function:src/kvcompression/cli_logging.py:setup_cli_logging",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/kvcompression/rl/trainers/policy_entropy_loss.py",
+      "target": "function:src/kvcompression/rl/trainers/policy_entropy_loss.py:compute_policy_entropy_loss",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/kvcompression/rl/trainers/policy_entropy_loss.py",
+      "target": "function:src/kvcompression/rl/trainers/policy_entropy_loss.py:compute_policy_entropy_loss",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:configs/setups/agent_training_setup.sh",
+      "target": "file:scripts/download_data.py",
+      "type": "depends_on",
+      "direction": "forward",
+      "weight": 0.6
+    },
+    {
+      "source": "file:configs/setups/agent_training_setup.sh",
+      "target": "config:configs/train_single_head.yaml",
+      "type": "related",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "file:scripts/orchestration/assignment_generator.py",
+      "target": "file:scripts/orchestration/agent_registry.py",
+      "type": "depends_on",
+      "direction": "forward",
+      "weight": 0.6
+    },
+    {
+      "source": "document:assets/ruler_split/train.txt",
+      "target": "config:configs/preprocess_ruler.yaml",
+      "type": "related",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "document:assets/ruler_split/val.txt",
+      "target": "config:configs/preprocess_ruler.yaml",
+      "type": "related",
+      "direction": "forward",
+      "weight": 0.5
+    }
+  ]
+}

@@ -1,0 +1,19 @@
+{
+  "projectRoot": "/Users/alexanderbodner/Documents/Udesa/5to/aprendizaje reforzado/tp final/ml-learning-to-evict",
+  "batchFiles": [
+    {"path": ".env.template", "language": "config", "sizeLines": 29, "fileCategory": "config"},
+    {"path": ".pre-commit-config.yaml", "language": "yaml", "sizeLines": 18, "fileCategory": "config"},
+    {"path": "CODE_OF_CONDUCT.md", "language": "markdown", "sizeLines": 70, "fileCategory": "docs"},
+    {"path": "CONTRIBUTING.md", "language": "markdown", "sizeLines": 7, "fileCategory": "docs"},
+    {"path": "README.md", "language": "markdown", "sizeLines": 106, "fileCategory": "docs"},
+    {"path": "pyproject.toml", "language": "toml", "sizeLines": 79, "fileCategory": "config"}
+  ],
+  "batchImportData": {
+    ".env.template": [],
+    ".pre-commit-config.yaml": [],
+    "CODE_OF_CONDUCT.md": [],
+    "CONTRIBUTING.md": [],
+    "README.md": [],
+    "pyproject.toml": []
+  }
+}

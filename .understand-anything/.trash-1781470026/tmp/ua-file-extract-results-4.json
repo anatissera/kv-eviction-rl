@@ -1,0 +1,1522 @@
+{
+  "scriptCompleted": true,
+  "filesAnalyzed": 7,
+  "filesSkipped": [],
+  "results": [
+    {
+      "path": "src/kvcompression/presses/base_press.py",
+      "language": "python",
+      "fileCategory": "code",
+      "totalLines": 72,
+      "nonEmptyLines": 61,
+      "classes": [
+        {
+          "name": "BasePress",
+          "startLine": 13,
+          "endLine": 72,
+          "methods": [
+            "sort",
+            "forward",
+            "requires_attention_weights",
+            "supports_gqa"
+          ],
+          "properties": []
+        }
+      ],
+      "exports": [
+        {
+          "name": "BasePress",
+          "line": 13,
+          "isDefault": false
+        }
+      ],
+      "callGraph": [
+        {
+          "caller": "sort",
+          "callee": "NotImplementedError",
+          "lineNumber": 45
+        },
+        {
+          "caller": "forward",
+          "callee": "self.sort",
+          "lineNumber": 55
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 1,
+        "functionCount": 0,
+        "classCount": 1
+      }
+    },
+    {
+      "path": "src/kvcompression/presses/random_press.py",
+      "language": "python",
+      "fileCategory": "code",
+      "totalLines": 23,
+      "nonEmptyLines": 18,
+      "classes": [
+        {
+          "name": "RandomPress",
+          "startLine": 11,
+          "endLine": 23,
+          "methods": [
+            "sort"
+          ],
+          "properties": []
+        }
+      ],
+      "exports": [
+        {
+          "name": "RandomPress",
+          "line": 11,
+          "isDefault": false
+        }
+      ],
+      "callGraph": [
+        {
+          "caller": "sort",
+          "callee": "torch.rand",
+          "lineNumber": 22
+        },
+        {
+          "caller": "sort",
+          "callee": "scores.argsort",
+          "lineNumber": 23
+        }
+      ],
+      "metrics": {
+        "importCount": 1,
+        "exportCount": 1,
+        "functionCount": 0,
+        "classCount": 1
+      }
+    },
+    {
+      "path": "src/kvcompression/presses/sampler_agent_press.py",
+      "language": "python",
+      "fileCategory": "code",
+      "totalLines": 342,
+      "nonEmptyLines": 294,
+      "classes": [
+        {
+          "name": "SamplerAgentPress",
+          "startLine": 30,
+          "endLine": 342,
+          "methods": [
+            "__init__",
+            "_find_latest_remote_resume_ckpt",
+            "_find_checkpoint_path",
+            "requires_attention_weights",
+            "_apply_sink_and_window",
+            "sort",
+            "supports_gqa"
+          ],
+          "properties": []
+        }
+      ],
+      "exports": [
+        {
+          "name": "SamplerAgentPress",
+          "line": 30,
+          "isDefault": false
+        }
+      ],
+      "callGraph": [
+        {
+          "caller": "__init__",
+          "callee": "super().__init__",
+          "lineNumber": 71
+        },
+        {
+          "caller": "__init__",
+          "callee": "super",
+          "lineNumber": 71
+        },
+        {
+          "caller": "__init__",
+          "callee": "utils.get_world_size_and_rank",
+          "lineNumber": 72
+        },
+        {
+          "caller": "__init__",
+          "callee": "ValueError",
+          "lineNumber": 75
+        },
+        {
+          "caller": "__init__",
+          "callee": "Path",
+          "lineNumber": 79
+        },
+        {
+          "caller": "__init__",
+          "callee": "Path",
+          "lineNumber": 82
+        },
+        {
+          "caller": "__init__",
+          "callee": "ckpt_path.exists",
+          "lineNumber": 83
+        },
+        {
+          "caller": "__init__",
+          "callee": "ValueError",
+          "lineNumber": 84
+        },
+        {
+          "caller": "__init__",
+          "callee": "EnvironmentError",
+          "lineNumber": 87
+        },
+        {
+          "caller": "__init__",
+          "callee": "self._find_checkpoint_path",
+          "lineNumber": 91
+        },
+        {
+          "caller": "__init__",
+          "callee": "ckpt_path.exists",
+          "lineNumber": 99
+        },
+        {
+          "caller": "__init__",
+          "callee": "log_rank_zero",
+          "lineNumber": 101
+        },
+        {
+          "caller": "__init__",
+          "callee": "download_file",
+          "lineNumber": 106
+        },
+        {
+          "caller": "__init__",
+          "callee": "log_rank_zero",
+          "lineNumber": 111
+        },
+        {
+          "caller": "__init__",
+          "callee": "dist.is_initialized",
+          "lineNumber": 116
+        },
+        {
+          "caller": "__init__",
+          "callee": "dist.barrier",
+          "lineNumber": 117
+        },
+        {
+          "caller": "__init__",
+          "callee": "instantiate_agent_from_ckpt",
+          "lineNumber": 119
+        },
+        {
+          "caller": "__init__",
+          "callee": "ValueError",
+          "lineNumber": 123
+        },
+        {
+          "caller": "_find_latest_remote_resume_ckpt",
+          "callee": "f.endswith",
+          "lineNumber": 131
+        },
+        {
+          "caller": "_find_latest_remote_resume_ckpt",
+          "callee": "resume_checkpoints.sort",
+          "lineNumber": 137
+        },
+        {
+          "caller": "_find_latest_remote_resume_ckpt",
+          "callee": "int",
+          "lineNumber": 137
+        },
+        {
+          "caller": "_find_latest_remote_resume_ckpt",
+          "callee": "Path",
+          "lineNumber": 137
+        },
+        {
+          "caller": "_find_checkpoint_path",
+          "callee": "get_s3_filesystem",
+          "lineNumber": 162
+        },
+        {
+          "caller": "_find_checkpoint_path",
+          "callee": "ls_remote_folder",
+          "lineNumber": 166
+        },
+        {
+          "caller": "_find_checkpoint_path",
+          "callee": "IOError",
+          "lineNumber": 168
+        },
+        {
+          "caller": "_find_checkpoint_path",
+          "callee": "self._find_latest_remote_resume_ckpt",
+          "lineNumber": 175
+        },
+        {
+          "caller": "_find_checkpoint_path",
+          "callee": "FileNotFoundError",
+          "lineNumber": 182
+        },
+        {
+          "caller": "_find_checkpoint_path",
+          "callee": "FileNotFoundError",
+          "lineNumber": 189
+        },
+        {
+          "caller": "_find_checkpoint_path",
+          "callee": "log_rank_zero",
+          "lineNumber": 196
+        },
+        {
+          "caller": "_find_checkpoint_path",
+          "callee": "Path",
+          "lineNumber": 199
+        },
+        {
+          "caller": "_find_checkpoint_path",
+          "callee": "FileNotFoundError",
+          "lineNumber": 203
+        },
+        {
+          "caller": "_find_checkpoint_path",
+          "callee": "Path(target_remote_path).relative_to",
+          "lineNumber": 208
+        },
+        {
+          "caller": "_find_checkpoint_path",
+          "callee": "Path",
+          "lineNumber": 208
+        },
+        {
+          "caller": "requires_attention_weights",
+          "callee": "self.agent.requires_attention_weights",
+          "lineNumber": 212
+        },
+        {
+          "caller": "_apply_sink_and_window",
+          "callee": "min",
+          "lineNumber": 235
+        },
+        {
+          "caller": "_apply_sink_and_window",
+          "callee": "min",
+          "lineNumber": 236
+        },
+        {
+          "caller": "_apply_sink_and_window",
+          "callee": "torch.arange",
+          "lineNumber": 237
+        },
+        {
+          "caller": "_apply_sink_and_window",
+          "callee": "max",
+          "lineNumber": 238
+        },
+        {
+          "caller": "_apply_sink_and_window",
+          "callee": "torch.arange",
+          "lineNumber": 239
+        },
+        {
+          "caller": "_apply_sink_and_window",
+          "callee": "torch.cat",
+          "lineNumber": 240
+        },
+        {
+          "caller": "_apply_sink_and_window",
+          "callee": "kv_ranking.argsort",
+          "lineNumber": 243
+        },
+        {
+          "caller": "_apply_sink_and_window",
+          "callee": "torch.argsort",
+          "lineNumber": 252
+        },
+        {
+          "caller": "sort",
+          "callee": "queries.view",
+          "lineNumber": 289
+        },
+        {
+          "caller": "sort",
+          "callee": "queries.view",
+          "lineNumber": 301
+        },
+        {
+          "caller": "sort",
+          "callee": "NotImplementedError",
+          "lineNumber": 305
+        },
+        {
+          "caller": "sort",
+          "callee": "queries.unsqueeze",
+          "lineNumber": 310
+        },
+        {
+          "caller": "sort",
+          "callee": "self.agent",
+          "lineNumber": 312
+        },
+        {
+          "caller": "sort",
+          "callee": "hidden_states.view",
+          "lineNumber": 314
+        },
+        {
+          "caller": "sort",
+          "callee": "keys.view",
+          "lineNumber": 319
+        },
+        {
+          "caller": "sort",
+          "callee": "values.view",
+          "lineNumber": 322
+        },
+        {
+          "caller": "sort",
+          "callee": "grouped_queries.view",
+          "lineNumber": 325
+        },
+        {
+          "caller": "sort",
+          "callee": "torch.tensor([seq_len], device=keys.device).expand",
+          "lineNumber": 328
+        },
+        {
+          "caller": "sort",
+          "callee": "torch.tensor",
+          "lineNumber": 328
+        },
+        {
+          "caller": "sort",
+          "callee": "scores.argsort",
+          "lineNumber": 334
+        },
+        {
+          "caller": "sort",
+          "callee": "self._apply_sink_and_window",
+          "lineNumber": 337
+        },
+        {
+          "caller": "sort",
+          "callee": "kv_ranking.view",
+          "lineNumber": 339
+        },
+        {
+          "caller": "supports_gqa",
+          "callee": "self.agent.supports_gqa",
+          "lineNumber": 342
+        }
+      ],
+      "metrics": {
+        "importCount": 4,
+        "exportCount": 1,
+        "functionCount": 0,
+        "classCount": 1
+      }
+    },
+    {
+      "path": "src/kvcompression/tools/__init__.py",
+      "language": "python",
+      "fileCategory": "code",
+      "totalLines": 18,
+      "nonEmptyLines": 15,
+      "metrics": {
+        "importCount": 2,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0
+      }
+    },
+    {
+      "path": "src/kvcompression/tools/agent_registry.py",
+      "language": "python",
+      "fileCategory": "code",
+      "totalLines": 286,
+      "nonEmptyLines": 235,
+      "classes": [
+        {
+          "name": "AgentRegistry",
+          "startLine": 21,
+          "endLine": 286,
+          "methods": [
+            "__init__",
+            "list_sweeps",
+            "discover_agent",
+            "resolve_checkpoint_path",
+            "_find_latest_resume_checkpoint_remote",
+            "validate_agent_checkpoint",
+            "discover_all_agents",
+            "print_discovery_summary"
+          ],
+          "properties": []
+        }
+      ],
+      "exports": [
+        {
+          "name": "AgentRegistry",
+          "line": 21,
+          "isDefault": false
+        }
+      ],
+      "callGraph": [
+        {
+          "caller": "__init__",
+          "callee": "get_s3_filesystem",
+          "lineNumber": 30
+        },
+        {
+          "caller": "list_sweeps",
+          "callee": "ls_remote_folder",
+          "lineNumber": 36
+        },
+        {
+          "caller": "list_sweeps",
+          "callee": "sorted",
+          "lineNumber": 37
+        },
+        {
+          "caller": "list_sweeps",
+          "callee": "set",
+          "lineNumber": 37
+        },
+        {
+          "caller": "list_sweeps",
+          "callee": "item[len(group_path) :].split",
+          "lineNumber": 37
+        },
+        {
+          "caller": "list_sweeps",
+          "callee": "len",
+          "lineNumber": 37
+        },
+        {
+          "caller": "list_sweeps",
+          "callee": "logger.error",
+          "lineNumber": 39
+        },
+        {
+          "caller": "discover_agent",
+          "callee": "ls_remote_folder",
+          "lineNumber": 54
+        },
+        {
+          "caller": "discover_agent",
+          "callee": "FileNotFoundError",
+          "lineNumber": 56
+        },
+        {
+          "caller": "discover_agent",
+          "callee": "item.rstrip(\"/\").split",
+          "lineNumber": 60
+        },
+        {
+          "caller": "discover_agent",
+          "callee": "item.rstrip",
+          "lineNumber": 60
+        },
+        {
+          "caller": "discover_agent",
+          "callee": "item.endswith",
+          "lineNumber": 62
+        },
+        {
+          "caller": "discover_agent",
+          "callee": "item.endswith",
+          "lineNumber": 62
+        },
+        {
+          "caller": "discover_agent",
+          "callee": "FileNotFoundError",
+          "lineNumber": 66
+        },
+        {
+          "caller": "discover_agent",
+          "callee": "len",
+          "lineNumber": 68
+        },
+        {
+          "caller": "discover_agent",
+          "callee": "ValueError",
+          "lineNumber": 70
+        },
+        {
+          "caller": "discover_agent",
+          "callee": "agent_dirs.sort",
+          "lineNumber": 75
+        },
+        {
+          "caller": "discover_agent",
+          "callee": "logger.warning",
+          "lineNumber": 77
+        },
+        {
+          "caller": "resolve_checkpoint_path",
+          "callee": "self.fs.exists",
+          "lineNumber": 100
+        },
+        {
+          "caller": "resolve_checkpoint_path",
+          "callee": "self._find_latest_resume_checkpoint_remote",
+          "lineNumber": 106
+        },
+        {
+          "caller": "resolve_checkpoint_path",
+          "callee": "FileNotFoundError",
+          "lineNumber": 110
+        },
+        {
+          "caller": "_find_latest_resume_checkpoint_remote",
+          "callee": "ls_remote_folder",
+          "lineNumber": 123
+        },
+        {
+          "caller": "_find_latest_resume_checkpoint_remote",
+          "callee": "f.endswith",
+          "lineNumber": 127
+        },
+        {
+          "caller": "_find_latest_resume_checkpoint_remote",
+          "callee": "resume_checkpoints.sort",
+          "lineNumber": 132
+        },
+        {
+          "caller": "_find_latest_resume_checkpoint_remote",
+          "callee": "int",
+          "lineNumber": 132
+        },
+        {
+          "caller": "_find_latest_resume_checkpoint_remote",
+          "callee": "Path",
+          "lineNumber": 132
+        },
+        {
+          "caller": "_find_latest_resume_checkpoint_remote",
+          "callee": "Path",
+          "lineNumber": 136
+        },
+        {
+          "caller": "validate_agent_checkpoint",
+          "callee": "self.resolve_checkpoint_path",
+          "lineNumber": 149
+        },
+        {
+          "caller": "discover_all_agents",
+          "callee": "ls_remote_folder",
+          "lineNumber": 167
+        },
+        {
+          "caller": "discover_all_agents",
+          "callee": "logger.error",
+          "lineNumber": 169
+        },
+        {
+          "caller": "discover_all_agents",
+          "callee": "set",
+          "lineNumber": 173
+        },
+        {
+          "caller": "discover_all_agents",
+          "callee": "len",
+          "lineNumber": 175
+        },
+        {
+          "caller": "discover_all_agents",
+          "callee": "len",
+          "lineNumber": 175
+        },
+        {
+          "caller": "discover_all_agents",
+          "callee": "len",
+          "lineNumber": 176
+        },
+        {
+          "caller": "discover_all_agents",
+          "callee": "relative_path.split",
+          "lineNumber": 177
+        },
+        {
+          "caller": "discover_all_agents",
+          "callee": "len",
+          "lineNumber": 180
+        },
+        {
+          "caller": "discover_all_agents",
+          "callee": "layer_folder.startswith",
+          "lineNumber": 186
+        },
+        {
+          "caller": "discover_all_agents",
+          "callee": "head_folder.startswith",
+          "lineNumber": 190
+        },
+        {
+          "caller": "discover_all_agents",
+          "callee": "path_tuples.add",
+          "lineNumber": 197
+        },
+        {
+          "caller": "discover_all_agents",
+          "callee": "sorted",
+          "lineNumber": 199
+        },
+        {
+          "caller": "discover_all_agents",
+          "callee": "layer_head_agents[key].append",
+          "lineNumber": 210
+        },
+        {
+          "caller": "discover_all_agents",
+          "callee": "layer_head_agents.items",
+          "lineNumber": 213
+        },
+        {
+          "caller": "discover_all_agents",
+          "callee": "len",
+          "lineNumber": 215
+        },
+        {
+          "caller": "discover_all_agents",
+          "callee": "int",
+          "lineNumber": 216
+        },
+        {
+          "caller": "discover_all_agents",
+          "callee": "layer_folder.split",
+          "lineNumber": 216
+        },
+        {
+          "caller": "discover_all_agents",
+          "callee": "int",
+          "lineNumber": 217
+        },
+        {
+          "caller": "discover_all_agents",
+          "callee": "head_folder.split",
+          "lineNumber": 217
+        },
+        {
+          "caller": "discover_all_agents",
+          "callee": "ValueError",
+          "lineNumber": 218
+        },
+        {
+          "caller": "discover_all_agents",
+          "callee": "agent_ids.sort",
+          "lineNumber": 224
+        },
+        {
+          "caller": "discover_all_agents",
+          "callee": "self.validate_agent_checkpoint",
+          "lineNumber": 228
+        },
+        {
+          "caller": "discover_all_agents",
+          "callee": "logger.warning",
+          "lineNumber": 233
+        },
+        {
+          "caller": "print_discovery_summary",
+          "callee": "logger.info",
+          "lineNumber": 247
+        },
+        {
+          "caller": "print_discovery_summary",
+          "callee": "agents.items",
+          "lineNumber": 253
+        },
+        {
+          "caller": "print_discovery_summary",
+          "callee": "int",
+          "lineNumber": 254
+        },
+        {
+          "caller": "print_discovery_summary",
+          "callee": "layer_folder.split",
+          "lineNumber": 254
+        },
+        {
+          "caller": "print_discovery_summary",
+          "callee": "int",
+          "lineNumber": 255
+        },
+        {
+          "caller": "print_discovery_summary",
+          "callee": "head_folder.split",
+          "lineNumber": 255
+        },
+        {
+          "caller": "print_discovery_summary",
+          "callee": "layers[layer_num].append",
+          "lineNumber": 260
+        },
+        {
+          "caller": "print_discovery_summary",
+          "callee": "logger.info",
+          "lineNumber": 263
+        },
+        {
+          "caller": "print_discovery_summary",
+          "callee": "len",
+          "lineNumber": 263
+        },
+        {
+          "caller": "print_discovery_summary",
+          "callee": "sorted",
+          "lineNumber": 264
+        },
+        {
+          "caller": "print_discovery_summary",
+          "callee": "layers.keys",
+          "lineNumber": 264
+        },
+        {
+          "caller": "print_discovery_summary",
+          "callee": "sorted",
+          "lineNumber": 265
+        },
+        {
+          "caller": "print_discovery_summary",
+          "callee": "\",\".join",
+          "lineNumber": 266
+        },
+        {
+          "caller": "print_discovery_summary",
+          "callee": "map",
+          "lineNumber": 266
+        },
+        {
+          "caller": "print_discovery_summary",
+          "callee": "list",
+          "lineNumber": 269
+        },
+        {
+          "caller": "print_discovery_summary",
+          "callee": "range",
+          "lineNumber": 269
+        },
+        {
+          "caller": "print_discovery_summary",
+          "callee": "len",
+          "lineNumber": 274
+        },
+        {
+          "caller": "print_discovery_summary",
+          "callee": "\"\".join",
+          "lineNumber": 276
+        },
+        {
+          "caller": "print_discovery_summary",
+          "callee": "\",\".join",
+          "lineNumber": 277
+        },
+        {
+          "caller": "print_discovery_summary",
+          "callee": "map",
+          "lineNumber": 277
+        },
+        {
+          "caller": "print_discovery_summary",
+          "callee": "len",
+          "lineNumber": 278
+        },
+        {
+          "caller": "print_discovery_summary",
+          "callee": "logger.info",
+          "lineNumber": 280
+        },
+        {
+          "caller": "print_discovery_summary",
+          "callee": "sorted",
+          "lineNumber": 284
+        },
+        {
+          "caller": "print_discovery_summary",
+          "callee": "logger.info",
+          "lineNumber": 286
+        }
+      ],
+      "metrics": {
+        "importCount": 1,
+        "exportCount": 1,
+        "functionCount": 0,
+        "classCount": 1
+      }
+    },
+    {
+      "path": "src/kvcompression/tools/assignment_generator.py",
+      "language": "python",
+      "fileCategory": "code",
+      "totalLines": 205,
+      "nonEmptyLines": 170,
+      "functions": [
+        {
+          "name": "generate_composites",
+          "startLine": 24,
+          "endLine": 167,
+          "params": [
+            "group",
+            "sweep_name",
+            "bucket",
+            "registry",
+            "layers",
+            "heads",
+            "expected_nagents",
+            "strict_unique"
+          ]
+        },
+        {
+          "name": "write_composites_file",
+          "startLine": 170,
+          "endLine": 205,
+          "params": [
+            "group",
+            "sweep_name",
+            "bucket",
+            "registry",
+            "layers",
+            "heads",
+            "expected_nagents",
+            "output_dir",
+            "strict_unique"
+          ]
+        }
+      ],
+      "exports": [
+        {
+          "name": "generate_composites",
+          "line": 24,
+          "isDefault": false
+        },
+        {
+          "name": "write_composites_file",
+          "line": 170,
+          "isDefault": false
+        }
+      ],
+      "callGraph": [
+        {
+          "caller": "generate_composites",
+          "callee": "registry.discover_all_agents",
+          "lineNumber": 44
+        },
+        {
+          "caller": "generate_composites",
+          "callee": "len",
+          "lineNumber": 49
+        },
+        {
+          "caller": "generate_composites",
+          "callee": "ValueError",
+          "lineNumber": 50
+        },
+        {
+          "caller": "generate_composites",
+          "callee": "registry.print_discovery_summary",
+          "lineNumber": 55
+        },
+        {
+          "caller": "generate_composites",
+          "callee": "len",
+          "lineNumber": 59
+        },
+        {
+          "caller": "generate_composites",
+          "callee": "ValueError",
+          "lineNumber": 60
+        },
+        {
+          "caller": "generate_composites",
+          "callee": "len",
+          "lineNumber": 61
+        },
+        {
+          "caller": "generate_composites",
+          "callee": "discovered_agents.items",
+          "lineNumber": 66
+        },
+        {
+          "caller": "generate_composites",
+          "callee": "int",
+          "lineNumber": 68
+        },
+        {
+          "caller": "generate_composites",
+          "callee": "layer_folder.split",
+          "lineNumber": 68
+        },
+        {
+          "caller": "generate_composites",
+          "callee": "int",
+          "lineNumber": 69
+        },
+        {
+          "caller": "generate_composites",
+          "callee": "head_folder.split",
+          "lineNumber": 69
+        },
+        {
+          "caller": "generate_composites",
+          "callee": "registry.resolve_checkpoint_path",
+          "lineNumber": 77
+        },
+        {
+          "caller": "generate_composites",
+          "callee": "composites.append",
+          "lineNumber": 93
+        },
+        {
+          "caller": "generate_composites",
+          "callee": "registry.discover_all_agents",
+          "lineNumber": 98
+        },
+        {
+          "caller": "generate_composites",
+          "callee": "len",
+          "lineNumber": 103
+        },
+        {
+          "caller": "generate_composites",
+          "callee": "ValueError",
+          "lineNumber": 104
+        },
+        {
+          "caller": "generate_composites",
+          "callee": "all_discovered_agents.items",
+          "lineNumber": 119
+        },
+        {
+          "caller": "generate_composites",
+          "callee": "int",
+          "lineNumber": 120
+        },
+        {
+          "caller": "generate_composites",
+          "callee": "layer_folder.split",
+          "lineNumber": 120
+        },
+        {
+          "caller": "generate_composites",
+          "callee": "int",
+          "lineNumber": 121
+        },
+        {
+          "caller": "generate_composites",
+          "callee": "head_folder.split",
+          "lineNumber": 121
+        },
+        {
+          "caller": "generate_composites",
+          "callee": "missing_agents.append",
+          "lineNumber": 128
+        },
+        {
+          "caller": "generate_composites",
+          "callee": "registry.resolve_checkpoint_path",
+          "lineNumber": 139
+        },
+        {
+          "caller": "generate_composites",
+          "callee": "composites.append",
+          "lineNumber": 155
+        },
+        {
+          "caller": "generate_composites",
+          "callee": "logger.error",
+          "lineNumber": 158
+        },
+        {
+          "caller": "generate_composites",
+          "callee": "len",
+          "lineNumber": 159
+        },
+        {
+          "caller": "generate_composites",
+          "callee": "logger.error",
+          "lineNumber": 162
+        },
+        {
+          "caller": "generate_composites",
+          "callee": "ValueError",
+          "lineNumber": 163
+        },
+        {
+          "caller": "generate_composites",
+          "callee": "len",
+          "lineNumber": 164
+        },
+        {
+          "caller": "generate_composites",
+          "callee": "sorted",
+          "lineNumber": 167
+        },
+        {
+          "caller": "write_composites_file",
+          "callee": "Path",
+          "lineNumber": 178
+        },
+        {
+          "caller": "write_composites_file",
+          "callee": "generate_composites",
+          "lineNumber": 182
+        },
+        {
+          "caller": "write_composites_file",
+          "callee": "config_composites_dir.mkdir",
+          "lineNumber": 195
+        },
+        {
+          "caller": "write_composites_file",
+          "callee": "open",
+          "lineNumber": 202
+        },
+        {
+          "caller": "write_composites_file",
+          "callee": "yaml.dump",
+          "lineNumber": 203
+        }
+      ],
+      "metrics": {
+        "importCount": 1,
+        "exportCount": 2,
+        "functionCount": 2,
+        "classCount": 0
+      }
+    },
+    {
+      "path": "src/kvcompression/utils/s3_utils.py",
+      "language": "python",
+      "fileCategory": "code",
+      "totalLines": 309,
+      "nonEmptyLines": 254,
+      "functions": [
+        {
+          "name": "get_s3_filesystem",
+          "startLine": 20,
+          "endLine": 46,
+          "params": []
+        },
+        {
+          "name": "upload_directory",
+          "startLine": 49,
+          "endLine": 117,
+          "params": [
+            "local_directory",
+            "remote_destination_path",
+            "fs"
+          ]
+        },
+        {
+          "name": "download_file",
+          "startLine": 120,
+          "endLine": 167,
+          "params": [
+            "remote_source_path",
+            "local_destination",
+            "fs"
+          ]
+        },
+        {
+          "name": "get_corresponding_remote_path",
+          "startLine": 170,
+          "endLine": 180,
+          "params": [
+            "path",
+            "local_root",
+            "remote_root"
+          ]
+        },
+        {
+          "name": "load_remote_json_secrets",
+          "startLine": 183,
+          "endLine": 295,
+          "params": [
+            "remote_secret_file",
+            "local_secret_file",
+            "rank"
+          ]
+        },
+        {
+          "name": "ls_remote_folder",
+          "startLine": 298,
+          "endLine": 309,
+          "params": [
+            "remote_source_path",
+            "fs"
+          ]
+        }
+      ],
+      "exports": [
+        {
+          "name": "get_s3_filesystem",
+          "line": 20,
+          "isDefault": false
+        },
+        {
+          "name": "upload_directory",
+          "line": 49,
+          "isDefault": false
+        },
+        {
+          "name": "download_file",
+          "line": 120,
+          "isDefault": false
+        },
+        {
+          "name": "get_corresponding_remote_path",
+          "line": 170,
+          "isDefault": false
+        },
+        {
+          "name": "load_remote_json_secrets",
+          "line": 183,
+          "isDefault": false
+        },
+        {
+          "name": "ls_remote_folder",
+          "line": 298,
+          "isDefault": false
+        }
+      ],
+      "callGraph": [
+        {
+          "caller": "get_s3_filesystem",
+          "callee": "os.environ.get",
+          "lineNumber": 33
+        },
+        {
+          "caller": "get_s3_filesystem",
+          "callee": "os.environ.get",
+          "lineNumber": 37
+        },
+        {
+          "caller": "get_s3_filesystem",
+          "callee": "os.environ.get(\"AWS_VERIFY_SSL\", \"true\").lower",
+          "lineNumber": 38
+        },
+        {
+          "caller": "get_s3_filesystem",
+          "callee": "os.environ.get",
+          "lineNumber": 38
+        },
+        {
+          "caller": "get_s3_filesystem",
+          "callee": "fsspec.filesystem",
+          "lineNumber": 46
+        },
+        {
+          "caller": "upload_directory",
+          "callee": "str",
+          "lineNumber": 84
+        },
+        {
+          "caller": "upload_directory",
+          "callee": "str",
+          "lineNumber": 85
+        },
+        {
+          "caller": "upload_directory",
+          "callee": "os.path.isdir",
+          "lineNumber": 87
+        },
+        {
+          "caller": "upload_directory",
+          "callee": "pylogger.warning",
+          "lineNumber": 88
+        },
+        {
+          "caller": "upload_directory",
+          "callee": "local_directory.rstrip",
+          "lineNumber": 94
+        },
+        {
+          "caller": "upload_directory",
+          "callee": "remote_destination_path.rstrip",
+          "lineNumber": 95
+        },
+        {
+          "caller": "upload_directory",
+          "callee": "get_s3_filesystem",
+          "lineNumber": 97
+        },
+        {
+          "caller": "upload_directory",
+          "callee": "pylogger.info",
+          "lineNumber": 99
+        },
+        {
+          "caller": "upload_directory",
+          "callee": "time.time",
+          "lineNumber": 102
+        },
+        {
+          "caller": "upload_directory",
+          "callee": "fs.put",
+          "lineNumber": 105
+        },
+        {
+          "caller": "upload_directory",
+          "callee": "time.time",
+          "lineNumber": 107
+        },
+        {
+          "caller": "upload_directory",
+          "callee": "pylogger.info",
+          "lineNumber": 109
+        },
+        {
+          "caller": "upload_directory",
+          "callee": "pylogger.error",
+          "lineNumber": 113
+        },
+        {
+          "caller": "download_file",
+          "callee": "str",
+          "lineNumber": 141
+        },
+        {
+          "caller": "download_file",
+          "callee": "str",
+          "lineNumber": 142
+        },
+        {
+          "caller": "download_file",
+          "callee": "get_s3_filesystem",
+          "lineNumber": 144
+        },
+        {
+          "caller": "download_file",
+          "callee": "remote_source_path.rstrip",
+          "lineNumber": 146
+        },
+        {
+          "caller": "download_file",
+          "callee": "local_destination.rstrip",
+          "lineNumber": 147
+        },
+        {
+          "caller": "download_file",
+          "callee": "pylogger.info",
+          "lineNumber": 149
+        },
+        {
+          "caller": "download_file",
+          "callee": "time.time",
+          "lineNumber": 153
+        },
+        {
+          "caller": "download_file",
+          "callee": "fs.get",
+          "lineNumber": 156
+        },
+        {
+          "caller": "download_file",
+          "callee": "time.time",
+          "lineNumber": 157
+        },
+        {
+          "caller": "download_file",
+          "callee": "pylogger.info",
+          "lineNumber": 159
+        },
+        {
+          "caller": "download_file",
+          "callee": "pylogger.error",
+          "lineNumber": 163
+        },
+        {
+          "caller": "get_corresponding_remote_path",
+          "callee": "Path(path).relative_to",
+          "lineNumber": 176
+        },
+        {
+          "caller": "get_corresponding_remote_path",
+          "callee": "Path",
+          "lineNumber": 176
+        },
+        {
+          "caller": "get_corresponding_remote_path",
+          "callee": "Path",
+          "lineNumber": 176
+        },
+        {
+          "caller": "get_corresponding_remote_path",
+          "callee": "str(remote_root).rstrip",
+          "lineNumber": 178
+        },
+        {
+          "caller": "get_corresponding_remote_path",
+          "callee": "str",
+          "lineNumber": 178
+        },
+        {
+          "caller": "get_corresponding_remote_path",
+          "callee": "str",
+          "lineNumber": 178
+        },
+        {
+          "caller": "load_remote_json_secrets",
+          "callee": "pylogger.info",
+          "lineNumber": 234
+        },
+        {
+          "caller": "load_remote_json_secrets",
+          "callee": "download_file",
+          "lineNumber": 238
+        },
+        {
+          "caller": "load_remote_json_secrets",
+          "callee": "pylogger.info",
+          "lineNumber": 242
+        },
+        {
+          "caller": "load_remote_json_secrets",
+          "callee": "pylogger.error",
+          "lineNumber": 244
+        },
+        {
+          "caller": "load_remote_json_secrets",
+          "callee": "dist.is_initialized",
+          "lineNumber": 250
+        },
+        {
+          "caller": "load_remote_json_secrets",
+          "callee": "dist.barrier",
+          "lineNumber": 251
+        },
+        {
+          "caller": "load_remote_json_secrets",
+          "callee": "pylogger.info",
+          "lineNumber": 253
+        },
+        {
+          "caller": "load_remote_json_secrets",
+          "callee": "Path(local_secret_file).open",
+          "lineNumber": 255
+        },
+        {
+          "caller": "load_remote_json_secrets",
+          "callee": "Path",
+          "lineNumber": 255
+        },
+        {
+          "caller": "load_remote_json_secrets",
+          "callee": "json.load",
+          "lineNumber": 256
+        },
+        {
+          "caller": "load_remote_json_secrets",
+          "callee": "pylogger.error",
+          "lineNumber": 258
+        },
+        {
+          "caller": "load_remote_json_secrets",
+          "callee": "pylogger.error",
+          "lineNumber": 263
+        },
+        {
+          "caller": "load_remote_json_secrets",
+          "callee": "secrets.get",
+          "lineNumber": 266
+        },
+        {
+          "caller": "load_remote_json_secrets",
+          "callee": "isinstance",
+          "lineNumber": 268
+        },
+        {
+          "caller": "load_remote_json_secrets",
+          "callee": "TypeError",
+          "lineNumber": 269
+        },
+        {
+          "caller": "load_remote_json_secrets",
+          "callee": "type",
+          "lineNumber": 271
+        },
+        {
+          "caller": "load_remote_json_secrets",
+          "callee": "environment_secrets.items",
+          "lineNumber": 276
+        },
+        {
+          "caller": "load_remote_json_secrets",
+          "callee": "str",
+          "lineNumber": 278
+        },
+        {
+          "caller": "load_remote_json_secrets",
+          "callee": "variables_set.append",
+          "lineNumber": 279
+        },
+        {
+          "caller": "load_remote_json_secrets",
+          "callee": "variables_skipped.append",
+          "lineNumber": 281
+        },
+        {
+          "caller": "load_remote_json_secrets",
+          "callee": "variables_set.sort",
+          "lineNumber": 284
+        },
+        {
+          "caller": "load_remote_json_secrets",
+          "callee": "pylogger.info",
+          "lineNumber": 285
+        },
+        {
+          "caller": "load_remote_json_secrets",
+          "callee": "pylogger.info",
+          "lineNumber": 287
+        },
+        {
+          "caller": "load_remote_json_secrets",
+          "callee": "variables_skipped.sort",
+          "lineNumber": 290
+        },
+        {
+          "caller": "load_remote_json_secrets",
+          "callee": "pylogger.info",
+          "lineNumber": 291
+        },
+        {
+          "caller": "load_remote_json_secrets",
+          "callee": "pylogger.info",
+          "lineNumber": 295
+        },
+        {
+          "caller": "ls_remote_folder",
+          "callee": "str",
+          "lineNumber": 302
+        },
+        {
+          "caller": "ls_remote_folder",
+          "callee": "get_s3_filesystem",
+          "lineNumber": 304
+        },
+        {
+          "caller": "ls_remote_folder",
+          "callee": "remote_source_path_str.rstrip",
+          "lineNumber": 307
+        },
+        {
+          "caller": "ls_remote_folder",
+          "callee": "current_fs.find",
+          "lineNumber": 308
+        },
+        {
+          "caller": "ls_remote_folder",
+          "callee": "sorted",
+          "lineNumber": 309
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 6,
+        "functionCount": 6,
+        "classCount": 0
+      }
+    }
+  ]
+}

@@ -1,0 +1,35 @@
+{
+  "projectRoot": "/Users/alexanderbodner/Documents/Udesa/5to/aprendizaje reforzado/tp final/ml-learning-to-evict",
+  "batchFiles": [
+    {"path": "src/kvcompression/rl/trainers/triton_policy_entropy_loss.py", "language": "python", "sizeLines": 639, "fileCategory": "code"},
+    {"path": "src/kvcompression/utils/__init__.py", "language": "python", "sizeLines": 12, "fileCategory": "code"},
+    {"path": "src/kvcompression/utils/generation.py", "language": "python", "sizeLines": 133, "fileCategory": "code"},
+    {"path": "src/kvcompression/utils/scheduler_factory.py", "language": "python", "sizeLines": 40, "fileCategory": "code"},
+    {"path": "tests/__init__.py", "language": "python", "sizeLines": 5, "fileCategory": "code"},
+    {"path": "tests/conftest.py", "language": "python", "sizeLines": 46, "fileCategory": "code"},
+    {"path": "tests/data/test_chunk_sampler.py", "language": "python", "sizeLines": 93, "fileCategory": "code"},
+    {"path": "tests/rl/test_compute_advantages.py", "language": "python", "sizeLines": 147, "fileCategory": "code"},
+    {"path": "tests/rl/test_masked_logprob_entropy.py", "language": "python", "sizeLines": 304, "fileCategory": "code"},
+    {"path": "tests/test_attention_utils.py", "language": "python", "sizeLines": 214, "fileCategory": "code"},
+    {"path": "tests/test_costs.py", "language": "python", "sizeLines": 234, "fileCategory": "code"},
+    {"path": "tests/test_kv_cache/test_compressible_kv_cache.py", "language": "python", "sizeLines": 720, "fileCategory": "code"},
+    {"path": "tests/test_kv_cache/test_flexattention_bfloat16.py", "language": "python", "sizeLines": 148, "fileCategory": "code"},
+    {"path": "tests/test_kv_cache/test_patched_attention.py", "language": "python", "sizeLines": 424, "fileCategory": "code"}
+  ],
+  "batchImportData": {
+    "src/kvcompression/rl/trainers/triton_policy_entropy_loss.py": [],
+    "src/kvcompression/utils/__init__.py": ["src/kvcompression/utils/generation.py"],
+    "src/kvcompression/utils/generation.py": [],
+    "src/kvcompression/utils/scheduler_factory.py": [],
+    "tests/__init__.py": [],
+    "tests/conftest.py": [],
+    "tests/data/test_chunk_sampler.py": [],
+    "tests/rl/test_compute_advantages.py": [],
+    "tests/rl/test_masked_logprob_entropy.py": [],
+    "tests/test_attention_utils.py": [],
+    "tests/test_costs.py": [],
+    "tests/test_kv_cache/test_compressible_kv_cache.py": [],
+    "tests/test_kv_cache/test_flexattention_bfloat16.py": [],
+    "tests/test_kv_cache/test_patched_attention.py": []
+  }
+}

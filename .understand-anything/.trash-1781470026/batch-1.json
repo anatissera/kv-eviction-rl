@@ -1,0 +1,461 @@
+{
+  "nodes": [
+    {
+      "id": "file:src/kvcompression/__init__.py",
+      "type": "file",
+      "name": "__init__.py",
+      "filePath": "src/kvcompression/__init__.py",
+      "summary": "Package initializer for the kvcompression library that sets up OmegaConf resolvers, loads environment variables via dotenv, and configures Hydra for distributed training entrypoints.",
+      "tags": ["entry-point", "configuration", "utility"],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/kvcompression/__init__.py:load_envs",
+      "type": "function",
+      "name": "load_envs",
+      "filePath": "src/kvcompression/__init__.py",
+      "lineRange": [29, 41],
+      "summary": "Loads environment variables from a .env file (or searches for one automatically) using python-dotenv.",
+      "tags": ["utility", "configuration"],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/kvcompression/__init__.py:format_resolver",
+      "type": "function",
+      "name": "format_resolver",
+      "filePath": "src/kvcompression/__init__.py",
+      "lineRange": [59, 64],
+      "summary": "OmegaConf custom resolver that applies Python format_spec string formatting to interpolated config values.",
+      "tags": ["utility", "configuration"],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:src/kvcompression/data/activations_dataset.py",
+      "type": "file",
+      "name": "activations_dataset.py",
+      "filePath": "src/kvcompression/data/activations_dataset.py",
+      "summary": "Defines QKVDataset, a PyTorch Dataset that loads pre-saved safetensors files containing per-layer query, key, and value activations along with attention metadata for RL agent training.",
+      "tags": ["data-model", "service", "utility"],
+      "complexity": "moderate"
+    },
+    {
+      "id": "class:src/kvcompression/data/activations_dataset.py:QKVDataset",
+      "type": "class",
+      "name": "QKVDataset",
+      "filePath": "src/kvcompression/data/activations_dataset.py",
+      "lineRange": [20, 189],
+      "summary": "PyTorch Dataset that discovers and loads QKV activation shards stored as safetensors files, supporting train/eval splits and returning per-item attention tensors with metadata.",
+      "tags": ["data-model", "service"],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:src/kvcompression/data/pad_collate.py",
+      "type": "file",
+      "name": "pad_collate.py",
+      "filePath": "src/kvcompression/data/pad_collate.py",
+      "summary": "Provides a DataLoader collate function that pads variable-length QKV tensors along the sequence dimension and assembles a batch-level attention mask for use in distributed training.",
+      "tags": ["utility", "data-model"],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/kvcompression/data/pad_collate.py:pad_collate_fn",
+      "type": "function",
+      "name": "pad_collate_fn",
+      "filePath": "src/kvcompression/data/pad_collate.py",
+      "lineRange": [36, 69],
+      "summary": "Collates a list of per-sample dicts into a padded batch, computing padding masks for both the full sequence length and the prompt-only prefix length.",
+      "tags": ["utility", "data-model"],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:src/kvcompression/entrypoints/rl/train_agent_sampler_distributed.py",
+      "type": "file",
+      "name": "train_agent_sampler_distributed.py",
+      "filePath": "src/kvcompression/entrypoints/rl/train_agent_sampler_distributed.py",
+      "summary": "Main distributed RL training entrypoint for the KVP sampler agent: orchestrates multi-GPU setup, data loading, RLOO trainer construction, checkpointing, evaluation, and S3 upload via the RLOOTrainingRecipeDistributed class.",
+      "tags": ["entry-point", "service", "api-handler"],
+      "complexity": "complex"
+    },
+    {
+      "id": "class:src/kvcompression/entrypoints/rl/train_agent_sampler_distributed.py:RLOOTrainingRecipeDistributed",
+      "type": "class",
+      "name": "RLOOTrainingRecipeDistributed",
+      "filePath": "src/kvcompression/entrypoints/rl/train_agent_sampler_distributed.py",
+      "lineRange": [42, 944],
+      "summary": "Encapsulates the full distributed RLOO training lifecycle: initializes distributed process groups, loads datasets and environments, sets up the agent model with optional EMA and DDP wrapping, drives the train-eval loop, saves checkpoints, plots results, and uploads artifacts.",
+      "tags": ["service", "entry-point", "factory"],
+      "complexity": "complex"
+    },
+    {
+      "id": "function:src/kvcompression/entrypoints/rl/train_agent_sampler_distributed.py:launch_training",
+      "type": "function",
+      "name": "launch_training",
+      "filePath": "src/kvcompression/entrypoints/rl/train_agent_sampler_distributed.py",
+      "lineRange": [947, 978],
+      "summary": "Bootstraps a RLOOTrainingRecipeDistributed instance and sequentially calls setup, train, plot_results, evaluate_best_model, upload, and cleanup with error-safe distributed barrier teardown.",
+      "tags": ["entry-point", "service"],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:src/kvcompression/entrypoints/rl/train_agent_sampler_distributed.py:main",
+      "type": "function",
+      "name": "main",
+      "filePath": "src/kvcompression/entrypoints/rl/train_agent_sampler_distributed.py",
+      "lineRange": [982, 985],
+      "summary": "Hydra-decorated entry function that invokes launch_training with the resolved OmegaConf config and finalizes the metrics manager.",
+      "tags": ["entry-point"],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:src/kvcompression/metrics/__init__.py",
+      "type": "file",
+      "name": "__init__.py",
+      "filePath": "src/kvcompression/metrics/__init__.py",
+      "summary": "Package initializer for the metrics subpackage that re-exports MetricsManager to make it accessible at the kvcompression.metrics namespace.",
+      "tags": ["barrel", "entry-point"],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:src/kvcompression/metrics/_metrics_manager.py",
+      "type": "file",
+      "name": "_metrics_manager.py",
+      "filePath": "src/kvcompression/metrics/_metrics_manager.py",
+      "summary": "Implements MetricsManager, a distributed-aware training metrics tracker that aggregates scalar values across ranks, logs to W&B, generates matplotlib plots, manages run/figures directories, and tracks the best checkpoint path.",
+      "tags": ["service", "utility", "monitoring"],
+      "complexity": "complex"
+    },
+    {
+      "id": "class:src/kvcompression/metrics/_metrics_manager.py:MetricsManager",
+      "type": "class",
+      "name": "MetricsManager",
+      "filePath": "src/kvcompression/metrics/_metrics_manager.py",
+      "lineRange": [21, 598],
+      "summary": "Centralized training metrics tracker with distributed gather support, W&B integration, per-metric history storage, running-average computation, and matplotlib grid visualization; manages run directory naming and best-checkpoint path derivation.",
+      "tags": ["service", "monitoring", "utility"],
+      "complexity": "complex"
+    },
+    {
+      "id": "file:src/kvcompression/utils/infinite_distributed_sampler.py",
+      "type": "file",
+      "name": "infinite_distributed_sampler.py",
+      "filePath": "src/kvcompression/utils/infinite_distributed_sampler.py",
+      "summary": "Provides InfiniteDistributedSampler, a DistributedSampler subclass that loops forever over the dataset without stopping at epoch boundaries and supports resumable state via state_dict/load_state_dict.",
+      "tags": ["utility", "service"],
+      "complexity": "simple"
+    },
+    {
+      "id": "class:src/kvcompression/utils/infinite_distributed_sampler.py:InfiniteDistributedSampler",
+      "type": "class",
+      "name": "InfiniteDistributedSampler",
+      "filePath": "src/kvcompression/utils/infinite_distributed_sampler.py",
+      "lineRange": [22, 99],
+      "summary": "Extends PyTorch DistributedSampler to yield an infinite stream of shuffled indices by auto-incrementing the epoch on each exhaustion, with serializable epoch state for checkpoint-based resume.",
+      "tags": ["utility", "service"],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:src/kvcompression/utils/training_checkpointer.py",
+      "type": "file",
+      "name": "training_checkpointer.py",
+      "filePath": "src/kvcompression/utils/training_checkpointer.py",
+      "summary": "Implements TrainingCheckpointer and the ResumeInfo dataclass, providing full checkpoint lifecycle management: saving, loading, best-model tracking, old-checkpoint pruning, random-state serialization, and distributed rank-0 broadcast of checkpoint paths.",
+      "tags": ["utility", "service"],
+      "complexity": "complex"
+    },
+    {
+      "id": "class:src/kvcompression/utils/training_checkpointer.py:ResumeInfo",
+      "type": "class",
+      "name": "ResumeInfo",
+      "filePath": "src/kvcompression/utils/training_checkpointer.py",
+      "lineRange": [36, 46],
+      "summary": "Dataclass holding resume state extracted from a loaded checkpoint: success flag, step index, best metric value, W&B run id, metric history, and RNG states.",
+      "tags": ["data-model", "utility"],
+      "complexity": "simple"
+    },
+    {
+      "id": "class:src/kvcompression/utils/training_checkpointer.py:TrainingCheckpointer",
+      "type": "class",
+      "name": "TrainingCheckpointer",
+      "filePath": "src/kvcompression/utils/training_checkpointer.py",
+      "lineRange": [49, 462],
+      "summary": "Manages the full checkpoint lifecycle for distributed RL training: discovers and loads existing checkpoints from local disk, serializes model/optimizer/scheduler/RNG state, enforces a keep-N policy, saves a separate best-model file, and broadcasts checkpoint paths across distributed ranks.",
+      "tags": ["utility", "service"],
+      "complexity": "complex"
+    }
+  ],
+  "edges": [
+    {
+      "source": "file:src/kvcompression/__init__.py",
+      "target": "function:src/kvcompression/__init__.py:load_envs",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/kvcompression/__init__.py",
+      "target": "function:src/kvcompression/__init__.py:format_resolver",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/kvcompression/__init__.py",
+      "target": "function:src/kvcompression/__init__.py:load_envs",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/kvcompression/__init__.py",
+      "target": "function:src/kvcompression/__init__.py:format_resolver",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/kvcompression/data/activations_dataset.py",
+      "target": "file:src/kvcompression/__init__.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:src/kvcompression/data/activations_dataset.py",
+      "target": "class:src/kvcompression/data/activations_dataset.py:QKVDataset",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/kvcompression/data/activations_dataset.py",
+      "target": "class:src/kvcompression/data/activations_dataset.py:QKVDataset",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/kvcompression/data/pad_collate.py",
+      "target": "function:src/kvcompression/data/pad_collate.py:pad_collate_fn",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/kvcompression/data/pad_collate.py",
+      "target": "function:src/kvcompression/data/pad_collate.py:pad_collate_fn",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/kvcompression/entrypoints/rl/train_agent_sampler_distributed.py",
+      "target": "file:src/kvcompression/__init__.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:src/kvcompression/entrypoints/rl/train_agent_sampler_distributed.py",
+      "target": "file:src/kvcompression/data/pad_collate.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:src/kvcompression/entrypoints/rl/train_agent_sampler_distributed.py",
+      "target": "file:src/kvcompression/metrics/_metrics_manager.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:src/kvcompression/entrypoints/rl/train_agent_sampler_distributed.py",
+      "target": "file:src/kvcompression/rl/trainers/rloo_terminal_trainer.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:src/kvcompression/entrypoints/rl/train_agent_sampler_distributed.py",
+      "target": "file:src/kvcompression/utils/infinite_distributed_sampler.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:src/kvcompression/entrypoints/rl/train_agent_sampler_distributed.py",
+      "target": "file:src/kvcompression/utils/s3_utils.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:src/kvcompression/entrypoints/rl/train_agent_sampler_distributed.py",
+      "target": "file:src/kvcompression/utils/training_checkpointer.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:src/kvcompression/entrypoints/rl/train_agent_sampler_distributed.py",
+      "target": "file:src/kvcompression/utils/utils.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:src/kvcompression/entrypoints/rl/train_agent_sampler_distributed.py",
+      "target": "class:src/kvcompression/entrypoints/rl/train_agent_sampler_distributed.py:RLOOTrainingRecipeDistributed",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/kvcompression/entrypoints/rl/train_agent_sampler_distributed.py",
+      "target": "function:src/kvcompression/entrypoints/rl/train_agent_sampler_distributed.py:launch_training",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/kvcompression/entrypoints/rl/train_agent_sampler_distributed.py",
+      "target": "function:src/kvcompression/entrypoints/rl/train_agent_sampler_distributed.py:main",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/kvcompression/entrypoints/rl/train_agent_sampler_distributed.py",
+      "target": "class:src/kvcompression/entrypoints/rl/train_agent_sampler_distributed.py:RLOOTrainingRecipeDistributed",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/kvcompression/entrypoints/rl/train_agent_sampler_distributed.py",
+      "target": "function:src/kvcompression/entrypoints/rl/train_agent_sampler_distributed.py:launch_training",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/kvcompression/entrypoints/rl/train_agent_sampler_distributed.py",
+      "target": "function:src/kvcompression/entrypoints/rl/train_agent_sampler_distributed.py:main",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "class:src/kvcompression/entrypoints/rl/train_agent_sampler_distributed.py:RLOOTrainingRecipeDistributed",
+      "target": "class:src/kvcompression/utils/training_checkpointer.py:TrainingCheckpointer",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "class:src/kvcompression/entrypoints/rl/train_agent_sampler_distributed.py:RLOOTrainingRecipeDistributed",
+      "target": "class:src/kvcompression/metrics/_metrics_manager.py:MetricsManager",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "class:src/kvcompression/entrypoints/rl/train_agent_sampler_distributed.py:RLOOTrainingRecipeDistributed",
+      "target": "class:src/kvcompression/utils/infinite_distributed_sampler.py:InfiniteDistributedSampler",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/kvcompression/metrics/__init__.py",
+      "target": "file:src/kvcompression/metrics/_metrics_manager.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:src/kvcompression/metrics/__init__.py",
+      "target": "class:src/kvcompression/metrics/_metrics_manager.py:MetricsManager",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/kvcompression/metrics/_metrics_manager.py",
+      "target": "file:src/kvcompression/__init__.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:src/kvcompression/metrics/_metrics_manager.py",
+      "target": "class:src/kvcompression/metrics/_metrics_manager.py:MetricsManager",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/kvcompression/metrics/_metrics_manager.py",
+      "target": "class:src/kvcompression/metrics/_metrics_manager.py:MetricsManager",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/kvcompression/utils/infinite_distributed_sampler.py",
+      "target": "class:src/kvcompression/utils/infinite_distributed_sampler.py:InfiniteDistributedSampler",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/kvcompression/utils/infinite_distributed_sampler.py",
+      "target": "class:src/kvcompression/utils/infinite_distributed_sampler.py:InfiniteDistributedSampler",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/kvcompression/utils/training_checkpointer.py",
+      "target": "file:src/kvcompression/utils/utils.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:src/kvcompression/utils/training_checkpointer.py",
+      "target": "class:src/kvcompression/utils/training_checkpointer.py:ResumeInfo",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/kvcompression/utils/training_checkpointer.py",
+      "target": "class:src/kvcompression/utils/training_checkpointer.py:TrainingCheckpointer",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/kvcompression/utils/training_checkpointer.py",
+      "target": "class:src/kvcompression/utils/training_checkpointer.py:ResumeInfo",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/kvcompression/utils/training_checkpointer.py",
+      "target": "class:src/kvcompression/utils/training_checkpointer.py:TrainingCheckpointer",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "class:src/kvcompression/utils/training_checkpointer.py:TrainingCheckpointer",
+      "target": "function:src/kvcompression/utils/utils.py:get_underlying_model",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    }
+  ]
+}

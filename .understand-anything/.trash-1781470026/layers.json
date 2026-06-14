@@ -1,0 +1,141 @@
+[
+  {
+    "id": "layer:rl-framework",
+    "name": "RL Training Framework",
+    "description": "Per-head RL agents (GRU policy networks), training environments for KV token ranking, reward strategies based on future attention AUC, and RLOO/Gumbel trainers with advantage computation and Triton-optimized loss kernels",
+    "nodeIds": [
+      "file:src/kvcompression/rl/__init__.py",
+      "file:src/kvcompression/rl/agents/__init__.py",
+      "file:src/kvcompression/rl/agents/base_agent.py",
+      "file:src/kvcompression/rl/agents/kv_sorting_agent.py",
+      "file:src/kvcompression/rl/environments/__init__.py",
+      "file:src/kvcompression/rl/environments/base_env.py",
+      "file:src/kvcompression/rl/environments/kvsorting_env.py",
+      "file:src/kvcompression/rl/rewards/__init__.py",
+      "file:src/kvcompression/rl/rewards/base_reward_strategy.py",
+      "file:src/kvcompression/rl/rewards/basic_strategies.py",
+      "file:src/kvcompression/rl/rewards/oracle.py",
+      "file:src/kvcompression/rl/trainers/__init__.py",
+      "file:src/kvcompression/rl/trainers/compute_advantages.py",
+      "file:src/kvcompression/rl/trainers/policy_entropy_loss.py",
+      "file:src/kvcompression/rl/trainers/rloo_gumbel_terminal_trainer.py",
+      "file:src/kvcompression/rl/trainers/rloo_terminal_trainer.py",
+      "file:src/kvcompression/rl/trainers/triton_policy_entropy_loss.py"
+    ]
+  },
+  {
+    "id": "layer:kv-cache-engine",
+    "name": "KV Cache Engine",
+    "description": "Core KV cache compression infrastructure including the compressible KV cache, patched multi-head attention, compression strategy protocol, PyTorch forward hooks for activation extraction, and KV press policy implementations used during inference",
+    "nodeIds": [
+      "file:src/kvcompression/kv_cache/__init__.py",
+      "file:src/kvcompression/kv_cache/compressible_attention.py",
+      "file:src/kvcompression/kv_cache/compressible_kv_cache.py",
+      "file:src/kvcompression/kv_cache/compressible_mha_layer.py",
+      "file:src/kvcompression/kv_cache/compression_strategy_protocol.py",
+      "file:src/kvcompression/hooks/__init__.py",
+      "file:src/kvcompression/hooks/compressor.py",
+      "file:src/kvcompression/hooks/extractors.py",
+      "file:src/kvcompression/hooks/registrar.py",
+      "file:src/kvcompression/presses/__init__.py",
+      "file:src/kvcompression/presses/base_press.py",
+      "file:src/kvcompression/presses/random_press.py",
+      "file:src/kvcompression/presses/sampler_agent_press.py"
+    ]
+  },
+  {
+    "id": "layer:data-pipeline",
+    "name": "Data Pipeline",
+    "description": "Dataset classes for Q/K/V activations and RULER-format data, chunk sampling for RL episodes, DataLoader collation, and entrypoint scripts for running LLM forward passes to extract and store activations to S3 and for launching distributed RL training",
+    "nodeIds": [
+      "file:src/kvcompression/data/__init__.py",
+      "file:src/kvcompression/data/activations_dataset.py",
+      "file:src/kvcompression/data/chunk_sampler.py",
+      "file:src/kvcompression/data/kvpress_dataset.py",
+      "file:src/kvcompression/data/pad_collate.py",
+      "file:src/kvcompression/entrypoints/__init__.py",
+      "file:src/kvcompression/entrypoints/datagen/__init__.py",
+      "file:src/kvcompression/entrypoints/datagen/unroll_and_store.py",
+      "file:src/kvcompression/entrypoints/rl/__init__.py",
+      "file:src/kvcompression/entrypoints/rl/train_agent_sampler_distributed.py",
+      "document:assets/ruler_split/train.txt",
+      "document:assets/ruler_split/val.txt"
+    ]
+  },
+  {
+    "id": "layer:shared-utilities",
+    "name": "Shared Utilities",
+    "description": "Package-level shared code including attention math utilities, eviction cost computation, constants, CLI logging, training helpers (S3 I/O, checkpointing, LR scheduling, distributed sampling), text generation with compression, W&B metrics management, and the agent registry and assignment generator tools for managing trained checkpoints",
+    "nodeIds": [
+      "file:src/kvcompression/__init__.py",
+      "file:src/kvcompression/attention_utils.py",
+      "file:src/kvcompression/cli_logging.py",
+      "file:src/kvcompression/constants.py",
+      "file:src/kvcompression/costs.py",
+      "file:src/kvcompression/metrics/__init__.py",
+      "file:src/kvcompression/metrics/_metrics_manager.py",
+      "file:src/kvcompression/tools/__init__.py",
+      "file:src/kvcompression/tools/agent_registry.py",
+      "file:src/kvcompression/tools/assignment_generator.py",
+      "file:src/kvcompression/utils/__init__.py",
+      "file:src/kvcompression/utils/generation.py",
+      "file:src/kvcompression/utils/infinite_distributed_sampler.py",
+      "file:src/kvcompression/utils/s3_utils.py",
+      "file:src/kvcompression/utils/scheduler_factory.py",
+      "file:src/kvcompression/utils/training_checkpointer.py",
+      "file:src/kvcompression/utils/utils.py"
+    ]
+  },
+  {
+    "id": "layer:tests",
+    "name": "Tests",
+    "description": "Pytest unit and integration tests covering chunk sampling, RLOO advantage computation, policy entropy, attention utilities, eviction cost metrics, KV cache eviction behavior, compression hook registration, FlexAttention precision, patched model forward passes, and text generation with compression",
+    "nodeIds": [
+      "file:tests/__init__.py",
+      "file:tests/conftest.py",
+      "file:tests/data/test_chunk_sampler.py",
+      "file:tests/rl/test_compute_advantages.py",
+      "file:tests/rl/test_masked_logprob_entropy.py",
+      "file:tests/test_attention_utils.py",
+      "file:tests/test_costs.py",
+      "file:tests/test_generate_with_compression.py",
+      "file:tests/test_kv_cache/test_compressible_kv_cache.py",
+      "file:tests/test_kv_cache/test_compressor.py",
+      "file:tests/test_kv_cache/test_flexattention_bfloat16.py",
+      "file:tests/test_kv_cache/test_patched_attention.py",
+      "file:tests/test_kv_cache/test_patched_model_forward.py",
+      "file:tests/test_online_attention.py",
+      "file:tests/test_utils.py"
+    ]
+  },
+  {
+    "id": "layer:configuration-scripts",
+    "name": "Configuration & Scripts",
+    "description": "Training and preprocessing YAML configs, environment setup shell scripts, CLI orchestration scripts for data download and agent registry management, pre-generated RULER dataset split files, an inference demo notebook, and project tooling configuration",
+    "nodeIds": [
+      "config:configs/preprocess_ruler.yaml",
+      "config:configs/train_single_head.yaml",
+      "config:.env.template",
+      "config:.pre-commit-config.yaml",
+      "config:pyproject.toml",
+      "file:configs/setups/agent_training_setup.sh",
+      "file:configs/setups/preprocessing_setup.sh",
+      "file:scripts/download_data.py",
+      "file:scripts/orchestration/agent_registry.py",
+      "file:scripts/orchestration/assignment_generator.py",
+      "file:notebooks/inference_demo.ipynb",
+      "file:.understand-anything/.understandignore"
+    ]
+  },
+  {
+    "id": "layer:documentation",
+    "name": "Documentation",
+    "description": "Project documentation including the main README explaining the KVP framework, setup, training and inference workflows, contribution guidelines, community code of conduct, and acknowledgements of third-party dependencies",
+    "nodeIds": [
+      "document:README.md",
+      "document:CONTRIBUTING.md",
+      "document:CODE_OF_CONDUCT.md",
+      "file:ACKNOWLEDGEMENTS"
+    ]
+  }
+]

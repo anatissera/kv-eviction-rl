@@ -1,0 +1,147 @@
+[
+  {
+    "order": 1,
+    "title": "Project Overview",
+    "description": "The README introduces KVP (KV Policy), a framework that trains one lightweight RL agent per attention head to learn which KV cache entries to evict during LLM inference. Reading this first establishes the three-phase pipeline — dataset generation, distributed RL training, and inference deployment — that structures every other file in the tour.",
+    "nodeIds": ["document:README.md"]
+  },
+  {
+    "order": 2,
+    "title": "Attention Math Foundations",
+    "description": "Before anything else can work, the project needs a reliable implementation of attention score computation. `attention_utils.py` provides scaled dot-product attention, causal masking, and GQA (Grouped Query Attention) head expansion — primitives that are consumed by both the reward oracle and the RL environment. Understanding these building blocks makes the reward signal in later steps immediately clear.",
+    "nodeIds": [
+      "file:src/kvcompression/attention_utils.py",
+      "file:src/kvcompression/costs.py"
+    ],
+    "languageLesson": "GQA (Grouped Query Attention) allows multiple query heads to share a single key/value head. When computing eviction scores you must expand the shared KV heads back to the full query-head count before comparing attention weights — that expansion is what GQA utilities handle here."
+  },
+  {
+    "order": 3,
+    "title": "Data Generation Pipeline",
+    "description": "`unroll_and_store.py` is the first entrypoint you would run in practice: it loads a Qwen2.5-7B model, runs a forward pass over the RULER long-context benchmark, and captures the raw Q/K/V activations from every attention layer, writing them to S3 as safetensors files. This step produces the offline dataset that the RL training loop consumes, completely decoupling expensive LLM inference from policy optimization.",
+    "nodeIds": [
+      "file:src/kvcompression/entrypoints/datagen/unroll_and_store.py",
+      "config:configs/preprocess_ruler.yaml"
+    ],
+    "languageLesson": "PyTorch forward hooks (registered via `register_forward_hook`) let you intercept intermediate tensor outputs without modifying the model's source code. The hook receives the module, its inputs, and its outputs as arguments — a clean pattern for activation capture at scale."
+  },
+  {
+    "order": 4,
+    "title": "Hook System: Activation Extractors",
+    "description": "`extractors.py` defines the hook functions that actually capture Q/K/V tensors during the forward pass, while `registrar.py` wires those hooks onto the correct attention modules inside the LLM. Together they form the observation layer of the entire framework: without them there is no signal for the RL agents to act on, and no oracle reward to train against.",
+    "nodeIds": [
+      "file:src/kvcompression/hooks/extractors.py",
+      "file:src/kvcompression/hooks/registrar.py"
+    ]
+  },
+  {
+    "order": 5,
+    "title": "Offline Activation Dataset",
+    "description": "Once activations are stored on S3, `activations_dataset.py` exposes them as a PyTorch Dataset (`QKVDataset`) that loads safetensors files on demand. `chunk_sampler.py` sits alongside it and draws fixed-size token windows from variable-length sequences, turning each window into one RL training episode. This pair is what `train_agent_sampler_distributed.py` passes to the DataLoader.",
+    "nodeIds": [
+      "file:src/kvcompression/data/activations_dataset.py",
+      "file:src/kvcompression/data/chunk_sampler.py"
+    ],
+    "languageLesson": "Safetensors is a memory-safe alternative to PyTorch `.pt` files: it supports zero-copy memory mapping, making it efficient to load large activation tensors from disk without copying them into RAM first."
+  },
+  {
+    "order": 6,
+    "title": "The RL Agent: Policy Network",
+    "description": "`base_agent.py` defines the abstract interface that all eviction policies must implement, while `kv_sorting_agent.py` provides the concrete `KVSamplingGroupedQueryAgent`: a GRU-based recurrent network that reads KV cache features (key norms, position encodings, attention statistics) and outputs a ranking score for each token. One instance of this agent is trained independently per layer-head pair — 112 total for Qwen2.5-7B.",
+    "nodeIds": [
+      "file:src/kvcompression/rl/agents/base_agent.py",
+      "file:src/kvcompression/rl/agents/kv_sorting_agent.py"
+    ],
+    "languageLesson": "A GRU (Gated Recurrent Unit) processes a sequence of token features one at a time, maintaining a hidden state that summarizes context seen so far. Here it is applied across KV cache positions so the agent's score for each token can depend on what came before it."
+  },
+  {
+    "order": 7,
+    "title": "Oracle Reward Signal",
+    "description": "The oracle uses the full attention matrix — unavailable at normal inference time but available in training — to compute the ideal future utility of each KV entry. `oracle.py` calls into `costs.py` to derive a reverse cumulative sum over future attention weights (the AUC of a token's predicted attendance in future decoding steps), then `basic_strategies.py` normalizes that score into a scalar reward the RLOO trainer can consume.",
+    "nodeIds": [
+      "file:src/kvcompression/rl/rewards/oracle.py",
+      "file:src/kvcompression/rl/rewards/basic_strategies.py"
+    ]
+  },
+  {
+    "order": 8,
+    "title": "RL Environment",
+    "description": "`base_env.py` sets the abstract contract for any RL environment in the project; `kvsorting_env.py` implements `KVSortingEnvironmentV2`, which frames KV cache eviction as a sequential decision problem. At each step the agent receives a chunk of Q/K/V features, selects a ranking over tokens, and receives the oracle AUC reward at episode termination. This environment is the bridge between the dataset, the policy network, and the trainer.",
+    "nodeIds": [
+      "file:src/kvcompression/rl/environments/base_env.py",
+      "file:src/kvcompression/rl/environments/kvsorting_env.py"
+    ]
+  },
+  {
+    "order": 9,
+    "title": "RLOO Trainer",
+    "description": "`rloo_terminal_trainer.py` is the heart of the learning loop: it runs multiple rollouts per update, waits for the terminal (episode-end) reward, calls `compute_advantages.py` to compute RLOO baselines, then applies the REINFORCE policy-entropy loss from `policy_entropy_loss.py` to update the agent's weights. The Triton kernel in `triton_policy_entropy_loss.py` accelerates the loss computation on GPU for the scale of 112 parallel agents.",
+    "nodeIds": [
+      "file:src/kvcompression/rl/trainers/rloo_terminal_trainer.py",
+      "file:src/kvcompression/rl/trainers/compute_advantages.py",
+      "file:src/kvcompression/rl/trainers/policy_entropy_loss.py",
+      "file:src/kvcompression/rl/trainers/triton_policy_entropy_loss.py"
+    ],
+    "languageLesson": "RLOO (REINFORCE Leave-One-Out) reduces variance in policy gradient estimation: instead of subtracting a learned value baseline, each rollout's return is compared against the mean of all other rollouts in the same batch. This is computationally cheap and effective for small, parallel policies."
+  },
+  {
+    "order": 10,
+    "title": "Distributed Training Entrypoint",
+    "description": "`train_agent_sampler_distributed.py` orchestrates the full training run using PyTorch DDP: it instantiates one agent per head, wraps each in DistributedDataParallel, feeds batches from `QKVDataset` through `KVSortingEnvironmentV2`, and calls the RLOO trainer. It also manages checkpointing and W&B logging through the supporting utilities. `train_single_head.yaml` holds all the hyperparameters — RLOO group size, learning rate, KV budget ratio — that control a training run.",
+    "nodeIds": [
+      "file:src/kvcompression/entrypoints/rl/train_agent_sampler_distributed.py",
+      "config:configs/train_single_head.yaml"
+    ],
+    "languageLesson": "PyTorch DDP (DistributedDataParallel) wraps a model and synchronizes gradients across all processes after each backward pass using an all-reduce collective. For 112 independent agents trained in parallel, DDP lets you split the per-head workload across multiple GPUs with minimal code change."
+  },
+  {
+    "order": 11,
+    "title": "Training Infrastructure",
+    "description": "Three supporting modules keep the training loop production-ready. `_metrics_manager.py` abstracts W&B and console logging behind a single interface. `training_checkpointer.py` saves and restores complete training state — model weights, optimizer state, and epoch counters — so runs can be resumed after preemption. `s3_utils.py` handles upload and download of checkpoints and datasets to S3, enabling fully cloud-based training pipelines.",
+    "nodeIds": [
+      "file:src/kvcompression/metrics/_metrics_manager.py",
+      "file:src/kvcompression/utils/training_checkpointer.py",
+      "file:src/kvcompression/utils/s3_utils.py"
+    ]
+  },
+  {
+    "order": 12,
+    "title": "Press Abstraction & Compression Strategies",
+    "description": "`base_press.py` defines the `BasePress` interface that all eviction policies expose at inference time: given a KV cache and a target size, return the indices to keep. `compression_strategy_protocol.py` wraps that interface in a Protocol so it can be dependency-injected into the cache layer. `random_press.py` provides a random-eviction baseline — useful for establishing a lower bound on performance before evaluating trained agents.",
+    "nodeIds": [
+      "file:src/kvcompression/presses/base_press.py",
+      "file:src/kvcompression/kv_cache/compression_strategy_protocol.py",
+      "file:src/kvcompression/presses/random_press.py"
+    ],
+    "languageLesson": "Python Protocols (from `typing`) define structural subtyping: any class that implements the required methods satisfies the protocol without explicitly inheriting from it. This is duck-typing made explicit and checkable by static analysis tools like mypy."
+  },
+  {
+    "order": 13,
+    "title": "KV Cache Engine",
+    "description": "`compressible_kv_cache.py` is a drop-in replacement for Hugging Face's default `DynamicCache` that intercepts each update step and applies a compression strategy when the cache exceeds a target token budget. `compressible_attention.py` and `compressible_mha_layer.py` patch the attention module itself so that every autoregressive decoding step passes through this eviction-aware cache, making compression fully transparent to the surrounding model.",
+    "nodeIds": [
+      "file:src/kvcompression/kv_cache/compressible_kv_cache.py",
+      "file:src/kvcompression/kv_cache/compressible_attention.py",
+      "file:src/kvcompression/kv_cache/compressible_mha_layer.py"
+    ]
+  },
+  {
+    "order": 14,
+    "title": "SamplerAgentPress: Trained Policy at Inference",
+    "description": "`sampler_agent_press.py` is where the trained RL agents re-enter the picture. `SamplerAgentPress` loads agent checkpoints via `AgentRegistry`, which discovers the per-head `.pt` files from S3 using the composite assignment YAML produced by `assignment_generator.py`. At inference time, for each attention head the press runs the corresponding agent forward to score the current KV entries, sorts by score, and evicts the lowest-ranked tokens to stay within the memory budget.",
+    "nodeIds": [
+      "file:src/kvcompression/presses/sampler_agent_press.py",
+      "file:src/kvcompression/tools/agent_registry.py",
+      "file:src/kvcompression/tools/assignment_generator.py"
+    ]
+  },
+  {
+    "order": 15,
+    "title": "End-to-End Inference Demo",
+    "description": "`generation.py` provides the high-level `generate()` function that wires together `CompressibleKVCache`, the hook registrar, and `SamplerAgentPress` into a single call, making it straightforward to run a compressed-inference generation loop with minimal boilerplate. The `inference_demo.ipynb` notebook then demonstrates this end-to-end: load the model, load the agents, generate text with a fixed KV budget, and compare output quality against full-cache generation.",
+    "nodeIds": [
+      "file:src/kvcompression/utils/generation.py",
+      "file:notebooks/inference_demo.ipynb"
+    ]
+  }
+]

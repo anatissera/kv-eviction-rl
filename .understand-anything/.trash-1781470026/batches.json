@@ -1,0 +1,1351 @@
+{
+  "schemaVersion": 1,
+  "algorithm": "louvain",
+  "totalFiles": 90,
+  "totalBatches": 10,
+  "exportsByPath": {
+    ".understand-anything/.understandignore": [],
+    "ACKNOWLEDGEMENTS": [],
+    "notebooks/inference_demo.ipynb": [],
+    "scripts/download_data.py": [
+      "DataDownloader",
+      "main"
+    ],
+    "scripts/orchestration/agent_registry.py": [
+      "list_sweeps",
+      "discover",
+      "validate_sweep"
+    ],
+    "scripts/orchestration/assignment_generator.py": [
+      "main",
+      "_parse_layer_head_params",
+      "write_composites"
+    ],
+    "src/kvcompression/__init__.py": [
+      "load_envs",
+      "format_resolver"
+    ],
+    "src/kvcompression/attention_utils.py": [
+      "materialize_attention_weights",
+      "get_attention_mask",
+      "expand_kv_for_gqa",
+      "expand_k_for_gqa"
+    ],
+    "src/kvcompression/cli_logging.py": [
+      "CLIRichHandler",
+      "setup_cli_logging"
+    ],
+    "src/kvcompression/constants.py": [],
+    "src/kvcompression/costs.py": [
+      "CostResult",
+      "reverse_cumsum",
+      "batched_compute_cost"
+    ],
+    "src/kvcompression/data/__init__.py": [],
+    "src/kvcompression/data/activations_dataset.py": [
+      "QKVDataset"
+    ],
+    "src/kvcompression/data/chunk_sampler.py": [
+      "ChunkSampler"
+    ],
+    "src/kvcompression/data/kvpress_dataset.py": [
+      "_add_row_id",
+      "KVPressPreprocessingDataset"
+    ],
+    "src/kvcompression/data/pad_collate.py": [
+      "pad_collate_fn"
+    ],
+    "src/kvcompression/entrypoints/__init__.py": [],
+    "src/kvcompression/entrypoints/datagen/__init__.py": [],
+    "src/kvcompression/entrypoints/datagen/unroll_and_store.py": [
+      "InferenceRecipe",
+      "main"
+    ],
+    "src/kvcompression/entrypoints/rl/__init__.py": [],
+    "src/kvcompression/entrypoints/rl/train_agent_sampler_distributed.py": [
+      "RLOOTrainingRecipeDistributed",
+      "launch_training",
+      "main"
+    ],
+    "src/kvcompression/hooks/__init__.py": [],
+    "src/kvcompression/hooks/compressor.py": [
+      "LayerHeadCompressionConfig",
+      "KVCompressor"
+    ],
+    "src/kvcompression/hooks/extractors.py": [
+      "ExtractAttentionTensors"
+    ],
+    "src/kvcompression/hooks/registrar.py": [
+      "register_attention_forward_hook",
+      "monkeypatch_multihead_attention"
+    ],
+    "src/kvcompression/kv_cache/__init__.py": [],
+    "src/kvcompression/kv_cache/compressible_attention.py": [
+      "monkey_patched_setup_cache",
+      "_build_head_strategy_mapping",
+      "monkey_patched_mha_forward"
+    ],
+    "src/kvcompression/kv_cache/compressible_kv_cache.py": [
+      "CompressibleKVCache"
+    ],
+    "src/kvcompression/kv_cache/compressible_mha_layer.py": [
+      "CompressibleMultiHeadAttention"
+    ],
+    "src/kvcompression/kv_cache/compression_strategy_protocol.py": [
+      "CompressionStrategy",
+      "DummyCompressionStrategy",
+      "RandomCompressionStrategy",
+      "PressCompressionStrategy"
+    ],
+    "src/kvcompression/metrics/__init__.py": [],
+    "src/kvcompression/metrics/_metrics_manager.py": [
+      "MetricsManager"
+    ],
+    "src/kvcompression/presses/__init__.py": [],
+    "src/kvcompression/presses/base_press.py": [
+      "BasePress"
+    ],
+    "src/kvcompression/presses/random_press.py": [
+      "RandomPress"
+    ],
+    "src/kvcompression/presses/sampler_agent_press.py": [
+      "SamplerAgentPress"
+    ],
+    "src/kvcompression/rl/__init__.py": [],
+    "src/kvcompression/rl/agents/__init__.py": [],
+    "src/kvcompression/rl/agents/base_agent.py": [
+      "BaseAgent"
+    ],
+    "src/kvcompression/rl/agents/kv_sorting_agent.py": [
+      "KVSamplingGroupedQueryAgent"
+    ],
+    "src/kvcompression/rl/environments/__init__.py": [],
+    "src/kvcompression/rl/environments/base_env.py": [
+      "BaseEnvironment"
+    ],
+    "src/kvcompression/rl/environments/kvsorting_env.py": [
+      "KVSortingEnvironmentV2"
+    ],
+    "src/kvcompression/rl/rewards/__init__.py": [],
+    "src/kvcompression/rl/rewards/base_reward_strategy.py": [
+      "RewardStrategy"
+    ],
+    "src/kvcompression/rl/rewards/basic_strategies.py": [
+      "FutureAttentionAucNormalizedReward"
+    ],
+    "src/kvcompression/rl/rewards/oracle.py": [
+      "Oracle"
+    ],
+    "src/kvcompression/rl/trainers/__init__.py": [],
+    "src/kvcompression/rl/trainers/compute_advantages.py": [
+      "compute_returns_and_advantage",
+      "compute_returns_and_advantage_vec"
+    ],
+    "src/kvcompression/rl/trainers/policy_entropy_loss.py": [
+      "compute_policy_entropy_loss"
+    ],
+    "src/kvcompression/rl/trainers/rloo_gumbel_terminal_trainer.py": [
+      "RLOOGumbelTrainer"
+    ],
+    "src/kvcompression/rl/trainers/rloo_terminal_trainer.py": [
+      "RLOOTerminalTrainer"
+    ],
+    "src/kvcompression/rl/trainers/triton_policy_entropy_loss.py": [
+      "_policy_entropy_loss_forward_kernel",
+      "_policy_entropy_loss_backward_kernel",
+      "PolicyEntropyLossTriton",
+      "compute_policy_entropy_loss_triton"
+    ],
+    "src/kvcompression/tools/__init__.py": [],
+    "src/kvcompression/tools/agent_registry.py": [
+      "AgentRegistry"
+    ],
+    "src/kvcompression/tools/assignment_generator.py": [
+      "generate_composites",
+      "write_composites_file"
+    ],
+    "src/kvcompression/utils/__init__.py": [],
+    "src/kvcompression/utils/generation.py": [
+      "_sample_like_torchtune",
+      "generate_with_compression"
+    ],
+    "src/kvcompression/utils/infinite_distributed_sampler.py": [
+      "InfiniteDistributedSampler"
+    ],
+    "src/kvcompression/utils/s3_utils.py": [
+      "get_s3_filesystem",
+      "upload_directory",
+      "download_file",
+      "get_corresponding_remote_path",
+      "load_remote_json_secrets",
+      "ls_remote_folder"
+    ],
+    "src/kvcompression/utils/scheduler_factory.py": [
+      "SequentialWarmupCosineScheduler"
+    ],
+    "src/kvcompression/utils/training_checkpointer.py": [
+      "ResumeInfo",
+      "TrainingCheckpointer"
+    ],
+    "src/kvcompression/utils/utils.py": [
+      "get_underlying_model",
+      "instantiate_agent_from_ckpt",
+      "_select_seed_randomly",
+      "seed_everything",
+      "is_torch_compile_disabled",
+      "batch_to_device"
+    ],
+    "tests/__init__.py": [],
+    "tests/conftest.py": [
+      "pytest_configure",
+      "skip_cuda_tests_if_no_gpu",
+      "model_base_config_fixture"
+    ],
+    "tests/data/test_chunk_sampler.py": [
+      "DummyDataset",
+      "test_chunk_validation",
+      "test_complete_coverage",
+      "test_uneven_chunk_distribution",
+      "test_shuffle_determinism"
+    ],
+    "tests/rl/test_compute_advantages.py": [
+      "generate_test_data",
+      "test_compute_returns_and_advantage"
+    ],
+    "tests/rl/test_masked_logprob_entropy.py": [
+      "compute_policy_entropy_loss_simple",
+      "test_loss_equivalence"
+    ],
+    "tests/test_attention_utils.py": [
+      "_create_sdpa_equivalent_additive_bias",
+      "test_materialize_attention_weights_against_sdpa"
+    ],
+    "tests/test_costs.py": [
+      "test_batched_compute_cost_regression",
+      "test_batched_compute_cost_output_structure",
+      "test_batched_compute_cost_oracle_ranking",
+      "test_batched_compute_cost_gqa",
+      "test_batched_compute_cost_with_padding",
+      "test_cost_result_to_device",
+      "test_batched_compute_cost_cost_is_sum_of_per_cachesize"
+    ],
+    "tests/test_generate_with_compression.py": [
+      "create_model",
+      "test_matches_torchtune_without_compression",
+      "test_differs_from_torchtune_with_real_compression",
+      "test_matches_torchtune_with_noop_compression",
+      "test_batch_size_validation"
+    ],
+    "tests/test_kv_cache/test_compressible_kv_cache.py": [
+      "MockStrategy",
+      "cache_params",
+      "mock_strategy_single_head_keep_first",
+      "mock_strategy_multi_head_keep_last",
+      "_create_dummy_data",
+      "test_initialization",
+      "test_reset",
+      "test_update_simple",
+      "test_update_multiple",
+      "test_update_overflow",
+      "test_update_s_new_zero",
+      "test_compress_empty_cache",
+      "test_compress_target_zero",
+      "test_compress_logic_single_head_strategy",
+      "test_compress_invalid_target_size",
+      "test_num_kv_heads_zero",
+      "test_get_k_v_q_and_mask_sliced_output",
+      "test_get_k_v_q_and_mask_full_length_output",
+      "test_get_k_v_q_and_mask_empty_cache_output",
+      "test_query_group_extraction_gqa",
+      "test_query_storage_without_queries",
+      "test_query_storage_shape_mismatch",
+      "QueryCapturingStrategy",
+      "test_compression_strategy_receives_correct_query_groups",
+      "test_get_queries_for_kv_head_edge_cases"
+    ],
+    "tests/test_kv_cache/test_compressor.py": [
+      "TestKVCompressorEquivalence"
+    ],
+    "tests/test_kv_cache/test_flexattention_bfloat16.py": [
+      "test_flex_attention_vs_sdpa_numerical_equivalence",
+      "test_flex_attention_vs_sdpa_small_example"
+    ],
+    "tests/test_kv_cache/test_patched_attention.py": [
+      "config",
+      "create_mha_instance",
+      "test_mha_patch_equivalence",
+      "test_compressible_mha_equivalence"
+    ],
+    "tests/test_kv_cache/test_patched_model_forward.py": [
+      "test_patched_model_forward"
+    ],
+    "tests/test_online_attention.py": [
+      "test_attention_rematerialization_equivalence",
+      "_setup_model_and_run_forward",
+      "_verify_attention_outputs",
+      "test_gqa_expansion_correctness",
+      "test_edge_cases"
+    ],
+    "tests/test_utils.py": [
+      "fixed_init_tensor",
+      "fixed_init_model",
+      "base_test_model"
+    ]
+  },
+  "batches": [
+    {
+      "batchIndex": 1,
+      "files": [
+        {
+          "path": "src/kvcompression/__init__.py",
+          "language": "python",
+          "sizeLines": 67,
+          "fileCategory": "code"
+        },
+        {
+          "path": "src/kvcompression/data/activations_dataset.py",
+          "language": "python",
+          "sizeLines": 189,
+          "fileCategory": "code"
+        },
+        {
+          "path": "src/kvcompression/data/pad_collate.py",
+          "language": "python",
+          "sizeLines": 69,
+          "fileCategory": "code"
+        },
+        {
+          "path": "src/kvcompression/entrypoints/rl/train_agent_sampler_distributed.py",
+          "language": "python",
+          "sizeLines": 991,
+          "fileCategory": "code"
+        },
+        {
+          "path": "src/kvcompression/metrics/__init__.py",
+          "language": "python",
+          "sizeLines": 10,
+          "fileCategory": "code"
+        },
+        {
+          "path": "src/kvcompression/metrics/_metrics_manager.py",
+          "language": "python",
+          "sizeLines": 598,
+          "fileCategory": "code"
+        },
+        {
+          "path": "src/kvcompression/utils/infinite_distributed_sampler.py",
+          "language": "python",
+          "sizeLines": 99,
+          "fileCategory": "code"
+        },
+        {
+          "path": "src/kvcompression/utils/training_checkpointer.py",
+          "language": "python",
+          "sizeLines": 462,
+          "fileCategory": "code"
+        }
+      ],
+      "batchImportData": {
+        "src/kvcompression/__init__.py": [],
+        "src/kvcompression/data/activations_dataset.py": [
+          "src/kvcompression/__init__.py"
+        ],
+        "src/kvcompression/data/pad_collate.py": [],
+        "src/kvcompression/entrypoints/rl/train_agent_sampler_distributed.py": [
+          "src/kvcompression/__init__.py",
+          "src/kvcompression/data/pad_collate.py",
+          "src/kvcompression/metrics/_metrics_manager.py",
+          "src/kvcompression/rl/trainers/rloo_terminal_trainer.py",
+          "src/kvcompression/utils/infinite_distributed_sampler.py",
+          "src/kvcompression/utils/s3_utils.py",
+          "src/kvcompression/utils/training_checkpointer.py",
+          "src/kvcompression/utils/utils.py"
+        ],
+        "src/kvcompression/metrics/__init__.py": [
+          "src/kvcompression/metrics/_metrics_manager.py"
+        ],
+        "src/kvcompression/metrics/_metrics_manager.py": [
+          "src/kvcompression/__init__.py"
+        ],
+        "src/kvcompression/utils/infinite_distributed_sampler.py": [],
+        "src/kvcompression/utils/training_checkpointer.py": [
+          "src/kvcompression/utils/utils.py"
+        ]
+      },
+      "neighborMap": {
+        "src/kvcompression/__init__.py": [
+          {
+            "path": "src/kvcompression/presses/sampler_agent_press.py",
+            "batchIndex": 4,
+            "symbols": [
+              "SamplerAgentPress"
+            ]
+          }
+        ],
+        "src/kvcompression/entrypoints/rl/train_agent_sampler_distributed.py": [
+          {
+            "path": "src/kvcompression/rl/trainers/rloo_terminal_trainer.py",
+            "batchIndex": 5,
+            "symbols": [
+              "RLOOTerminalTrainer"
+            ]
+          },
+          {
+            "path": "src/kvcompression/utils/s3_utils.py",
+            "batchIndex": 4,
+            "symbols": [
+              "get_s3_filesystem",
+              "upload_directory",
+              "download_file",
+              "get_corresponding_remote_path",
+              "load_remote_json_secrets",
+              "ls_remote_folder"
+            ]
+          },
+          {
+            "path": "src/kvcompression/utils/utils.py",
+            "batchIndex": 3,
+            "symbols": [
+              "get_underlying_model",
+              "instantiate_agent_from_ckpt",
+              "_select_seed_randomly",
+              "seed_everything",
+              "is_torch_compile_disabled",
+              "batch_to_device"
+            ]
+          }
+        ],
+        "src/kvcompression/metrics/__init__.py": [
+          {
+            "path": "src/kvcompression/rl/trainers/rloo_terminal_trainer.py",
+            "batchIndex": 5,
+            "symbols": [
+              "RLOOTerminalTrainer"
+            ]
+          }
+        ],
+        "src/kvcompression/utils/training_checkpointer.py": [
+          {
+            "path": "src/kvcompression/utils/utils.py",
+            "batchIndex": 3,
+            "symbols": [
+              "get_underlying_model",
+              "instantiate_agent_from_ckpt",
+              "_select_seed_randomly",
+              "seed_everything",
+              "is_torch_compile_disabled",
+              "batch_to_device"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "batchIndex": 2,
+      "files": [
+        {
+          "path": "src/kvcompression/attention_utils.py",
+          "language": "python",
+          "sizeLines": 220,
+          "fileCategory": "code"
+        },
+        {
+          "path": "src/kvcompression/hooks/compressor.py",
+          "language": "python",
+          "sizeLines": 272,
+          "fileCategory": "code"
+        },
+        {
+          "path": "src/kvcompression/kv_cache/__init__.py",
+          "language": "python",
+          "sizeLines": 12,
+          "fileCategory": "code"
+        },
+        {
+          "path": "src/kvcompression/kv_cache/compressible_attention.py",
+          "language": "python",
+          "sizeLines": 270,
+          "fileCategory": "code"
+        },
+        {
+          "path": "src/kvcompression/kv_cache/compressible_kv_cache.py",
+          "language": "python",
+          "sizeLines": 298,
+          "fileCategory": "code"
+        },
+        {
+          "path": "src/kvcompression/kv_cache/compressible_mha_layer.py",
+          "language": "python",
+          "sizeLines": 96,
+          "fileCategory": "code"
+        },
+        {
+          "path": "src/kvcompression/kv_cache/compression_strategy_protocol.py",
+          "language": "python",
+          "sizeLines": 197,
+          "fileCategory": "code"
+        }
+      ],
+      "batchImportData": {
+        "src/kvcompression/attention_utils.py": [],
+        "src/kvcompression/hooks/compressor.py": [
+          "src/kvcompression/hooks/registrar.py",
+          "src/kvcompression/kv_cache/compressible_attention.py",
+          "src/kvcompression/kv_cache/compressible_kv_cache.py",
+          "src/kvcompression/kv_cache/compression_strategy_protocol.py"
+        ],
+        "src/kvcompression/kv_cache/__init__.py": [
+          "src/kvcompression/kv_cache/compressible_kv_cache.py",
+          "src/kvcompression/kv_cache/compression_strategy_protocol.py"
+        ],
+        "src/kvcompression/kv_cache/compressible_attention.py": [
+          "src/kvcompression/attention_utils.py",
+          "src/kvcompression/kv_cache/compressible_kv_cache.py",
+          "src/kvcompression/kv_cache/compression_strategy_protocol.py"
+        ],
+        "src/kvcompression/kv_cache/compressible_kv_cache.py": [
+          "src/kvcompression/kv_cache/compression_strategy_protocol.py"
+        ],
+        "src/kvcompression/kv_cache/compressible_mha_layer.py": [
+          "src/kvcompression/kv_cache/compressible_attention.py"
+        ],
+        "src/kvcompression/kv_cache/compression_strategy_protocol.py": [
+          "src/kvcompression/attention_utils.py",
+          "src/kvcompression/presses/base_press.py"
+        ]
+      },
+      "neighborMap": {
+        "src/kvcompression/attention_utils.py": [
+          {
+            "path": "src/kvcompression/rl/rewards/oracle.py",
+            "batchIndex": 3,
+            "symbols": [
+              "Oracle"
+            ]
+          }
+        ],
+        "src/kvcompression/hooks/compressor.py": [
+          {
+            "path": "src/kvcompression/hooks/registrar.py",
+            "batchIndex": 6,
+            "symbols": [
+              "register_attention_forward_hook",
+              "monkeypatch_multihead_attention"
+            ]
+          }
+        ],
+        "src/kvcompression/kv_cache/compression_strategy_protocol.py": [
+          {
+            "path": "src/kvcompression/presses/base_press.py",
+            "batchIndex": 4,
+            "symbols": [
+              "BasePress"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "batchIndex": 3,
+      "files": [
+        {
+          "path": "src/kvcompression/constants.py",
+          "language": "python",
+          "sizeLines": 6,
+          "fileCategory": "code"
+        },
+        {
+          "path": "src/kvcompression/costs.py",
+          "language": "python",
+          "sizeLines": 145,
+          "fileCategory": "code"
+        },
+        {
+          "path": "src/kvcompression/rl/environments/kvsorting_env.py",
+          "language": "python",
+          "sizeLines": 428,
+          "fileCategory": "code"
+        },
+        {
+          "path": "src/kvcompression/rl/rewards/base_reward_strategy.py",
+          "language": "python",
+          "sizeLines": 30,
+          "fileCategory": "code"
+        },
+        {
+          "path": "src/kvcompression/rl/rewards/basic_strategies.py",
+          "language": "python",
+          "sizeLines": 15,
+          "fileCategory": "code"
+        },
+        {
+          "path": "src/kvcompression/rl/rewards/oracle.py",
+          "language": "python",
+          "sizeLines": 72,
+          "fileCategory": "code"
+        },
+        {
+          "path": "src/kvcompression/utils/utils.py",
+          "language": "python",
+          "sizeLines": 127,
+          "fileCategory": "code"
+        }
+      ],
+      "batchImportData": {
+        "src/kvcompression/constants.py": [],
+        "src/kvcompression/costs.py": [
+          "src/kvcompression/utils/utils.py"
+        ],
+        "src/kvcompression/rl/environments/kvsorting_env.py": [
+          "src/kvcompression/rl/rewards/base_reward_strategy.py",
+          "src/kvcompression/rl/rewards/basic_strategies.py",
+          "src/kvcompression/rl/rewards/oracle.py",
+          "src/kvcompression/utils/utils.py"
+        ],
+        "src/kvcompression/rl/rewards/base_reward_strategy.py": [
+          "src/kvcompression/costs.py"
+        ],
+        "src/kvcompression/rl/rewards/basic_strategies.py": [
+          "src/kvcompression/costs.py",
+          "src/kvcompression/rl/rewards/base_reward_strategy.py"
+        ],
+        "src/kvcompression/rl/rewards/oracle.py": [
+          "src/kvcompression/attention_utils.py",
+          "src/kvcompression/costs.py",
+          "src/kvcompression/utils/utils.py"
+        ],
+        "src/kvcompression/utils/utils.py": [
+          "src/kvcompression/constants.py"
+        ]
+      },
+      "neighborMap": {
+        "src/kvcompression/rl/rewards/oracle.py": [
+          {
+            "path": "src/kvcompression/attention_utils.py",
+            "batchIndex": 2,
+            "symbols": [
+              "materialize_attention_weights",
+              "get_attention_mask",
+              "expand_kv_for_gqa",
+              "expand_k_for_gqa"
+            ]
+          }
+        ],
+        "src/kvcompression/utils/utils.py": [
+          {
+            "path": "src/kvcompression/entrypoints/rl/train_agent_sampler_distributed.py",
+            "batchIndex": 1,
+            "symbols": [
+              "RLOOTrainingRecipeDistributed",
+              "launch_training",
+              "main"
+            ]
+          },
+          {
+            "path": "src/kvcompression/presses/sampler_agent_press.py",
+            "batchIndex": 4,
+            "symbols": [
+              "SamplerAgentPress"
+            ]
+          },
+          {
+            "path": "src/kvcompression/rl/trainers/rloo_terminal_trainer.py",
+            "batchIndex": 5,
+            "symbols": [
+              "RLOOTerminalTrainer"
+            ]
+          },
+          {
+            "path": "src/kvcompression/utils/training_checkpointer.py",
+            "batchIndex": 1,
+            "symbols": [
+              "ResumeInfo",
+              "TrainingCheckpointer"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "batchIndex": 4,
+      "files": [
+        {
+          "path": "src/kvcompression/presses/base_press.py",
+          "language": "python",
+          "sizeLines": 72,
+          "fileCategory": "code"
+        },
+        {
+          "path": "src/kvcompression/presses/random_press.py",
+          "language": "python",
+          "sizeLines": 23,
+          "fileCategory": "code"
+        },
+        {
+          "path": "src/kvcompression/presses/sampler_agent_press.py",
+          "language": "python",
+          "sizeLines": 342,
+          "fileCategory": "code"
+        },
+        {
+          "path": "src/kvcompression/tools/__init__.py",
+          "language": "python",
+          "sizeLines": 18,
+          "fileCategory": "code"
+        },
+        {
+          "path": "src/kvcompression/tools/agent_registry.py",
+          "language": "python",
+          "sizeLines": 286,
+          "fileCategory": "code"
+        },
+        {
+          "path": "src/kvcompression/tools/assignment_generator.py",
+          "language": "python",
+          "sizeLines": 205,
+          "fileCategory": "code"
+        },
+        {
+          "path": "src/kvcompression/utils/s3_utils.py",
+          "language": "python",
+          "sizeLines": 309,
+          "fileCategory": "code"
+        }
+      ],
+      "batchImportData": {
+        "src/kvcompression/presses/base_press.py": [],
+        "src/kvcompression/presses/random_press.py": [
+          "src/kvcompression/presses/base_press.py"
+        ],
+        "src/kvcompression/presses/sampler_agent_press.py": [
+          "src/kvcompression/__init__.py",
+          "src/kvcompression/presses/base_press.py",
+          "src/kvcompression/utils/s3_utils.py",
+          "src/kvcompression/utils/utils.py"
+        ],
+        "src/kvcompression/tools/__init__.py": [
+          "src/kvcompression/tools/agent_registry.py",
+          "src/kvcompression/tools/assignment_generator.py"
+        ],
+        "src/kvcompression/tools/agent_registry.py": [
+          "src/kvcompression/utils/s3_utils.py"
+        ],
+        "src/kvcompression/tools/assignment_generator.py": [
+          "src/kvcompression/tools/agent_registry.py"
+        ],
+        "src/kvcompression/utils/s3_utils.py": []
+      },
+      "neighborMap": {
+        "src/kvcompression/presses/base_press.py": [
+          {
+            "path": "src/kvcompression/kv_cache/compression_strategy_protocol.py",
+            "batchIndex": 2,
+            "symbols": [
+              "CompressionStrategy",
+              "DummyCompressionStrategy",
+              "RandomCompressionStrategy",
+              "PressCompressionStrategy"
+            ]
+          }
+        ],
+        "src/kvcompression/presses/sampler_agent_press.py": [
+          {
+            "path": "src/kvcompression/__init__.py",
+            "batchIndex": 1,
+            "symbols": [
+              "load_envs",
+              "format_resolver"
+            ]
+          },
+          {
+            "path": "src/kvcompression/utils/utils.py",
+            "batchIndex": 3,
+            "symbols": [
+              "get_underlying_model",
+              "instantiate_agent_from_ckpt",
+              "_select_seed_randomly",
+              "seed_everything",
+              "is_torch_compile_disabled",
+              "batch_to_device"
+            ]
+          }
+        ],
+        "src/kvcompression/utils/s3_utils.py": [
+          {
+            "path": "src/kvcompression/entrypoints/datagen/unroll_and_store.py",
+            "batchIndex": 6,
+            "symbols": [
+              "InferenceRecipe",
+              "main"
+            ]
+          },
+          {
+            "path": "src/kvcompression/entrypoints/rl/train_agent_sampler_distributed.py",
+            "batchIndex": 1,
+            "symbols": [
+              "RLOOTrainingRecipeDistributed",
+              "launch_training",
+              "main"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "batchIndex": 5,
+      "files": [
+        {
+          "path": "src/kvcompression/rl/agents/base_agent.py",
+          "language": "python",
+          "sizeLines": 125,
+          "fileCategory": "code"
+        },
+        {
+          "path": "src/kvcompression/rl/agents/kv_sorting_agent.py",
+          "language": "python",
+          "sizeLines": 273,
+          "fileCategory": "code"
+        },
+        {
+          "path": "src/kvcompression/rl/environments/base_env.py",
+          "language": "python",
+          "sizeLines": 27,
+          "fileCategory": "code"
+        },
+        {
+          "path": "src/kvcompression/rl/trainers/compute_advantages.py",
+          "language": "python",
+          "sizeLines": 110,
+          "fileCategory": "code"
+        },
+        {
+          "path": "src/kvcompression/rl/trainers/rloo_gumbel_terminal_trainer.py",
+          "language": "python",
+          "sizeLines": 300,
+          "fileCategory": "code"
+        },
+        {
+          "path": "src/kvcompression/rl/trainers/rloo_terminal_trainer.py",
+          "language": "python",
+          "sizeLines": 747,
+          "fileCategory": "code"
+        }
+      ],
+      "batchImportData": {
+        "src/kvcompression/rl/agents/base_agent.py": [],
+        "src/kvcompression/rl/agents/kv_sorting_agent.py": [
+          "src/kvcompression/rl/agents/base_agent.py"
+        ],
+        "src/kvcompression/rl/environments/base_env.py": [],
+        "src/kvcompression/rl/trainers/compute_advantages.py": [],
+        "src/kvcompression/rl/trainers/rloo_gumbel_terminal_trainer.py": [
+          "src/kvcompression/rl/trainers/rloo_terminal_trainer.py"
+        ],
+        "src/kvcompression/rl/trainers/rloo_terminal_trainer.py": [
+          "src/kvcompression/metrics/__init__.py",
+          "src/kvcompression/rl/agents/base_agent.py",
+          "src/kvcompression/rl/environments/base_env.py",
+          "src/kvcompression/rl/trainers/compute_advantages.py",
+          "src/kvcompression/utils/utils.py"
+        ]
+      },
+      "neighborMap": {
+        "src/kvcompression/rl/trainers/rloo_terminal_trainer.py": [
+          {
+            "path": "src/kvcompression/metrics/__init__.py",
+            "batchIndex": 1,
+            "symbols": []
+          },
+          {
+            "path": "src/kvcompression/utils/utils.py",
+            "batchIndex": 3,
+            "symbols": [
+              "get_underlying_model",
+              "instantiate_agent_from_ckpt",
+              "_select_seed_randomly",
+              "seed_everything",
+              "is_torch_compile_disabled",
+              "batch_to_device"
+            ]
+          },
+          {
+            "path": "src/kvcompression/entrypoints/rl/train_agent_sampler_distributed.py",
+            "batchIndex": 1,
+            "symbols": [
+              "RLOOTrainingRecipeDistributed",
+              "launch_training",
+              "main"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "batchIndex": 6,
+      "files": [
+        {
+          "path": "src/kvcompression/data/chunk_sampler.py",
+          "language": "python",
+          "sizeLines": 69,
+          "fileCategory": "code"
+        },
+        {
+          "path": "src/kvcompression/data/kvpress_dataset.py",
+          "language": "python",
+          "sizeLines": 51,
+          "fileCategory": "code"
+        },
+        {
+          "path": "src/kvcompression/entrypoints/datagen/unroll_and_store.py",
+          "language": "python",
+          "sizeLines": 254,
+          "fileCategory": "code"
+        },
+        {
+          "path": "src/kvcompression/hooks/extractors.py",
+          "language": "python",
+          "sizeLines": 167,
+          "fileCategory": "code"
+        },
+        {
+          "path": "src/kvcompression/hooks/registrar.py",
+          "language": "python",
+          "sizeLines": 157,
+          "fileCategory": "code"
+        }
+      ],
+      "batchImportData": {
+        "src/kvcompression/data/chunk_sampler.py": [],
+        "src/kvcompression/data/kvpress_dataset.py": [],
+        "src/kvcompression/entrypoints/datagen/unroll_and_store.py": [
+          "src/kvcompression/data/chunk_sampler.py",
+          "src/kvcompression/data/kvpress_dataset.py",
+          "src/kvcompression/hooks/extractors.py",
+          "src/kvcompression/utils/s3_utils.py"
+        ],
+        "src/kvcompression/hooks/extractors.py": [
+          "src/kvcompression/hooks/registrar.py"
+        ],
+        "src/kvcompression/hooks/registrar.py": []
+      },
+      "neighborMap": {
+        "src/kvcompression/entrypoints/datagen/unroll_and_store.py": [
+          {
+            "path": "src/kvcompression/utils/s3_utils.py",
+            "batchIndex": 4,
+            "symbols": [
+              "get_s3_filesystem",
+              "upload_directory",
+              "download_file",
+              "get_corresponding_remote_path",
+              "load_remote_json_secrets",
+              "ls_remote_folder"
+            ]
+          }
+        ],
+        "src/kvcompression/hooks/registrar.py": [
+          {
+            "path": "src/kvcompression/hooks/compressor.py",
+            "batchIndex": 2,
+            "symbols": [
+              "LayerHeadCompressionConfig",
+              "KVCompressor"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "batchIndex": 7,
+      "files": [
+        {
+          "path": "tests/test_generate_with_compression.py",
+          "language": "python",
+          "sizeLines": 204,
+          "fileCategory": "code"
+        },
+        {
+          "path": "tests/test_kv_cache/test_compressor.py",
+          "language": "python",
+          "sizeLines": 476,
+          "fileCategory": "code"
+        },
+        {
+          "path": "tests/test_kv_cache/test_patched_model_forward.py",
+          "language": "python",
+          "sizeLines": 84,
+          "fileCategory": "code"
+        },
+        {
+          "path": "tests/test_online_attention.py",
+          "language": "python",
+          "sizeLines": 230,
+          "fileCategory": "code"
+        },
+        {
+          "path": "tests/test_utils.py",
+          "language": "python",
+          "sizeLines": 83,
+          "fileCategory": "code"
+        }
+      ],
+      "batchImportData": {
+        "tests/test_generate_with_compression.py": [
+          "tests/test_utils.py"
+        ],
+        "tests/test_kv_cache/test_compressor.py": [
+          "tests/test_utils.py"
+        ],
+        "tests/test_kv_cache/test_patched_model_forward.py": [
+          "tests/test_utils.py"
+        ],
+        "tests/test_online_attention.py": [
+          "tests/test_utils.py"
+        ],
+        "tests/test_utils.py": []
+      },
+      "neighborMap": {}
+    },
+    {
+      "batchIndex": 8,
+      "files": [
+        {
+          "path": ".env.template",
+          "language": "config",
+          "sizeLines": 29,
+          "fileCategory": "config"
+        },
+        {
+          "path": ".pre-commit-config.yaml",
+          "language": "yaml",
+          "sizeLines": 18,
+          "fileCategory": "config"
+        },
+        {
+          "path": "CODE_OF_CONDUCT.md",
+          "language": "markdown",
+          "sizeLines": 70,
+          "fileCategory": "docs"
+        },
+        {
+          "path": "CONTRIBUTING.md",
+          "language": "markdown",
+          "sizeLines": 7,
+          "fileCategory": "docs"
+        },
+        {
+          "path": "README.md",
+          "language": "markdown",
+          "sizeLines": 106,
+          "fileCategory": "docs"
+        },
+        {
+          "path": "pyproject.toml",
+          "language": "toml",
+          "sizeLines": 79,
+          "fileCategory": "config"
+        }
+      ],
+      "batchImportData": {
+        ".env.template": [],
+        ".pre-commit-config.yaml": [],
+        "CODE_OF_CONDUCT.md": [],
+        "CONTRIBUTING.md": [],
+        "README.md": [],
+        "pyproject.toml": []
+      },
+      "neighborMap": {}
+    },
+    {
+      "batchIndex": 9,
+      "files": [
+        {
+          "path": ".understand-anything/.understandignore",
+          "language": "unknown",
+          "sizeLines": 126,
+          "fileCategory": "code"
+        },
+        {
+          "path": "ACKNOWLEDGEMENTS",
+          "language": "unknown",
+          "sizeLines": 245,
+          "fileCategory": "code"
+        },
+        {
+          "path": "assets/ruler_split/train.txt",
+          "language": "txt",
+          "sizeLines": 6175,
+          "fileCategory": "docs"
+        },
+        {
+          "path": "assets/ruler_split/val.txt",
+          "language": "txt",
+          "sizeLines": 325,
+          "fileCategory": "docs"
+        },
+        {
+          "path": "configs/preprocess_ruler.yaml",
+          "language": "yaml",
+          "sizeLines": 108,
+          "fileCategory": "config"
+        },
+        {
+          "path": "configs/setups/agent_training_setup.sh",
+          "language": "shell",
+          "sizeLines": 51,
+          "fileCategory": "script"
+        },
+        {
+          "path": "configs/setups/preprocessing_setup.sh",
+          "language": "shell",
+          "sizeLines": 37,
+          "fileCategory": "script"
+        },
+        {
+          "path": "configs/train_single_head.yaml",
+          "language": "yaml",
+          "sizeLines": 216,
+          "fileCategory": "config"
+        },
+        {
+          "path": "notebooks/inference_demo.ipynb",
+          "language": "ipynb",
+          "sizeLines": 203,
+          "fileCategory": "code"
+        },
+        {
+          "path": "scripts/download_data.py",
+          "language": "python",
+          "sizeLines": 531,
+          "fileCategory": "code"
+        },
+        {
+          "path": "scripts/orchestration/agent_registry.py",
+          "language": "python",
+          "sizeLines": 296,
+          "fileCategory": "code"
+        },
+        {
+          "path": "scripts/orchestration/assignment_generator.py",
+          "language": "python",
+          "sizeLines": 202,
+          "fileCategory": "code"
+        },
+        {
+          "path": "src/kvcompression/cli_logging.py",
+          "language": "python",
+          "sizeLines": 43,
+          "fileCategory": "code"
+        },
+        {
+          "path": "src/kvcompression/data/__init__.py",
+          "language": "python",
+          "sizeLines": 5,
+          "fileCategory": "code"
+        },
+        {
+          "path": "src/kvcompression/entrypoints/__init__.py",
+          "language": "python",
+          "sizeLines": 4,
+          "fileCategory": "code"
+        },
+        {
+          "path": "src/kvcompression/entrypoints/datagen/__init__.py",
+          "language": "python",
+          "sizeLines": 5,
+          "fileCategory": "code"
+        },
+        {
+          "path": "src/kvcompression/entrypoints/rl/__init__.py",
+          "language": "python",
+          "sizeLines": 5,
+          "fileCategory": "code"
+        },
+        {
+          "path": "src/kvcompression/hooks/__init__.py",
+          "language": "python",
+          "sizeLines": 5,
+          "fileCategory": "code"
+        },
+        {
+          "path": "src/kvcompression/presses/__init__.py",
+          "language": "python",
+          "sizeLines": 4,
+          "fileCategory": "code"
+        },
+        {
+          "path": "src/kvcompression/rl/__init__.py",
+          "language": "python",
+          "sizeLines": 4,
+          "fileCategory": "code"
+        },
+        {
+          "path": "src/kvcompression/rl/agents/__init__.py",
+          "language": "python",
+          "sizeLines": 5,
+          "fileCategory": "code"
+        },
+        {
+          "path": "src/kvcompression/rl/environments/__init__.py",
+          "language": "python",
+          "sizeLines": 5,
+          "fileCategory": "code"
+        },
+        {
+          "path": "src/kvcompression/rl/rewards/__init__.py",
+          "language": "python",
+          "sizeLines": 5,
+          "fileCategory": "code"
+        },
+        {
+          "path": "src/kvcompression/rl/trainers/__init__.py",
+          "language": "python",
+          "sizeLines": 5,
+          "fileCategory": "code"
+        },
+        {
+          "path": "src/kvcompression/rl/trainers/policy_entropy_loss.py",
+          "language": "python",
+          "sizeLines": 100,
+          "fileCategory": "code"
+        }
+      ],
+      "batchImportData": {
+        ".understand-anything/.understandignore": [],
+        "ACKNOWLEDGEMENTS": [],
+        "assets/ruler_split/train.txt": [],
+        "assets/ruler_split/val.txt": [],
+        "configs/preprocess_ruler.yaml": [],
+        "configs/setups/agent_training_setup.sh": [],
+        "configs/setups/preprocessing_setup.sh": [],
+        "configs/train_single_head.yaml": [],
+        "notebooks/inference_demo.ipynb": [],
+        "scripts/download_data.py": [],
+        "scripts/orchestration/agent_registry.py": [],
+        "scripts/orchestration/assignment_generator.py": [],
+        "src/kvcompression/cli_logging.py": [],
+        "src/kvcompression/data/__init__.py": [],
+        "src/kvcompression/entrypoints/__init__.py": [],
+        "src/kvcompression/entrypoints/datagen/__init__.py": [],
+        "src/kvcompression/entrypoints/rl/__init__.py": [],
+        "src/kvcompression/hooks/__init__.py": [],
+        "src/kvcompression/presses/__init__.py": [],
+        "src/kvcompression/rl/__init__.py": [],
+        "src/kvcompression/rl/agents/__init__.py": [],
+        "src/kvcompression/rl/environments/__init__.py": [],
+        "src/kvcompression/rl/rewards/__init__.py": [],
+        "src/kvcompression/rl/trainers/__init__.py": [],
+        "src/kvcompression/rl/trainers/policy_entropy_loss.py": []
+      },
+      "neighborMap": {}
+    },
+    {
+      "batchIndex": 10,
+      "files": [
+        {
+          "path": "src/kvcompression/rl/trainers/triton_policy_entropy_loss.py",
+          "language": "python",
+          "sizeLines": 639,
+          "fileCategory": "code"
+        },
+        {
+          "path": "src/kvcompression/utils/__init__.py",
+          "language": "python",
+          "sizeLines": 12,
+          "fileCategory": "code"
+        },
+        {
+          "path": "src/kvcompression/utils/generation.py",
+          "language": "python",
+          "sizeLines": 133,
+          "fileCategory": "code"
+        },
+        {
+          "path": "src/kvcompression/utils/scheduler_factory.py",
+          "language": "python",
+          "sizeLines": 40,
+          "fileCategory": "code"
+        },
+        {
+          "path": "tests/__init__.py",
+          "language": "python",
+          "sizeLines": 5,
+          "fileCategory": "code"
+        },
+        {
+          "path": "tests/conftest.py",
+          "language": "python",
+          "sizeLines": 46,
+          "fileCategory": "code"
+        },
+        {
+          "path": "tests/data/test_chunk_sampler.py",
+          "language": "python",
+          "sizeLines": 93,
+          "fileCategory": "code"
+        },
+        {
+          "path": "tests/rl/test_compute_advantages.py",
+          "language": "python",
+          "sizeLines": 147,
+          "fileCategory": "code"
+        },
+        {
+          "path": "tests/rl/test_masked_logprob_entropy.py",
+          "language": "python",
+          "sizeLines": 304,
+          "fileCategory": "code"
+        },
+        {
+          "path": "tests/test_attention_utils.py",
+          "language": "python",
+          "sizeLines": 214,
+          "fileCategory": "code"
+        },
+        {
+          "path": "tests/test_costs.py",
+          "language": "python",
+          "sizeLines": 234,
+          "fileCategory": "code"
+        },
+        {
+          "path": "tests/test_kv_cache/test_compressible_kv_cache.py",
+          "language": "python",
+          "sizeLines": 720,
+          "fileCategory": "code"
+        },
+        {
+          "path": "tests/test_kv_cache/test_flexattention_bfloat16.py",
+          "language": "python",
+          "sizeLines": 148,
+          "fileCategory": "code"
+        },
+        {
+          "path": "tests/test_kv_cache/test_patched_attention.py",
+          "language": "python",
+          "sizeLines": 424,
+          "fileCategory": "code"
+        }
+      ],
+      "batchImportData": {
+        "src/kvcompression/rl/trainers/triton_policy_entropy_loss.py": [],
+        "src/kvcompression/utils/__init__.py": [
+          "src/kvcompression/utils/generation.py"
+        ],
+        "src/kvcompression/utils/generation.py": [],
+        "src/kvcompression/utils/scheduler_factory.py": [],
+        "tests/__init__.py": [],
+        "tests/conftest.py": [],
+        "tests/data/test_chunk_sampler.py": [],
+        "tests/rl/test_compute_advantages.py": [],
+        "tests/rl/test_masked_logprob_entropy.py": [],
+        "tests/test_attention_utils.py": [],
+        "tests/test_costs.py": [],
+        "tests/test_kv_cache/test_compressible_kv_cache.py": [],
+        "tests/test_kv_cache/test_flexattention_bfloat16.py": [],
+        "tests/test_kv_cache/test_patched_attention.py": []
+      },
+      "neighborMap": {}
+    }
+  ]
+}

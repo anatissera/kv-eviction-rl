@@ -1,0 +1,4695 @@
+{
+  "scriptCompleted": true,
+  "filesAnalyzed": 14,
+  "filesSkipped": [],
+  "results": [
+    {
+      "path": "src/kvcompression/rl/trainers/triton_policy_entropy_loss.py",
+      "language": "python",
+      "fileCategory": "code",
+      "totalLines": 639,
+      "nonEmptyLines": 551,
+      "functions": [
+        {
+          "name": "_policy_entropy_loss_forward_kernel",
+          "startLine": 17,
+          "endLine": 138,
+          "params": [
+            "logits_ptr",
+            "actions_ptr",
+            "seq_lengths_ptr",
+            "episode_lengths_ptr",
+            "prefix_sum_lengths_ptr",
+            "flat_log_probs_out_ptr",
+            "flat_entropies_out_ptr",
+            "batch_size",
+            "action_dim",
+            "max_steps",
+            "stride_logits_b",
+            "stride_logits_a",
+            "stride_actions_b",
+            "stride_actions_t",
+            "logit_dtype",
+            "BLOCK_SIZE_ACTION"
+          ]
+        },
+        {
+          "name": "_policy_entropy_loss_backward_kernel",
+          "startLine": 142,
+          "endLine": 287,
+          "params": [
+            "logits_ptr",
+            "actions_ptr",
+            "seq_lengths_ptr",
+            "episode_lengths_ptr",
+            "prefix_sum_lengths_ptr",
+            "advantages_ptr",
+            "grad_output_ptr",
+            "grad_logits_out_ptr",
+            "batch_size",
+            "action_dim",
+            "max_steps",
+            "total_num_steps",
+            "stride_logits_b",
+            "stride_logits_a",
+            "stride_actions_b",
+            "stride_actions_t",
+            "stride_grad_logits_b",
+            "stride_grad_logits_a",
+            "logit_dtype",
+            "entropy_coef",
+            "BLOCK_SIZE_ACTION"
+          ]
+        },
+        {
+          "name": "compute_policy_entropy_loss_triton",
+          "startLine": 565,
+          "endLine": 639,
+          "params": [
+            "device",
+            "entropy_coef",
+            "batch_size",
+            "max_steps",
+            "action_dim",
+            "seq_lengths",
+            "episode_lengths",
+            "actions",
+            "policy_logits",
+            "advantages"
+          ]
+        }
+      ],
+      "classes": [
+        {
+          "name": "PolicyEntropyLossTriton",
+          "startLine": 290,
+          "endLine": 562,
+          "methods": [
+            "forward",
+            "backward"
+          ],
+          "properties": []
+        }
+      ],
+      "exports": [
+        {
+          "name": "_policy_entropy_loss_forward_kernel",
+          "line": 16,
+          "isDefault": false
+        },
+        {
+          "name": "_policy_entropy_loss_backward_kernel",
+          "line": 141,
+          "isDefault": false
+        },
+        {
+          "name": "PolicyEntropyLossTriton",
+          "line": 290,
+          "isDefault": false
+        },
+        {
+          "name": "compute_policy_entropy_loss_triton",
+          "line": 565,
+          "isDefault": false
+        }
+      ],
+      "callGraph": [
+        {
+          "caller": "_policy_entropy_loss_forward_kernel",
+          "callee": "tl.program_id",
+          "lineNumber": 51
+        },
+        {
+          "caller": "_policy_entropy_loss_forward_kernel",
+          "callee": "tl.load",
+          "lineNumber": 58
+        },
+        {
+          "caller": "_policy_entropy_loss_forward_kernel",
+          "callee": "tl.load",
+          "lineNumber": 59
+        },
+        {
+          "caller": "_policy_entropy_loss_forward_kernel",
+          "callee": "tl.load",
+          "lineNumber": 61
+        },
+        {
+          "caller": "_policy_entropy_loss_forward_kernel",
+          "callee": "tl.arange",
+          "lineNumber": 66
+        },
+        {
+          "caller": "_policy_entropy_loss_forward_kernel",
+          "callee": "tl.load(\n        logits_b_ptr + a_indices * stride_logits_a,\n        mask=action_range_mask,\n        other=-float(\"inf\"),\n    ).to",
+          "lineNumber": 70
+        },
+        {
+          "caller": "_policy_entropy_loss_forward_kernel",
+          "callee": "tl.load",
+          "lineNumber": 70
+        },
+        {
+          "caller": "_policy_entropy_loss_forward_kernel",
+          "callee": "float",
+          "lineNumber": 73
+        },
+        {
+          "caller": "_policy_entropy_loss_forward_kernel",
+          "callee": "range",
+          "lineNumber": 85
+        },
+        {
+          "caller": "_policy_entropy_loss_forward_kernel",
+          "callee": "tl.where",
+          "lineNumber": 87
+        },
+        {
+          "caller": "_policy_entropy_loss_forward_kernel",
+          "callee": "float",
+          "lineNumber": 87
+        },
+        {
+          "caller": "_policy_entropy_loss_forward_kernel",
+          "callee": "step_logits.to",
+          "lineNumber": 90
+        },
+        {
+          "caller": "_policy_entropy_loss_forward_kernel",
+          "callee": "tl.max",
+          "lineNumber": 93
+        },
+        {
+          "caller": "_policy_entropy_loss_forward_kernel",
+          "callee": "tl.where",
+          "lineNumber": 94
+        },
+        {
+          "caller": "_policy_entropy_loss_forward_kernel",
+          "callee": "float",
+          "lineNumber": 95
+        },
+        {
+          "caller": "_policy_entropy_loss_forward_kernel",
+          "callee": "tl.exp",
+          "lineNumber": 97
+        },
+        {
+          "caller": "_policy_entropy_loss_forward_kernel",
+          "callee": "tl.sum",
+          "lineNumber": 98
+        },
+        {
+          "caller": "_policy_entropy_loss_forward_kernel",
+          "callee": "tl.log",
+          "lineNumber": 101
+        },
+        {
+          "caller": "_policy_entropy_loss_forward_kernel",
+          "callee": "tl.where",
+          "lineNumber": 105
+        },
+        {
+          "caller": "_policy_entropy_loss_forward_kernel",
+          "callee": "float",
+          "lineNumber": 108
+        },
+        {
+          "caller": "_policy_entropy_loss_forward_kernel",
+          "callee": "tl.exp",
+          "lineNumber": 112
+        },
+        {
+          "caller": "_policy_entropy_loss_forward_kernel",
+          "callee": "tl.where",
+          "lineNumber": 113
+        },
+        {
+          "caller": "_policy_entropy_loss_forward_kernel",
+          "callee": "tl.where",
+          "lineNumber": 116
+        },
+        {
+          "caller": "_policy_entropy_loss_forward_kernel",
+          "callee": "tl.sum",
+          "lineNumber": 117
+        },
+        {
+          "caller": "_policy_entropy_loss_forward_kernel",
+          "callee": "tl.load",
+          "lineNumber": 120
+        },
+        {
+          "caller": "_policy_entropy_loss_forward_kernel",
+          "callee": "tl.sum",
+          "lineNumber": 124
+        },
+        {
+          "caller": "_policy_entropy_loss_forward_kernel",
+          "callee": "tl.where",
+          "lineNumber": 125
+        },
+        {
+          "caller": "_policy_entropy_loss_forward_kernel",
+          "callee": "tl.store",
+          "lineNumber": 130
+        },
+        {
+          "caller": "_policy_entropy_loss_forward_kernel",
+          "callee": "log_prob_for_step.to",
+          "lineNumber": 131
+        },
+        {
+          "caller": "_policy_entropy_loss_forward_kernel",
+          "callee": "tl.store",
+          "lineNumber": 133
+        },
+        {
+          "caller": "_policy_entropy_loss_forward_kernel",
+          "callee": "entropy_for_step.to",
+          "lineNumber": 134
+        },
+        {
+          "caller": "_policy_entropy_loss_backward_kernel",
+          "callee": "tl.program_id",
+          "lineNumber": 180
+        },
+        {
+          "caller": "_policy_entropy_loss_backward_kernel",
+          "callee": "tl.load",
+          "lineNumber": 185
+        },
+        {
+          "caller": "_policy_entropy_loss_backward_kernel",
+          "callee": "tl.load",
+          "lineNumber": 186
+        },
+        {
+          "caller": "_policy_entropy_loss_backward_kernel",
+          "callee": "tl.load",
+          "lineNumber": 187
+        },
+        {
+          "caller": "_policy_entropy_loss_backward_kernel",
+          "callee": "tl.arange",
+          "lineNumber": 194
+        },
+        {
+          "caller": "_policy_entropy_loss_backward_kernel",
+          "callee": "tl.load(\n        logits_b_ptr + a_indices * stride_logits_a,\n        mask=action_range_mask,\n        other=-float(\"inf\"),\n    ).to",
+          "lineNumber": 196
+        },
+        {
+          "caller": "_policy_entropy_loss_backward_kernel",
+          "callee": "tl.load",
+          "lineNumber": 196
+        },
+        {
+          "caller": "_policy_entropy_loss_backward_kernel",
+          "callee": "float",
+          "lineNumber": 199
+        },
+        {
+          "caller": "_policy_entropy_loss_backward_kernel",
+          "callee": "tl.zeros",
+          "lineNumber": 203
+        },
+        {
+          "caller": "_policy_entropy_loss_backward_kernel",
+          "callee": "tl.load(grad_output_ptr).to",
+          "lineNumber": 205
+        },
+        {
+          "caller": "_policy_entropy_loss_backward_kernel",
+          "callee": "tl.load",
+          "lineNumber": 205
+        },
+        {
+          "caller": "_policy_entropy_loss_backward_kernel",
+          "callee": "inv_total_steps.to",
+          "lineNumber": 209
+        },
+        {
+          "caller": "_policy_entropy_loss_backward_kernel",
+          "callee": "range",
+          "lineNumber": 214
+        },
+        {
+          "caller": "_policy_entropy_loss_backward_kernel",
+          "callee": "tl.where",
+          "lineNumber": 218
+        },
+        {
+          "caller": "_policy_entropy_loss_backward_kernel",
+          "callee": "float",
+          "lineNumber": 218
+        },
+        {
+          "caller": "_policy_entropy_loss_backward_kernel",
+          "callee": "step_logits.to",
+          "lineNumber": 219
+        },
+        {
+          "caller": "_policy_entropy_loss_backward_kernel",
+          "callee": "tl.max",
+          "lineNumber": 222
+        },
+        {
+          "caller": "_policy_entropy_loss_backward_kernel",
+          "callee": "tl.where",
+          "lineNumber": 223
+        },
+        {
+          "caller": "_policy_entropy_loss_backward_kernel",
+          "callee": "float",
+          "lineNumber": 224
+        },
+        {
+          "caller": "_policy_entropy_loss_backward_kernel",
+          "callee": "tl.exp",
+          "lineNumber": 226
+        },
+        {
+          "caller": "_policy_entropy_loss_backward_kernel",
+          "callee": "tl.sum",
+          "lineNumber": 227
+        },
+        {
+          "caller": "_policy_entropy_loss_backward_kernel",
+          "callee": "tl.log",
+          "lineNumber": 228
+        },
+        {
+          "caller": "_policy_entropy_loss_backward_kernel",
+          "callee": "tl.where",
+          "lineNumber": 231
+        },
+        {
+          "caller": "_policy_entropy_loss_backward_kernel",
+          "callee": "float",
+          "lineNumber": 234
+        },
+        {
+          "caller": "_policy_entropy_loss_backward_kernel",
+          "callee": "tl.exp",
+          "lineNumber": 236
+        },
+        {
+          "caller": "_policy_entropy_loss_backward_kernel",
+          "callee": "tl.where",
+          "lineNumber": 237
+        },
+        {
+          "caller": "_policy_entropy_loss_backward_kernel",
+          "callee": "tl.load",
+          "lineNumber": 240
+        },
+        {
+          "caller": "_policy_entropy_loss_backward_kernel",
+          "callee": "tl.load(advantages_ptr + current_flat_idx).to",
+          "lineNumber": 241
+        },
+        {
+          "caller": "_policy_entropy_loss_backward_kernel",
+          "callee": "tl.load",
+          "lineNumber": 241
+        },
+        {
+          "caller": "_policy_entropy_loss_backward_kernel",
+          "callee": "tl.where(action_is_taken, 1.0, 0.0).to",
+          "lineNumber": 245
+        },
+        {
+          "caller": "_policy_entropy_loss_backward_kernel",
+          "callee": "tl.where",
+          "lineNumber": 245
+        },
+        {
+          "caller": "_policy_entropy_loss_backward_kernel",
+          "callee": "tl.where",
+          "lineNumber": 251
+        },
+        {
+          "caller": "_policy_entropy_loss_backward_kernel",
+          "callee": "tl.where",
+          "lineNumber": 259
+        },
+        {
+          "caller": "_policy_entropy_loss_backward_kernel",
+          "callee": "tl.sum",
+          "lineNumber": 260
+        },
+        {
+          "caller": "_policy_entropy_loss_backward_kernel",
+          "callee": "tl.where",
+          "lineNumber": 268
+        },
+        {
+          "caller": "_policy_entropy_loss_backward_kernel",
+          "callee": "tl.where",
+          "lineNumber": 271
+        },
+        {
+          "caller": "_policy_entropy_loss_backward_kernel",
+          "callee": "tl.store",
+          "lineNumber": 283
+        },
+        {
+          "caller": "forward",
+          "callee": "policy_logits.dim",
+          "lineNumber": 326
+        },
+        {
+          "caller": "forward",
+          "callee": "actions.dim",
+          "lineNumber": 327
+        },
+        {
+          "caller": "forward",
+          "callee": "seq_lengths.dim",
+          "lineNumber": 328
+        },
+        {
+          "caller": "forward",
+          "callee": "episode_lengths.dim",
+          "lineNumber": 329
+        },
+        {
+          "caller": "forward",
+          "callee": "advantages.dim",
+          "lineNumber": 330
+        },
+        {
+          "caller": "forward",
+          "callee": "actions.to",
+          "lineNumber": 342
+        },
+        {
+          "caller": "forward",
+          "callee": "seq_lengths.to",
+          "lineNumber": 344
+        },
+        {
+          "caller": "forward",
+          "callee": "episode_lengths.to",
+          "lineNumber": 346
+        },
+        {
+          "caller": "forward",
+          "callee": "int",
+          "lineNumber": 362
+        },
+        {
+          "caller": "forward",
+          "callee": "episode_lengths.sum().item",
+          "lineNumber": 362
+        },
+        {
+          "caller": "forward",
+          "callee": "episode_lengths.sum",
+          "lineNumber": 362
+        },
+        {
+          "caller": "forward",
+          "callee": "pylogger.warning",
+          "lineNumber": 365
+        },
+        {
+          "caller": "forward",
+          "callee": "torch.empty",
+          "lineNumber": 372
+        },
+        {
+          "caller": "forward",
+          "callee": "torch.tensor",
+          "lineNumber": 378
+        },
+        {
+          "caller": "forward",
+          "callee": "torch.tensor",
+          "lineNumber": 384
+        },
+        {
+          "caller": "forward",
+          "callee": "ctx.save_for_backward",
+          "lineNumber": 385
+        },
+        {
+          "caller": "forward",
+          "callee": "torch.zeros",
+          "lineNumber": 391
+        },
+        {
+          "caller": "forward",
+          "callee": "zero_loss.clone().detach",
+          "lineNumber": 399
+        },
+        {
+          "caller": "forward",
+          "callee": "zero_loss.clone",
+          "lineNumber": 399
+        },
+        {
+          "caller": "forward",
+          "callee": "torch.zeros",
+          "lineNumber": 404
+        },
+        {
+          "caller": "forward",
+          "callee": "torch.cumsum",
+          "lineNumber": 407
+        },
+        {
+          "caller": "forward",
+          "callee": "torch.empty",
+          "lineNumber": 410
+        },
+        {
+          "caller": "forward",
+          "callee": "torch.empty",
+          "lineNumber": 413
+        },
+        {
+          "caller": "forward",
+          "callee": "triton.next_power_of_2",
+          "lineNumber": 419
+        },
+        {
+          "caller": "forward",
+          "callee": "policy_logits.stride",
+          "lineNumber": 432
+        },
+        {
+          "caller": "forward",
+          "callee": "policy_logits.stride",
+          "lineNumber": 433
+        },
+        {
+          "caller": "forward",
+          "callee": "actions.stride",
+          "lineNumber": 434
+        },
+        {
+          "caller": "forward",
+          "callee": "actions.stride",
+          "lineNumber": 435
+        },
+        {
+          "caller": "forward",
+          "callee": "advantages.to(device=device, dtype=torch.float64).detach",
+          "lineNumber": 441
+        },
+        {
+          "caller": "forward",
+          "callee": "advantages.to",
+          "lineNumber": 441
+        },
+        {
+          "caller": "forward",
+          "callee": "(flat_log_probs * advantages_f64).mean",
+          "lineNumber": 443
+        },
+        {
+          "caller": "forward",
+          "callee": "flat_entropies.mean",
+          "lineNumber": 445
+        },
+        {
+          "caller": "forward",
+          "callee": "float",
+          "lineNumber": 448
+        },
+        {
+          "caller": "forward",
+          "callee": "ctx.save_for_backward",
+          "lineNumber": 451
+        },
+        {
+          "caller": "forward",
+          "callee": "total_loss_f64.to",
+          "lineNumber": 466
+        },
+        {
+          "caller": "forward",
+          "callee": "entropy_loss.to(logit_dtype).detach",
+          "lineNumber": 467
+        },
+        {
+          "caller": "forward",
+          "callee": "entropy_loss.to",
+          "lineNumber": 467
+        },
+        {
+          "caller": "forward",
+          "callee": "policy_loss.to(logit_dtype).detach",
+          "lineNumber": 468
+        },
+        {
+          "caller": "forward",
+          "callee": "policy_loss.to",
+          "lineNumber": 468
+        },
+        {
+          "caller": "forward",
+          "callee": "mean_entropy.to(logit_dtype).detach",
+          "lineNumber": 469
+        },
+        {
+          "caller": "forward",
+          "callee": "mean_entropy.to",
+          "lineNumber": 469
+        },
+        {
+          "caller": "backward",
+          "callee": "torch.zeros_like",
+          "lineNumber": 482
+        },
+        {
+          "caller": "backward",
+          "callee": "torch.zeros_like",
+          "lineNumber": 509
+        },
+        {
+          "caller": "backward",
+          "callee": "torch.tensor",
+          "lineNumber": 523
+        },
+        {
+          "caller": "backward",
+          "callee": "grad_total_loss.to",
+          "lineNumber": 525
+        },
+        {
+          "caller": "backward",
+          "callee": "torch.zeros_like",
+          "lineNumber": 528
+        },
+        {
+          "caller": "backward",
+          "callee": "advantages.to",
+          "lineNumber": 529
+        },
+        {
+          "caller": "backward",
+          "callee": "triton.next_power_of_2",
+          "lineNumber": 532
+        },
+        {
+          "caller": "backward",
+          "callee": "policy_logits.stride",
+          "lineNumber": 547
+        },
+        {
+          "caller": "backward",
+          "callee": "policy_logits.stride",
+          "lineNumber": 548
+        },
+        {
+          "caller": "backward",
+          "callee": "actions.stride",
+          "lineNumber": 549
+        },
+        {
+          "caller": "backward",
+          "callee": "actions.stride",
+          "lineNumber": 550
+        },
+        {
+          "caller": "backward",
+          "callee": "grad_logits_out_f64.stride",
+          "lineNumber": 551
+        },
+        {
+          "caller": "backward",
+          "callee": "grad_logits_out_f64.stride",
+          "lineNumber": 552
+        },
+        {
+          "caller": "backward",
+          "callee": "float",
+          "lineNumber": 554
+        },
+        {
+          "caller": "backward",
+          "callee": "grad_logits_out_f64.to",
+          "lineNumber": 559
+        },
+        {
+          "caller": "compute_policy_entropy_loss_triton",
+          "callee": "ValueError",
+          "lineNumber": 608
+        },
+        {
+          "caller": "compute_policy_entropy_loss_triton",
+          "callee": "all",
+          "lineNumber": 613
+        },
+        {
+          "caller": "compute_policy_entropy_loss_triton",
+          "callee": "pylogger.warning",
+          "lineNumber": 614
+        },
+        {
+          "caller": "compute_policy_entropy_loss_triton",
+          "callee": "actions.to",
+          "lineNumber": 615
+        },
+        {
+          "caller": "compute_policy_entropy_loss_triton",
+          "callee": "seq_lengths.to",
+          "lineNumber": 616
+        },
+        {
+          "caller": "compute_policy_entropy_loss_triton",
+          "callee": "episode_lengths.to",
+          "lineNumber": 617
+        },
+        {
+          "caller": "compute_policy_entropy_loss_triton",
+          "callee": "advantages.to",
+          "lineNumber": 618
+        },
+        {
+          "caller": "compute_policy_entropy_loss_triton",
+          "callee": "all",
+          "lineNumber": 619
+        },
+        {
+          "caller": "compute_policy_entropy_loss_triton",
+          "callee": "ValueError",
+          "lineNumber": 620
+        },
+        {
+          "caller": "compute_policy_entropy_loss_triton",
+          "callee": "pylogger.warning",
+          "lineNumber": 625
+        },
+        {
+          "caller": "compute_policy_entropy_loss_triton",
+          "callee": "policy_logits.requires_grad_",
+          "lineNumber": 628
+        },
+        {
+          "caller": "compute_policy_entropy_loss_triton",
+          "callee": "PolicyEntropyLossTriton.apply",
+          "lineNumber": 630
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 4,
+        "functionCount": 3,
+        "classCount": 1
+      }
+    },
+    {
+      "path": "src/kvcompression/utils/__init__.py",
+      "language": "python",
+      "fileCategory": "code",
+      "totalLines": 12,
+      "nonEmptyLines": 9,
+      "metrics": {
+        "importCount": 1,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0
+      }
+    },
+    {
+      "path": "src/kvcompression/utils/generation.py",
+      "language": "python",
+      "fileCategory": "code",
+      "totalLines": 133,
+      "nonEmptyLines": 106,
+      "functions": [
+        {
+          "name": "_sample_like_torchtune",
+          "startLine": 13,
+          "endLine": 27,
+          "params": [
+            "logits",
+            "temperature"
+          ]
+        },
+        {
+          "name": "generate_with_compression",
+          "startLine": 30,
+          "endLine": 133,
+          "params": [
+            "model",
+            "prompt",
+            "kv_compressor",
+            "target_cache_size",
+            "max_generated_tokens",
+            "pad_id",
+            "stop_tokens"
+          ]
+        }
+      ],
+      "exports": [
+        {
+          "name": "_sample_like_torchtune",
+          "line": 13,
+          "isDefault": false
+        },
+        {
+          "name": "generate_with_compression",
+          "line": 30,
+          "isDefault": false
+        }
+      ],
+      "callGraph": [
+        {
+          "caller": "_sample_like_torchtune",
+          "callee": "max",
+          "lineNumber": 24
+        },
+        {
+          "caller": "_sample_like_torchtune",
+          "callee": "torch.nn.functional.softmax",
+          "lineNumber": 25
+        },
+        {
+          "caller": "_sample_like_torchtune",
+          "callee": "torch.empty_like(probs).exponential_",
+          "lineNumber": 26
+        },
+        {
+          "caller": "_sample_like_torchtune",
+          "callee": "torch.empty_like",
+          "lineNumber": 26
+        },
+        {
+          "caller": "_sample_like_torchtune",
+          "callee": "torch.argmax(probs / q, dim=-1, keepdim=True).to",
+          "lineNumber": 27
+        },
+        {
+          "caller": "_sample_like_torchtune",
+          "callee": "torch.argmax",
+          "lineNumber": 27
+        },
+        {
+          "caller": "generate_with_compression",
+          "callee": "ValueError",
+          "lineNumber": 59
+        },
+        {
+          "caller": "generate_with_compression",
+          "callee": "prompt.view",
+          "lineNumber": 61
+        },
+        {
+          "caller": "generate_with_compression",
+          "callee": "ValueError",
+          "lineNumber": 69
+        },
+        {
+          "caller": "generate_with_compression",
+          "callee": "prompt.clone",
+          "lineNumber": 74
+        },
+        {
+          "caller": "generate_with_compression",
+          "callee": "torch.tril(\n        torch.ones(\n            total_response_length,\n            max_seq_len,\n            dtype=torch.bool,\n            device=device,\n        )\n    ).unsqueeze",
+          "lineNumber": 76
+        },
+        {
+          "caller": "generate_with_compression",
+          "callee": "torch.tril",
+          "lineNumber": 76
+        },
+        {
+          "caller": "generate_with_compression",
+          "callee": "torch.ones",
+          "lineNumber": 77
+        },
+        {
+          "caller": "generate_with_compression",
+          "callee": "torch.arange(0, total_response_length, device=device).unsqueeze",
+          "lineNumber": 85
+        },
+        {
+          "caller": "generate_with_compression",
+          "callee": "torch.arange",
+          "lineNumber": 85
+        },
+        {
+          "caller": "generate_with_compression",
+          "callee": "torch.tensor",
+          "lineNumber": 90
+        },
+        {
+          "caller": "generate_with_compression",
+          "callee": "torch.zeros",
+          "lineNumber": 94
+        },
+        {
+          "caller": "generate_with_compression",
+          "callee": "model",
+          "lineNumber": 99
+        },
+        {
+          "caller": "generate_with_compression",
+          "callee": "kv_compressor.compress_caches",
+          "lineNumber": 103
+        },
+        {
+          "caller": "generate_with_compression",
+          "callee": "_sample_like_torchtune",
+          "lineNumber": 105
+        },
+        {
+          "caller": "generate_with_compression",
+          "callee": "torch.cat",
+          "lineNumber": 106
+        },
+        {
+          "caller": "generate_with_compression",
+          "callee": "torch.isin",
+          "lineNumber": 109
+        },
+        {
+          "caller": "generate_with_compression",
+          "callee": "first_token.squeeze",
+          "lineNumber": 109
+        },
+        {
+          "caller": "generate_with_compression",
+          "callee": "torch.all",
+          "lineNumber": 110
+        },
+        {
+          "caller": "generate_with_compression",
+          "callee": "range",
+          "lineNumber": 116
+        },
+        {
+          "caller": "generate_with_compression",
+          "callee": "model",
+          "lineNumber": 120
+        },
+        {
+          "caller": "generate_with_compression",
+          "callee": "_sample_like_torchtune",
+          "lineNumber": 121
+        },
+        {
+          "caller": "generate_with_compression",
+          "callee": "torch.cat",
+          "lineNumber": 122
+        },
+        {
+          "caller": "generate_with_compression",
+          "callee": "torch.isin",
+          "lineNumber": 126
+        },
+        {
+          "caller": "generate_with_compression",
+          "callee": "next_token.squeeze",
+          "lineNumber": 126
+        },
+        {
+          "caller": "generate_with_compression",
+          "callee": "torch.all",
+          "lineNumber": 127
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 2,
+        "functionCount": 2,
+        "classCount": 0
+      }
+    },
+    {
+      "path": "src/kvcompression/utils/scheduler_factory.py",
+      "language": "python",
+      "fileCategory": "code",
+      "totalLines": 40,
+      "nonEmptyLines": 32,
+      "classes": [
+        {
+          "name": "SequentialWarmupCosineScheduler",
+          "startLine": 12,
+          "endLine": 40,
+          "methods": [
+            "__init__"
+          ],
+          "properties": []
+        }
+      ],
+      "exports": [
+        {
+          "name": "SequentialWarmupCosineScheduler",
+          "line": 12,
+          "isDefault": false
+        }
+      ],
+      "callGraph": [
+        {
+          "caller": "__init__",
+          "callee": "torch.optim.lr_scheduler.LinearLR",
+          "lineNumber": 25
+        },
+        {
+          "caller": "__init__",
+          "callee": "torch.optim.lr_scheduler.CosineAnnealingLR",
+          "lineNumber": 32
+        },
+        {
+          "caller": "__init__",
+          "callee": "super().__init__",
+          "lineNumber": 36
+        },
+        {
+          "caller": "__init__",
+          "callee": "super",
+          "lineNumber": 36
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 1,
+        "functionCount": 0,
+        "classCount": 1
+      }
+    },
+    {
+      "path": "tests/__init__.py",
+      "language": "python",
+      "fileCategory": "code",
+      "totalLines": 5,
+      "nonEmptyLines": 4,
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0
+      }
+    },
+    {
+      "path": "tests/conftest.py",
+      "language": "python",
+      "fileCategory": "code",
+      "totalLines": 46,
+      "nonEmptyLines": 34,
+      "functions": [
+        {
+          "name": "pytest_configure",
+          "startLine": 21,
+          "endLine": 25,
+          "params": [
+            "config"
+          ]
+        },
+        {
+          "name": "skip_cuda_tests_if_no_gpu",
+          "startLine": 29,
+          "endLine": 33,
+          "params": [
+            "request"
+          ]
+        },
+        {
+          "name": "model_base_config_fixture",
+          "startLine": 37,
+          "endLine": 46,
+          "params": []
+        }
+      ],
+      "exports": [
+        {
+          "name": "pytest_configure",
+          "line": 21,
+          "isDefault": false
+        },
+        {
+          "name": "skip_cuda_tests_if_no_gpu",
+          "line": 28,
+          "isDefault": false
+        },
+        {
+          "name": "model_base_config_fixture",
+          "line": 36,
+          "isDefault": false
+        }
+      ],
+      "callGraph": [
+        {
+          "caller": "pytest_configure",
+          "callee": "config.addinivalue_line",
+          "lineNumber": 23
+        },
+        {
+          "caller": "skip_cuda_tests_if_no_gpu",
+          "callee": "request.node.get_closest_marker",
+          "lineNumber": 31
+        },
+        {
+          "caller": "skip_cuda_tests_if_no_gpu",
+          "callee": "pytest.skip",
+          "lineNumber": 33
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 3,
+        "functionCount": 3,
+        "classCount": 0
+      }
+    },
+    {
+      "path": "tests/data/test_chunk_sampler.py",
+      "language": "python",
+      "fileCategory": "code",
+      "totalLines": 93,
+      "nonEmptyLines": 67,
+      "functions": [
+        {
+          "name": "test_chunk_validation",
+          "startLine": 25,
+          "endLine": 35,
+          "params": []
+        },
+        {
+          "name": "test_complete_coverage",
+          "startLine": 38,
+          "endLine": 58,
+          "params": []
+        },
+        {
+          "name": "test_uneven_chunk_distribution",
+          "startLine": 61,
+          "endLine": 74,
+          "params": []
+        },
+        {
+          "name": "test_shuffle_determinism",
+          "startLine": 77,
+          "endLine": 93,
+          "params": []
+        }
+      ],
+      "classes": [
+        {
+          "name": "DummyDataset",
+          "startLine": 14,
+          "endLine": 22,
+          "methods": [
+            "__init__",
+            "__len__",
+            "__getitem__"
+          ],
+          "properties": []
+        }
+      ],
+      "exports": [
+        {
+          "name": "DummyDataset",
+          "line": 14,
+          "isDefault": false
+        },
+        {
+          "name": "test_chunk_validation",
+          "line": 25,
+          "isDefault": false
+        },
+        {
+          "name": "test_complete_coverage",
+          "line": 38,
+          "isDefault": false
+        },
+        {
+          "name": "test_uneven_chunk_distribution",
+          "line": 61,
+          "isDefault": false
+        },
+        {
+          "name": "test_shuffle_determinism",
+          "line": 77,
+          "isDefault": false
+        }
+      ],
+      "callGraph": [
+        {
+          "caller": "test_chunk_validation",
+          "callee": "DummyDataset",
+          "lineNumber": 27
+        },
+        {
+          "caller": "test_chunk_validation",
+          "callee": "pytest.raises",
+          "lineNumber": 30
+        },
+        {
+          "caller": "test_chunk_validation",
+          "callee": "ChunkSampler",
+          "lineNumber": 31
+        },
+        {
+          "caller": "test_chunk_validation",
+          "callee": "ChunkSampler",
+          "lineNumber": 34
+        },
+        {
+          "caller": "test_chunk_validation",
+          "callee": "ChunkSampler",
+          "lineNumber": 35
+        },
+        {
+          "caller": "test_complete_coverage",
+          "callee": "DummyDataset",
+          "lineNumber": 41
+        },
+        {
+          "caller": "test_complete_coverage",
+          "callee": "range",
+          "lineNumber": 48
+        },
+        {
+          "caller": "test_complete_coverage",
+          "callee": "ChunkSampler",
+          "lineNumber": 49
+        },
+        {
+          "caller": "test_complete_coverage",
+          "callee": "list",
+          "lineNumber": 50
+        },
+        {
+          "caller": "test_complete_coverage",
+          "callee": "len",
+          "lineNumber": 53
+        },
+        {
+          "caller": "test_complete_coverage",
+          "callee": "len",
+          "lineNumber": 53
+        },
+        {
+          "caller": "test_complete_coverage",
+          "callee": "set",
+          "lineNumber": 53
+        },
+        {
+          "caller": "test_complete_coverage",
+          "callee": "all_indices.extend",
+          "lineNumber": 54
+        },
+        {
+          "caller": "test_complete_coverage",
+          "callee": "sorted",
+          "lineNumber": 57
+        },
+        {
+          "caller": "test_complete_coverage",
+          "callee": "list",
+          "lineNumber": 57
+        },
+        {
+          "caller": "test_complete_coverage",
+          "callee": "range",
+          "lineNumber": 57
+        },
+        {
+          "caller": "test_complete_coverage",
+          "callee": "len",
+          "lineNumber": 58
+        },
+        {
+          "caller": "test_complete_coverage",
+          "callee": "set",
+          "lineNumber": 58
+        },
+        {
+          "caller": "test_uneven_chunk_distribution",
+          "callee": "DummyDataset",
+          "lineNumber": 63
+        },
+        {
+          "caller": "test_uneven_chunk_distribution",
+          "callee": "ChunkSampler",
+          "lineNumber": 68
+        },
+        {
+          "caller": "test_uneven_chunk_distribution",
+          "callee": "ChunkSampler",
+          "lineNumber": 69
+        },
+        {
+          "caller": "test_uneven_chunk_distribution",
+          "callee": "ChunkSampler",
+          "lineNumber": 70
+        },
+        {
+          "caller": "test_uneven_chunk_distribution",
+          "callee": "list",
+          "lineNumber": 72
+        },
+        {
+          "caller": "test_uneven_chunk_distribution",
+          "callee": "list",
+          "lineNumber": 73
+        },
+        {
+          "caller": "test_uneven_chunk_distribution",
+          "callee": "list",
+          "lineNumber": 74
+        },
+        {
+          "caller": "test_shuffle_determinism",
+          "callee": "DummyDataset",
+          "lineNumber": 79
+        },
+        {
+          "caller": "test_shuffle_determinism",
+          "callee": "ChunkSampler",
+          "lineNumber": 80
+        },
+        {
+          "caller": "test_shuffle_determinism",
+          "callee": "list",
+          "lineNumber": 83
+        },
+        {
+          "caller": "test_shuffle_determinism",
+          "callee": "ChunkSampler",
+          "lineNumber": 86
+        },
+        {
+          "caller": "test_shuffle_determinism",
+          "callee": "ChunkSampler",
+          "lineNumber": 87
+        },
+        {
+          "caller": "test_shuffle_determinism",
+          "callee": "list",
+          "lineNumber": 88
+        },
+        {
+          "caller": "test_shuffle_determinism",
+          "callee": "list",
+          "lineNumber": 88
+        },
+        {
+          "caller": "test_shuffle_determinism",
+          "callee": "list",
+          "lineNumber": 91
+        },
+        {
+          "caller": "test_shuffle_determinism",
+          "callee": "sorted",
+          "lineNumber": 93
+        },
+        {
+          "caller": "test_shuffle_determinism",
+          "callee": "sorted",
+          "lineNumber": 93
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 5,
+        "functionCount": 4,
+        "classCount": 1
+      }
+    },
+    {
+      "path": "tests/rl/test_compute_advantages.py",
+      "language": "python",
+      "fileCategory": "code",
+      "totalLines": 147,
+      "nonEmptyLines": 131,
+      "functions": [
+        {
+          "name": "generate_test_data",
+          "startLine": 15,
+          "endLine": 78,
+          "params": [
+            "batch_size",
+            "max_seq_len",
+            "length_distribution",
+            "device"
+          ]
+        },
+        {
+          "name": "test_compute_returns_and_advantage",
+          "startLine": 107,
+          "endLine": 147,
+          "params": [
+            "batch_size",
+            "max_seq_len",
+            "length_distribution",
+            "normalize_advantages"
+          ]
+        }
+      ],
+      "exports": [
+        {
+          "name": "generate_test_data",
+          "line": 15,
+          "isDefault": false
+        },
+        {
+          "name": "test_compute_returns_and_advantage",
+          "line": 105,
+          "isDefault": false
+        }
+      ],
+      "callGraph": [
+        {
+          "caller": "generate_test_data",
+          "callee": "torch.empty",
+          "lineNumber": 20
+        },
+        {
+          "caller": "generate_test_data",
+          "callee": "torch.empty",
+          "lineNumber": 21
+        },
+        {
+          "caller": "generate_test_data",
+          "callee": "torch.empty",
+          "lineNumber": 24
+        },
+        {
+          "caller": "generate_test_data",
+          "callee": "torch.zeros",
+          "lineNumber": 28
+        },
+        {
+          "caller": "generate_test_data",
+          "callee": "torch.randn",
+          "lineNumber": 32
+        },
+        {
+          "caller": "generate_test_data",
+          "callee": "torch.randn",
+          "lineNumber": 33
+        },
+        {
+          "caller": "generate_test_data",
+          "callee": "torch.rand",
+          "lineNumber": 34
+        },
+        {
+          "caller": "generate_test_data",
+          "callee": "torch.zeros",
+          "lineNumber": 38
+        },
+        {
+          "caller": "generate_test_data",
+          "callee": "torch.zeros",
+          "lineNumber": 40
+        },
+        {
+          "caller": "generate_test_data",
+          "callee": "torch.randint(0, batch_size, (1,)).item",
+          "lineNumber": 42
+        },
+        {
+          "caller": "generate_test_data",
+          "callee": "torch.randint",
+          "lineNumber": 42
+        },
+        {
+          "caller": "generate_test_data",
+          "callee": "torch.randint(1, max_seq_len + 1, (1,)).item",
+          "lineNumber": 43
+        },
+        {
+          "caller": "generate_test_data",
+          "callee": "torch.randint",
+          "lineNumber": 43
+        },
+        {
+          "caller": "generate_test_data",
+          "callee": "torch.full",
+          "lineNumber": 46
+        },
+        {
+          "caller": "generate_test_data",
+          "callee": "torch.ones",
+          "lineNumber": 50
+        },
+        {
+          "caller": "generate_test_data",
+          "callee": "torch.randint",
+          "lineNumber": 54
+        },
+        {
+          "caller": "generate_test_data",
+          "callee": "torch.zeros",
+          "lineNumber": 58
+        },
+        {
+          "caller": "generate_test_data",
+          "callee": "torch.randint(1, max_seq_len + 1, (1,)).item",
+          "lineNumber": 60
+        },
+        {
+          "caller": "generate_test_data",
+          "callee": "torch.randint",
+          "lineNumber": 60
+        },
+        {
+          "caller": "generate_test_data",
+          "callee": "torch.zeros",
+          "lineNumber": 62
+        },
+        {
+          "caller": "generate_test_data",
+          "callee": "torch.randint(1, max_seq_len + 1, (1,)).item",
+          "lineNumber": 64
+        },
+        {
+          "caller": "generate_test_data",
+          "callee": "torch.randint",
+          "lineNumber": 64
+        },
+        {
+          "caller": "generate_test_data",
+          "callee": "torch.randint(1, max_seq_len + 1, (1,)).item",
+          "lineNumber": 65
+        },
+        {
+          "caller": "generate_test_data",
+          "callee": "torch.randint",
+          "lineNumber": 65
+        },
+        {
+          "caller": "generate_test_data",
+          "callee": "ValueError",
+          "lineNumber": 67
+        },
+        {
+          "caller": "generate_test_data",
+          "callee": "torch.clamp",
+          "lineNumber": 76
+        },
+        {
+          "caller": "test_compute_returns_and_advantage",
+          "callee": "generate_test_data",
+          "lineNumber": 115
+        },
+        {
+          "caller": "test_compute_returns_and_advantage",
+          "callee": "original_calculator",
+          "lineNumber": 122
+        },
+        {
+          "caller": "test_compute_returns_and_advantage",
+          "callee": "vectorized_calculator",
+          "lineNumber": 127
+        },
+        {
+          "caller": "test_compute_returns_and_advantage",
+          "callee": "torch.allclose",
+          "lineNumber": 142
+        },
+        {
+          "caller": "test_compute_returns_and_advantage",
+          "callee": "torch.equal",
+          "lineNumber": 145
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 2,
+        "functionCount": 2,
+        "classCount": 0
+      }
+    },
+    {
+      "path": "tests/rl/test_masked_logprob_entropy.py",
+      "language": "python",
+      "fileCategory": "code",
+      "totalLines": 304,
+      "nonEmptyLines": 254,
+      "functions": [
+        {
+          "name": "compute_policy_entropy_loss_simple",
+          "startLine": 28,
+          "endLine": 147,
+          "params": [
+            "device",
+            "entropy_coef",
+            "batch_size",
+            "max_steps",
+            "action_dim",
+            "seq_lengths",
+            "episode_lengths",
+            "actions",
+            "policy_logits",
+            "advantages"
+          ]
+        },
+        {
+          "name": "test_loss_equivalence",
+          "startLine": 166,
+          "endLine": 304,
+          "params": [
+            "batch_size",
+            "action_dim",
+            "max_steps",
+            "entropy_coef",
+            "dtype",
+            "optimize_fn"
+          ]
+        }
+      ],
+      "exports": [
+        {
+          "name": "compute_policy_entropy_loss_simple",
+          "line": 28,
+          "isDefault": false
+        },
+        {
+          "name": "test_loss_equivalence",
+          "line": 150,
+          "isDefault": false
+        }
+      ],
+      "callGraph": [
+        {
+          "caller": "compute_policy_entropy_loss_simple",
+          "callee": "range",
+          "lineNumber": 56
+        },
+        {
+          "caller": "compute_policy_entropy_loss_simple",
+          "callee": "episode_lengths[b_idx].item",
+          "lineNumber": 57
+        },
+        {
+          "caller": "compute_policy_entropy_loss_simple",
+          "callee": "seq_lengths[b_idx].item",
+          "lineNumber": 58
+        },
+        {
+          "caller": "compute_policy_entropy_loss_simple",
+          "callee": "set",
+          "lineNumber": 63
+        },
+        {
+          "caller": "compute_policy_entropy_loss_simple",
+          "callee": "range",
+          "lineNumber": 65
+        },
+        {
+          "caller": "compute_policy_entropy_loss_simple",
+          "callee": "torch.zeros",
+          "lineNumber": 71
+        },
+        {
+          "caller": "compute_policy_entropy_loss_simple",
+          "callee": "min",
+          "lineNumber": 74
+        },
+        {
+          "caller": "compute_policy_entropy_loss_simple",
+          "callee": "episode_initial_scores.clone",
+          "lineNumber": 83
+        },
+        {
+          "caller": "compute_policy_entropy_loss_simple",
+          "callee": "Categorical",
+          "lineNumber": 87
+        },
+        {
+          "caller": "compute_policy_entropy_loss_simple",
+          "callee": "print",
+          "lineNumber": 89
+        },
+        {
+          "caller": "compute_policy_entropy_loss_simple",
+          "callee": "print",
+          "lineNumber": 90
+        },
+        {
+          "caller": "compute_policy_entropy_loss_simple",
+          "callee": "print",
+          "lineNumber": 91
+        },
+        {
+          "caller": "compute_policy_entropy_loss_simple",
+          "callee": "print",
+          "lineNumber": 92
+        },
+        {
+          "caller": "compute_policy_entropy_loss_simple",
+          "callee": "print",
+          "lineNumber": 93
+        },
+        {
+          "caller": "compute_policy_entropy_loss_simple",
+          "callee": "action_taken_tensor.item",
+          "lineNumber": 97
+        },
+        {
+          "caller": "compute_policy_entropy_loss_simple",
+          "callee": "IndexError",
+          "lineNumber": 100
+        },
+        {
+          "caller": "compute_policy_entropy_loss_simple",
+          "callee": "step_distribution.log_prob",
+          "lineNumber": 105
+        },
+        {
+          "caller": "compute_policy_entropy_loss_simple",
+          "callee": "step_distribution.entropy",
+          "lineNumber": 106
+        },
+        {
+          "caller": "compute_policy_entropy_loss_simple",
+          "callee": "log_probs_list.append",
+          "lineNumber": 108
+        },
+        {
+          "caller": "compute_policy_entropy_loss_simple",
+          "callee": "entropies_list.append",
+          "lineNumber": 109
+        },
+        {
+          "caller": "compute_policy_entropy_loss_simple",
+          "callee": "actions_selected_in_episode_so_far.add",
+          "lineNumber": 112
+        },
+        {
+          "caller": "compute_policy_entropy_loss_simple",
+          "callee": "advantages.numel",
+          "lineNumber": 116
+        },
+        {
+          "caller": "compute_policy_entropy_loss_simple",
+          "callee": "ValueError",
+          "lineNumber": 117
+        },
+        {
+          "caller": "compute_policy_entropy_loss_simple",
+          "callee": "torch.tensor",
+          "lineNumber": 121
+        },
+        {
+          "caller": "compute_policy_entropy_loss_simple",
+          "callee": "torch.tensor",
+          "lineNumber": 124
+        },
+        {
+          "caller": "compute_policy_entropy_loss_simple",
+          "callee": "zero_loss.clone",
+          "lineNumber": 125
+        },
+        {
+          "caller": "compute_policy_entropy_loss_simple",
+          "callee": "torch.stack",
+          "lineNumber": 127
+        },
+        {
+          "caller": "compute_policy_entropy_loss_simple",
+          "callee": "torch.stack",
+          "lineNumber": 128
+        },
+        {
+          "caller": "compute_policy_entropy_loss_simple",
+          "callee": "episode_lengths.sum().item",
+          "lineNumber": 132
+        },
+        {
+          "caller": "compute_policy_entropy_loss_simple",
+          "callee": "episode_lengths.sum",
+          "lineNumber": 132
+        },
+        {
+          "caller": "compute_policy_entropy_loss_simple",
+          "callee": "ValueError",
+          "lineNumber": 133
+        },
+        {
+          "caller": "compute_policy_entropy_loss_simple",
+          "callee": "advantages.to(device).detach",
+          "lineNumber": 140
+        },
+        {
+          "caller": "compute_policy_entropy_loss_simple",
+          "callee": "advantages.to",
+          "lineNumber": 140
+        },
+        {
+          "caller": "compute_policy_entropy_loss_simple",
+          "callee": "(flat_log_probs * advantages_tensor).mean",
+          "lineNumber": 142
+        },
+        {
+          "caller": "compute_policy_entropy_loss_simple",
+          "callee": "flat_entropies.mean",
+          "lineNumber": 143
+        },
+        {
+          "caller": "compute_policy_entropy_loss_simple",
+          "callee": "flat_entropies.mean",
+          "lineNumber": 144
+        },
+        {
+          "caller": "compute_policy_entropy_loss_simple",
+          "callee": "float",
+          "lineNumber": 145
+        },
+        {
+          "caller": "test_loss_equivalence",
+          "callee": "torch.cuda.is_available",
+          "lineNumber": 173
+        },
+        {
+          "caller": "test_loss_equivalence",
+          "callee": "pytest.skip",
+          "lineNumber": 174
+        },
+        {
+          "caller": "test_loss_equivalence",
+          "callee": "torch.device",
+          "lineNumber": 178
+        },
+        {
+          "caller": "test_loss_equivalence",
+          "callee": "torch.cuda.is_available",
+          "lineNumber": 178
+        },
+        {
+          "caller": "test_loss_equivalence",
+          "callee": "torch.manual_seed",
+          "lineNumber": 179
+        },
+        {
+          "caller": "test_loss_equivalence",
+          "callee": "torch.randint",
+          "lineNumber": 181
+        },
+        {
+          "caller": "test_loss_equivalence",
+          "callee": "torch.randint",
+          "lineNumber": 185
+        },
+        {
+          "caller": "test_loss_equivalence",
+          "callee": "torch.min",
+          "lineNumber": 188
+        },
+        {
+          "caller": "test_loss_equivalence",
+          "callee": "torch.full",
+          "lineNumber": 191
+        },
+        {
+          "caller": "test_loss_equivalence",
+          "callee": "range",
+          "lineNumber": 192
+        },
+        {
+          "caller": "test_loss_equivalence",
+          "callee": "episode_lengths[b].item",
+          "lineNumber": 193
+        },
+        {
+          "caller": "test_loss_equivalence",
+          "callee": "seq_lengths[b].item",
+          "lineNumber": 194
+        },
+        {
+          "caller": "test_loss_equivalence",
+          "callee": "torch.arange",
+          "lineNumber": 201
+        },
+        {
+          "caller": "test_loss_equivalence",
+          "callee": "torch.randperm",
+          "lineNumber": 202
+        },
+        {
+          "caller": "test_loss_equivalence",
+          "callee": "torch.randn",
+          "lineNumber": 207
+        },
+        {
+          "caller": "test_loss_equivalence",
+          "callee": "episode_lengths.sum().item",
+          "lineNumber": 211
+        },
+        {
+          "caller": "test_loss_equivalence",
+          "callee": "episode_lengths.sum",
+          "lineNumber": 211
+        },
+        {
+          "caller": "test_loss_equivalence",
+          "callee": "torch.randn",
+          "lineNumber": 212
+        },
+        {
+          "caller": "test_loss_equivalence",
+          "callee": "optimize_fn",
+          "lineNumber": 218
+        },
+        {
+          "caller": "test_loss_equivalence",
+          "callee": "policy_logits.clone().detach().requires_grad_",
+          "lineNumber": 232
+        },
+        {
+          "caller": "test_loss_equivalence",
+          "callee": "policy_logits.clone().detach",
+          "lineNumber": 232
+        },
+        {
+          "caller": "test_loss_equivalence",
+          "callee": "policy_logits.clone",
+          "lineNumber": 232
+        },
+        {
+          "caller": "test_loss_equivalence",
+          "callee": "compute_policy_entropy_loss_simple",
+          "lineNumber": 242
+        },
+        {
+          "caller": "test_loss_equivalence",
+          "callee": "torch.isnan",
+          "lineNumber": 258
+        },
+        {
+          "caller": "test_loss_equivalence",
+          "callee": "torch.isnan",
+          "lineNumber": 259
+        },
+        {
+          "caller": "test_loss_equivalence",
+          "callee": "torch.allclose",
+          "lineNumber": 261
+        },
+        {
+          "caller": "test_loss_equivalence",
+          "callee": "total_loss_orig.item",
+          "lineNumber": 262
+        },
+        {
+          "caller": "test_loss_equivalence",
+          "callee": "total_loss_simple.item",
+          "lineNumber": 262
+        },
+        {
+          "caller": "test_loss_equivalence",
+          "callee": "torch.allclose",
+          "lineNumber": 264
+        },
+        {
+          "caller": "test_loss_equivalence",
+          "callee": "entropy_loss_orig.item",
+          "lineNumber": 267
+        },
+        {
+          "caller": "test_loss_equivalence",
+          "callee": "entropy_loss_simple.item",
+          "lineNumber": 267
+        },
+        {
+          "caller": "test_loss_equivalence",
+          "callee": "torch.allclose",
+          "lineNumber": 269
+        },
+        {
+          "caller": "test_loss_equivalence",
+          "callee": "policy_loss_orig.item",
+          "lineNumber": 270
+        },
+        {
+          "caller": "test_loss_equivalence",
+          "callee": "policy_loss_simple.item",
+          "lineNumber": 270
+        },
+        {
+          "caller": "test_loss_equivalence",
+          "callee": "torch.allclose",
+          "lineNumber": 272
+        },
+        {
+          "caller": "test_loss_equivalence",
+          "callee": "mean_entropy_orig.item",
+          "lineNumber": 275
+        },
+        {
+          "caller": "test_loss_equivalence",
+          "callee": "mean_entropy_simple.item",
+          "lineNumber": 275
+        },
+        {
+          "caller": "test_loss_equivalence",
+          "callee": "total_loss_orig.backward",
+          "lineNumber": 278
+        },
+        {
+          "caller": "test_loss_equivalence",
+          "callee": "total_loss_simple.backward",
+          "lineNumber": 279
+        },
+        {
+          "caller": "test_loss_equivalence",
+          "callee": "torch.isnan(policy_logits.grad).any",
+          "lineNumber": 287
+        },
+        {
+          "caller": "test_loss_equivalence",
+          "callee": "torch.isnan",
+          "lineNumber": 287
+        },
+        {
+          "caller": "test_loss_equivalence",
+          "callee": "torch.isnan(scores_batch_grad_simple.grad).any",
+          "lineNumber": 288
+        },
+        {
+          "caller": "test_loss_equivalence",
+          "callee": "torch.isnan",
+          "lineNumber": 288
+        },
+        {
+          "caller": "test_loss_equivalence",
+          "callee": "torch.allclose",
+          "lineNumber": 291
+        },
+        {
+          "caller": "test_loss_equivalence",
+          "callee": "print",
+          "lineNumber": 297
+        },
+        {
+          "caller": "test_loss_equivalence",
+          "callee": "print",
+          "lineNumber": 300
+        },
+        {
+          "caller": "test_loss_equivalence",
+          "callee": "total_loss_orig.item",
+          "lineNumber": 301
+        },
+        {
+          "caller": "test_loss_equivalence",
+          "callee": "total_loss_simple.item",
+          "lineNumber": 301
+        },
+        {
+          "caller": "test_loss_equivalence",
+          "callee": "policy_loss_orig.item",
+          "lineNumber": 302
+        },
+        {
+          "caller": "test_loss_equivalence",
+          "callee": "policy_loss_simple.item",
+          "lineNumber": 302
+        },
+        {
+          "caller": "test_loss_equivalence",
+          "callee": "entropy_loss_orig.item",
+          "lineNumber": 303
+        },
+        {
+          "caller": "test_loss_equivalence",
+          "callee": "entropy_loss_simple.item",
+          "lineNumber": 303
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 2,
+        "functionCount": 2,
+        "classCount": 0
+      }
+    },
+    {
+      "path": "tests/test_attention_utils.py",
+      "language": "python",
+      "fileCategory": "code",
+      "totalLines": 214,
+      "nonEmptyLines": 185,
+      "functions": [
+        {
+          "name": "_create_sdpa_equivalent_additive_bias",
+          "startLine": 15,
+          "endLine": 90,
+          "params": [
+            "query_shape",
+            "key_shape",
+            "is_causal_custom",
+            "explicit_attn_mask_custom",
+            "query_seq_lengths_custom",
+            "key_seq_lengths_custom",
+            "device",
+            "dtype"
+          ]
+        },
+        {
+          "name": "test_materialize_attention_weights_against_sdpa",
+          "startLine": 127,
+          "endLine": 214,
+          "params": [
+            "B",
+            "H",
+            "L_padded",
+            "S_padded",
+            "Dk",
+            "use_causal",
+            "use_q_pad",
+            "use_k_pad",
+            "explicit_mask_type",
+            "dtype"
+          ]
+        }
+      ],
+      "exports": [
+        {
+          "name": "_create_sdpa_equivalent_additive_bias",
+          "line": 15,
+          "isDefault": false
+        },
+        {
+          "name": "test_materialize_attention_weights_against_sdpa",
+          "line": 122,
+          "isDefault": false
+        }
+      ],
+      "callGraph": [
+        {
+          "caller": "_create_sdpa_equivalent_additive_bias",
+          "callee": "len",
+          "lineNumber": 28
+        },
+        {
+          "caller": "_create_sdpa_equivalent_additive_bias",
+          "callee": "len",
+          "lineNumber": 30
+        },
+        {
+          "caller": "_create_sdpa_equivalent_additive_bias",
+          "callee": "ValueError",
+          "lineNumber": 33
+        },
+        {
+          "caller": "_create_sdpa_equivalent_additive_bias",
+          "callee": "torch.zeros",
+          "lineNumber": 35
+        },
+        {
+          "caller": "_create_sdpa_equivalent_additive_bias",
+          "callee": "torch.triu",
+          "lineNumber": 38
+        },
+        {
+          "caller": "_create_sdpa_equivalent_additive_bias",
+          "callee": "torch.ones",
+          "lineNumber": 39
+        },
+        {
+          "caller": "_create_sdpa_equivalent_additive_bias",
+          "callee": "expected_bias.masked_fill_",
+          "lineNumber": 41
+        },
+        {
+          "caller": "_create_sdpa_equivalent_additive_bias",
+          "callee": "float",
+          "lineNumber": 41
+        },
+        {
+          "caller": "_create_sdpa_equivalent_additive_bias",
+          "callee": "len",
+          "lineNumber": 49
+        },
+        {
+          "caller": "_create_sdpa_equivalent_additive_bias",
+          "callee": "_eff_mask.size",
+          "lineNumber": 51
+        },
+        {
+          "caller": "_create_sdpa_equivalent_additive_bias",
+          "callee": "_eff_mask.size",
+          "lineNumber": 52
+        },
+        {
+          "caller": "_create_sdpa_equivalent_additive_bias",
+          "callee": "_eff_mask.size",
+          "lineNumber": 53
+        },
+        {
+          "caller": "_create_sdpa_equivalent_additive_bias",
+          "callee": "expected_bias.masked_fill_",
+          "lineNumber": 58
+        },
+        {
+          "caller": "_create_sdpa_equivalent_additive_bias",
+          "callee": "_eff_mask.logical_not",
+          "lineNumber": 58
+        },
+        {
+          "caller": "_create_sdpa_equivalent_additive_bias",
+          "callee": "float",
+          "lineNumber": 58
+        },
+        {
+          "caller": "_create_sdpa_equivalent_additive_bias",
+          "callee": "torch.arange",
+          "lineNumber": 69
+        },
+        {
+          "caller": "_create_sdpa_equivalent_additive_bias",
+          "callee": "len",
+          "lineNumber": 72
+        },
+        {
+          "caller": "_create_sdpa_equivalent_additive_bias",
+          "callee": "expected_bias.masked_fill_",
+          "lineNumber": 74
+        },
+        {
+          "caller": "_create_sdpa_equivalent_additive_bias",
+          "callee": "padded_key_mask.view",
+          "lineNumber": 75
+        },
+        {
+          "caller": "_create_sdpa_equivalent_additive_bias",
+          "callee": "float",
+          "lineNumber": 75
+        },
+        {
+          "caller": "_create_sdpa_equivalent_additive_bias",
+          "callee": "torch.arange",
+          "lineNumber": 81
+        },
+        {
+          "caller": "_create_sdpa_equivalent_additive_bias",
+          "callee": "len",
+          "lineNumber": 84
+        },
+        {
+          "caller": "_create_sdpa_equivalent_additive_bias",
+          "callee": "expected_bias.masked_fill_",
+          "lineNumber": 86
+        },
+        {
+          "caller": "_create_sdpa_equivalent_additive_bias",
+          "callee": "padded_query_mask.view",
+          "lineNumber": 87
+        },
+        {
+          "caller": "_create_sdpa_equivalent_additive_bias",
+          "callee": "float",
+          "lineNumber": 87
+        },
+        {
+          "caller": "_create_sdpa_equivalent_additive_bias",
+          "callee": "expected_bias.to",
+          "lineNumber": 90
+        },
+        {
+          "caller": "test_materialize_attention_weights_against_sdpa",
+          "callee": "torch.device",
+          "lineNumber": 139
+        },
+        {
+          "caller": "test_materialize_attention_weights_against_sdpa",
+          "callee": "torch.cuda.is_available",
+          "lineNumber": 139
+        },
+        {
+          "caller": "test_materialize_attention_weights_against_sdpa",
+          "callee": "pytest.skip",
+          "lineNumber": 142
+        },
+        {
+          "caller": "test_materialize_attention_weights_against_sdpa",
+          "callee": "pytest.skip",
+          "lineNumber": 144
+        },
+        {
+          "caller": "test_materialize_attention_weights_against_sdpa",
+          "callee": "torch.randn",
+          "lineNumber": 152
+        },
+        {
+          "caller": "test_materialize_attention_weights_against_sdpa",
+          "callee": "torch.randn",
+          "lineNumber": 153
+        },
+        {
+          "caller": "test_materialize_attention_weights_against_sdpa",
+          "callee": "torch.randn",
+          "lineNumber": 154
+        },
+        {
+          "caller": "test_materialize_attention_weights_against_sdpa",
+          "callee": "torch.randint",
+          "lineNumber": 157
+        },
+        {
+          "caller": "test_materialize_attention_weights_against_sdpa",
+          "callee": "torch.zeros",
+          "lineNumber": 162
+        },
+        {
+          "caller": "test_materialize_attention_weights_against_sdpa",
+          "callee": "torch.randint",
+          "lineNumber": 165
+        },
+        {
+          "caller": "test_materialize_attention_weights_against_sdpa",
+          "callee": "torch.zeros",
+          "lineNumber": 170
+        },
+        {
+          "caller": "test_materialize_attention_weights_against_sdpa",
+          "callee": "torch.rand",
+          "lineNumber": 176
+        },
+        {
+          "caller": "test_materialize_attention_weights_against_sdpa",
+          "callee": "torch.randn",
+          "lineNumber": 178
+        },
+        {
+          "caller": "test_materialize_attention_weights_against_sdpa",
+          "callee": "torch.rand",
+          "lineNumber": 179
+        },
+        {
+          "caller": "test_materialize_attention_weights_against_sdpa",
+          "callee": "float",
+          "lineNumber": 179
+        },
+        {
+          "caller": "test_materialize_attention_weights_against_sdpa",
+          "callee": "materialize_attention_weights",
+          "lineNumber": 184
+        },
+        {
+          "caller": "test_materialize_attention_weights_against_sdpa",
+          "callee": "torch.matmul",
+          "lineNumber": 192
+        },
+        {
+          "caller": "test_materialize_attention_weights_against_sdpa",
+          "callee": "_create_sdpa_equivalent_additive_bias",
+          "lineNumber": 195
+        },
+        {
+          "caller": "test_materialize_attention_weights_against_sdpa",
+          "callee": "F.scaled_dot_product_attention",
+          "lineNumber": 201
+        },
+        {
+          "caller": "test_materialize_attention_weights_against_sdpa",
+          "callee": "torch.allclose",
+          "lineNumber": 208
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 2,
+        "functionCount": 2,
+        "classCount": 0
+      }
+    },
+    {
+      "path": "tests/test_costs.py",
+      "language": "python",
+      "fileCategory": "code",
+      "totalLines": 234,
+      "nonEmptyLines": 195,
+      "functions": [
+        {
+          "name": "test_batched_compute_cost_regression",
+          "startLine": 12,
+          "endLine": 63,
+          "params": []
+        },
+        {
+          "name": "test_batched_compute_cost_output_structure",
+          "startLine": 75,
+          "endLine": 96,
+          "params": [
+            "batch_size",
+            "sequence_length",
+            "time_length"
+          ]
+        },
+        {
+          "name": "test_batched_compute_cost_oracle_ranking",
+          "startLine": 99,
+          "endLine": 127,
+          "params": []
+        },
+        {
+          "name": "test_batched_compute_cost_gqa",
+          "startLine": 138,
+          "endLine": 161,
+          "params": [
+            "batch_size",
+            "num_queries",
+            "time_length",
+            "sequence_length"
+          ]
+        },
+        {
+          "name": "test_batched_compute_cost_with_padding",
+          "startLine": 164,
+          "endLine": 189,
+          "params": []
+        },
+        {
+          "name": "test_cost_result_to_device",
+          "startLine": 192,
+          "endLine": 207,
+          "params": []
+        },
+        {
+          "name": "test_batched_compute_cost_cost_is_sum_of_per_cachesize",
+          "startLine": 210,
+          "endLine": 234,
+          "params": []
+        }
+      ],
+      "exports": [
+        {
+          "name": "test_batched_compute_cost_regression",
+          "line": 12,
+          "isDefault": false
+        },
+        {
+          "name": "test_batched_compute_cost_output_structure",
+          "line": 66,
+          "isDefault": false
+        },
+        {
+          "name": "test_batched_compute_cost_oracle_ranking",
+          "line": 99,
+          "isDefault": false
+        },
+        {
+          "name": "test_batched_compute_cost_gqa",
+          "line": 130,
+          "isDefault": false
+        },
+        {
+          "name": "test_batched_compute_cost_with_padding",
+          "line": 164,
+          "isDefault": false
+        },
+        {
+          "name": "test_cost_result_to_device",
+          "line": 192,
+          "isDefault": false
+        },
+        {
+          "name": "test_batched_compute_cost_cost_is_sum_of_per_cachesize",
+          "line": 210,
+          "isDefault": false
+        }
+      ],
+      "callGraph": [
+        {
+          "caller": "test_batched_compute_cost_regression",
+          "callee": "torch.manual_seed",
+          "lineNumber": 17
+        },
+        {
+          "caller": "test_batched_compute_cost_regression",
+          "callee": "torch.stack",
+          "lineNumber": 20
+        },
+        {
+          "caller": "test_batched_compute_cost_regression",
+          "callee": "torch.randperm",
+          "lineNumber": 21
+        },
+        {
+          "caller": "test_batched_compute_cost_regression",
+          "callee": "range",
+          "lineNumber": 21
+        },
+        {
+          "caller": "test_batched_compute_cost_regression",
+          "callee": "torch.rand",
+          "lineNumber": 23
+        },
+        {
+          "caller": "test_batched_compute_cost_regression",
+          "callee": "torch.full",
+          "lineNumber": 24
+        },
+        {
+          "caller": "test_batched_compute_cost_regression",
+          "callee": "torch.full",
+          "lineNumber": 25
+        },
+        {
+          "caller": "test_batched_compute_cost_regression",
+          "callee": "batched_compute_cost",
+          "lineNumber": 27
+        },
+        {
+          "caller": "test_batched_compute_cost_regression",
+          "callee": "torch.tensor",
+          "lineNumber": 35
+        },
+        {
+          "caller": "test_batched_compute_cost_regression",
+          "callee": "torch.tensor",
+          "lineNumber": 36
+        },
+        {
+          "caller": "test_batched_compute_cost_regression",
+          "callee": "torch.tensor",
+          "lineNumber": 52
+        },
+        {
+          "caller": "test_batched_compute_cost_regression",
+          "callee": "isinstance",
+          "lineNumber": 54
+        },
+        {
+          "caller": "test_batched_compute_cost_regression",
+          "callee": "torch.allclose",
+          "lineNumber": 59
+        },
+        {
+          "caller": "test_batched_compute_cost_regression",
+          "callee": "torch.allclose",
+          "lineNumber": 60
+        },
+        {
+          "caller": "test_batched_compute_cost_regression",
+          "callee": "torch.equal",
+          "lineNumber": 63
+        },
+        {
+          "caller": "test_batched_compute_cost_output_structure",
+          "callee": "torch.stack",
+          "lineNumber": 79
+        },
+        {
+          "caller": "test_batched_compute_cost_output_structure",
+          "callee": "torch.randperm",
+          "lineNumber": 80
+        },
+        {
+          "caller": "test_batched_compute_cost_output_structure",
+          "callee": "range",
+          "lineNumber": 80
+        },
+        {
+          "caller": "test_batched_compute_cost_output_structure",
+          "callee": "torch.rand",
+          "lineNumber": 82
+        },
+        {
+          "caller": "test_batched_compute_cost_output_structure",
+          "callee": "torch.full",
+          "lineNumber": 83
+        },
+        {
+          "caller": "test_batched_compute_cost_output_structure",
+          "callee": "torch.full",
+          "lineNumber": 84
+        },
+        {
+          "caller": "test_batched_compute_cost_output_structure",
+          "callee": "batched_compute_cost",
+          "lineNumber": 86
+        },
+        {
+          "caller": "test_batched_compute_cost_output_structure",
+          "callee": "isinstance",
+          "lineNumber": 93
+        },
+        {
+          "caller": "test_batched_compute_cost_oracle_ranking",
+          "callee": "torch.manual_seed",
+          "lineNumber": 101
+        },
+        {
+          "caller": "test_batched_compute_cost_oracle_ranking",
+          "callee": "torch.rand",
+          "lineNumber": 104
+        },
+        {
+          "caller": "test_batched_compute_cost_oracle_ranking",
+          "callee": "torch.full",
+          "lineNumber": 105
+        },
+        {
+          "caller": "test_batched_compute_cost_oracle_ranking",
+          "callee": "torch.full",
+          "lineNumber": 106
+        },
+        {
+          "caller": "test_batched_compute_cost_oracle_ranking",
+          "callee": "reverse_cumsum",
+          "lineNumber": 110
+        },
+        {
+          "caller": "test_batched_compute_cost_oracle_ranking",
+          "callee": "torch.arange",
+          "lineNumber": 113
+        },
+        {
+          "caller": "test_batched_compute_cost_oracle_ranking",
+          "callee": "importance.argsort",
+          "lineNumber": 117
+        },
+        {
+          "caller": "test_batched_compute_cost_oracle_ranking",
+          "callee": "batched_compute_cost",
+          "lineNumber": 119
+        },
+        {
+          "caller": "test_batched_compute_cost_oracle_ranking",
+          "callee": "torch.allclose",
+          "lineNumber": 127
+        },
+        {
+          "caller": "test_batched_compute_cost_oracle_ranking",
+          "callee": "torch.ones_like",
+          "lineNumber": 127
+        },
+        {
+          "caller": "test_batched_compute_cost_gqa",
+          "callee": "torch.stack",
+          "lineNumber": 142
+        },
+        {
+          "caller": "test_batched_compute_cost_gqa",
+          "callee": "torch.randperm",
+          "lineNumber": 143
+        },
+        {
+          "caller": "test_batched_compute_cost_gqa",
+          "callee": "range",
+          "lineNumber": 143
+        },
+        {
+          "caller": "test_batched_compute_cost_gqa",
+          "callee": "torch.rand",
+          "lineNumber": 145
+        },
+        {
+          "caller": "test_batched_compute_cost_gqa",
+          "callee": "torch.full",
+          "lineNumber": 148
+        },
+        {
+          "caller": "test_batched_compute_cost_gqa",
+          "callee": "torch.full",
+          "lineNumber": 149
+        },
+        {
+          "caller": "test_batched_compute_cost_gqa",
+          "callee": "batched_compute_cost",
+          "lineNumber": 151
+        },
+        {
+          "caller": "test_batched_compute_cost_gqa",
+          "callee": "isinstance",
+          "lineNumber": 158
+        },
+        {
+          "caller": "test_batched_compute_cost_with_padding",
+          "callee": "torch.manual_seed",
+          "lineNumber": 166
+        },
+        {
+          "caller": "test_batched_compute_cost_with_padding",
+          "callee": "torch.stack",
+          "lineNumber": 169
+        },
+        {
+          "caller": "test_batched_compute_cost_with_padding",
+          "callee": "torch.randperm",
+          "lineNumber": 170
+        },
+        {
+          "caller": "test_batched_compute_cost_with_padding",
+          "callee": "range",
+          "lineNumber": 170
+        },
+        {
+          "caller": "test_batched_compute_cost_with_padding",
+          "callee": "torch.rand",
+          "lineNumber": 172
+        },
+        {
+          "caller": "test_batched_compute_cost_with_padding",
+          "callee": "torch.tensor",
+          "lineNumber": 174
+        },
+        {
+          "caller": "test_batched_compute_cost_with_padding",
+          "callee": "torch.full",
+          "lineNumber": 175
+        },
+        {
+          "caller": "test_batched_compute_cost_with_padding",
+          "callee": "batched_compute_cost",
+          "lineNumber": 177
+        },
+        {
+          "caller": "test_batched_compute_cost_with_padding",
+          "callee": "torch.equal",
+          "lineNumber": 189
+        },
+        {
+          "caller": "test_batched_compute_cost_with_padding",
+          "callee": "result.valid_lengths.squeeze",
+          "lineNumber": 189
+        },
+        {
+          "caller": "test_cost_result_to_device",
+          "callee": "torch.tensor",
+          "lineNumber": 194
+        },
+        {
+          "caller": "test_cost_result_to_device",
+          "callee": "torch.tensor",
+          "lineNumber": 195
+        },
+        {
+          "caller": "test_cost_result_to_device",
+          "callee": "torch.tensor",
+          "lineNumber": 196
+        },
+        {
+          "caller": "test_cost_result_to_device",
+          "callee": "CostResult",
+          "lineNumber": 198
+        },
+        {
+          "caller": "test_cost_result_to_device",
+          "callee": "result.to",
+          "lineNumber": 203
+        },
+        {
+          "caller": "test_cost_result_to_device",
+          "callee": "torch.device",
+          "lineNumber": 203
+        },
+        {
+          "caller": "test_cost_result_to_device",
+          "callee": "torch.device",
+          "lineNumber": 205
+        },
+        {
+          "caller": "test_cost_result_to_device",
+          "callee": "torch.device",
+          "lineNumber": 206
+        },
+        {
+          "caller": "test_cost_result_to_device",
+          "callee": "torch.device",
+          "lineNumber": 207
+        },
+        {
+          "caller": "test_batched_compute_cost_cost_is_sum_of_per_cachesize",
+          "callee": "torch.manual_seed",
+          "lineNumber": 212
+        },
+        {
+          "caller": "test_batched_compute_cost_cost_is_sum_of_per_cachesize",
+          "callee": "torch.stack",
+          "lineNumber": 215
+        },
+        {
+          "caller": "test_batched_compute_cost_cost_is_sum_of_per_cachesize",
+          "callee": "torch.randperm",
+          "lineNumber": 216
+        },
+        {
+          "caller": "test_batched_compute_cost_cost_is_sum_of_per_cachesize",
+          "callee": "range",
+          "lineNumber": 216
+        },
+        {
+          "caller": "test_batched_compute_cost_cost_is_sum_of_per_cachesize",
+          "callee": "torch.rand",
+          "lineNumber": 218
+        },
+        {
+          "caller": "test_batched_compute_cost_cost_is_sum_of_per_cachesize",
+          "callee": "torch.full",
+          "lineNumber": 219
+        },
+        {
+          "caller": "test_batched_compute_cost_cost_is_sum_of_per_cachesize",
+          "callee": "torch.full",
+          "lineNumber": 220
+        },
+        {
+          "caller": "test_batched_compute_cost_cost_is_sum_of_per_cachesize",
+          "callee": "batched_compute_cost",
+          "lineNumber": 222
+        },
+        {
+          "caller": "test_batched_compute_cost_cost_is_sum_of_per_cachesize",
+          "callee": "torch.allclose",
+          "lineNumber": 230
+        },
+        {
+          "caller": "test_batched_compute_cost_cost_is_sum_of_per_cachesize",
+          "callee": "result.cost_per_cachesize.sum",
+          "lineNumber": 232
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 7,
+        "functionCount": 7,
+        "classCount": 0
+      }
+    },
+    {
+      "path": "tests/test_kv_cache/test_compressible_kv_cache.py",
+      "language": "python",
+      "fileCategory": "code",
+      "totalLines": 720,
+      "nonEmptyLines": 597,
+      "functions": [
+        {
+          "name": "cache_params",
+          "startLine": 54,
+          "endLine": 62,
+          "params": []
+        },
+        {
+          "name": "mock_strategy_single_head_keep_first",
+          "startLine": 66,
+          "endLine": 67,
+          "params": []
+        },
+        {
+          "name": "mock_strategy_multi_head_keep_last",
+          "startLine": 71,
+          "endLine": 72,
+          "params": []
+        },
+        {
+          "name": "_create_dummy_data",
+          "startLine": 75,
+          "endLine": 78,
+          "params": [
+            "bsz",
+            "num_h",
+            "s_new",
+            "h_dim",
+            "dtype",
+            "value_offset"
+          ]
+        },
+        {
+          "name": "test_initialization",
+          "startLine": 81,
+          "endLine": 107,
+          "params": [
+            "cache_params",
+            "mock_strategy_single_head_keep_first"
+          ]
+        },
+        {
+          "name": "test_reset",
+          "startLine": 110,
+          "endLine": 138,
+          "params": [
+            "cache_params",
+            "mock_strategy_single_head_keep_first"
+          ]
+        },
+        {
+          "name": "test_update_simple",
+          "startLine": 141,
+          "endLine": 163,
+          "params": [
+            "cache_params",
+            "mock_strategy_single_head_keep_first"
+          ]
+        },
+        {
+          "name": "test_update_multiple",
+          "startLine": 166,
+          "endLine": 206,
+          "params": [
+            "cache_params",
+            "mock_strategy_single_head_keep_first"
+          ]
+        },
+        {
+          "name": "test_update_overflow",
+          "startLine": 209,
+          "endLine": 234,
+          "params": [
+            "cache_params",
+            "mock_strategy_single_head_keep_first"
+          ]
+        },
+        {
+          "name": "test_update_s_new_zero",
+          "startLine": 237,
+          "endLine": 254,
+          "params": [
+            "cache_params",
+            "mock_strategy_single_head_keep_first"
+          ]
+        },
+        {
+          "name": "test_compress_empty_cache",
+          "startLine": 257,
+          "endLine": 268,
+          "params": [
+            "cache_params",
+            "mock_strategy_single_head_keep_first"
+          ]
+        },
+        {
+          "name": "test_compress_target_zero",
+          "startLine": 271,
+          "endLine": 290,
+          "params": [
+            "cache_params",
+            "mock_strategy_single_head_keep_first"
+          ]
+        },
+        {
+          "name": "test_compress_logic_single_head_strategy",
+          "startLine": 293,
+          "endLine": 345,
+          "params": [
+            "cache_params",
+            "mock_strategy_single_head_keep_first"
+          ]
+        },
+        {
+          "name": "test_compress_invalid_target_size",
+          "startLine": 348,
+          "endLine": 356,
+          "params": [
+            "cache_params",
+            "mock_strategy_single_head_keep_first"
+          ]
+        },
+        {
+          "name": "test_num_kv_heads_zero",
+          "startLine": 359,
+          "endLine": 400,
+          "params": [
+            "cache_params"
+          ]
+        },
+        {
+          "name": "test_get_k_v_q_and_mask_sliced_output",
+          "startLine": 403,
+          "endLine": 465,
+          "params": [
+            "cache_params",
+            "mock_strategy_single_head_keep_first"
+          ]
+        },
+        {
+          "name": "test_get_k_v_q_and_mask_full_length_output",
+          "startLine": 468,
+          "endLine": 501,
+          "params": [
+            "cache_params",
+            "mock_strategy_single_head_keep_first"
+          ]
+        },
+        {
+          "name": "test_get_k_v_q_and_mask_empty_cache_output",
+          "startLine": 504,
+          "endLine": 534,
+          "params": [
+            "cache_params",
+            "mock_strategy_single_head_keep_first"
+          ]
+        },
+        {
+          "name": "test_query_group_extraction_gqa",
+          "startLine": 537,
+          "endLine": 565,
+          "params": []
+        },
+        {
+          "name": "test_query_storage_without_queries",
+          "startLine": 568,
+          "endLine": 594,
+          "params": []
+        },
+        {
+          "name": "test_query_storage_shape_mismatch",
+          "startLine": 597,
+          "endLine": 620,
+          "params": []
+        },
+        {
+          "name": "test_compression_strategy_receives_correct_query_groups",
+          "startLine": 651,
+          "endLine": 684,
+          "params": []
+        },
+        {
+          "name": "test_get_queries_for_kv_head_edge_cases",
+          "startLine": 687,
+          "endLine": 720,
+          "params": []
+        }
+      ],
+      "classes": [
+        {
+          "name": "MockStrategy",
+          "startLine": 14,
+          "endLine": 50,
+          "methods": [
+            "__init__",
+            "is_multihead",
+            "get_mask"
+          ],
+          "properties": []
+        },
+        {
+          "name": "QueryCapturingStrategy",
+          "startLine": 623,
+          "endLine": 648,
+          "methods": [
+            "__init__",
+            "get_mask"
+          ],
+          "properties": []
+        }
+      ],
+      "exports": [
+        {
+          "name": "MockStrategy",
+          "line": 14,
+          "isDefault": false
+        },
+        {
+          "name": "cache_params",
+          "line": 53,
+          "isDefault": false
+        },
+        {
+          "name": "mock_strategy_single_head_keep_first",
+          "line": 65,
+          "isDefault": false
+        },
+        {
+          "name": "mock_strategy_multi_head_keep_last",
+          "line": 70,
+          "isDefault": false
+        },
+        {
+          "name": "_create_dummy_data",
+          "line": 75,
+          "isDefault": false
+        },
+        {
+          "name": "test_initialization",
+          "line": 81,
+          "isDefault": false
+        },
+        {
+          "name": "test_reset",
+          "line": 110,
+          "isDefault": false
+        },
+        {
+          "name": "test_update_simple",
+          "line": 141,
+          "isDefault": false
+        },
+        {
+          "name": "test_update_multiple",
+          "line": 166,
+          "isDefault": false
+        },
+        {
+          "name": "test_update_overflow",
+          "line": 209,
+          "isDefault": false
+        },
+        {
+          "name": "test_update_s_new_zero",
+          "line": 237,
+          "isDefault": false
+        },
+        {
+          "name": "test_compress_empty_cache",
+          "line": 257,
+          "isDefault": false
+        },
+        {
+          "name": "test_compress_target_zero",
+          "line": 271,
+          "isDefault": false
+        },
+        {
+          "name": "test_compress_logic_single_head_strategy",
+          "line": 293,
+          "isDefault": false
+        },
+        {
+          "name": "test_compress_invalid_target_size",
+          "line": 348,
+          "isDefault": false
+        },
+        {
+          "name": "test_num_kv_heads_zero",
+          "line": 359,
+          "isDefault": false
+        },
+        {
+          "name": "test_get_k_v_q_and_mask_sliced_output",
+          "line": 403,
+          "isDefault": false
+        },
+        {
+          "name": "test_get_k_v_q_and_mask_full_length_output",
+          "line": 468,
+          "isDefault": false
+        },
+        {
+          "name": "test_get_k_v_q_and_mask_empty_cache_output",
+          "line": 504,
+          "isDefault": false
+        },
+        {
+          "name": "test_query_group_extraction_gqa",
+          "line": 537,
+          "isDefault": false
+        },
+        {
+          "name": "test_query_storage_without_queries",
+          "line": 568,
+          "isDefault": false
+        },
+        {
+          "name": "test_query_storage_shape_mismatch",
+          "line": 597,
+          "isDefault": false
+        },
+        {
+          "name": "QueryCapturingStrategy",
+          "line": 623,
+          "isDefault": false
+        },
+        {
+          "name": "test_compression_strategy_receives_correct_query_groups",
+          "line": 651,
+          "isDefault": false
+        },
+        {
+          "name": "test_get_queries_for_kv_head_edge_cases",
+          "line": 687,
+          "isDefault": false
+        }
+      ],
+      "callGraph": [
+        {
+          "caller": "get_mask",
+          "callee": "torch.zeros",
+          "lineNumber": 37
+        },
+        {
+          "caller": "get_mask",
+          "callee": "min",
+          "lineNumber": 44
+        },
+        {
+          "caller": "mock_strategy_single_head_keep_first",
+          "callee": "MockStrategy",
+          "lineNumber": 67
+        },
+        {
+          "caller": "mock_strategy_multi_head_keep_last",
+          "callee": "MockStrategy",
+          "lineNumber": 72
+        },
+        {
+          "caller": "_create_dummy_data",
+          "callee": "torch.randn",
+          "lineNumber": 76
+        },
+        {
+          "caller": "_create_dummy_data",
+          "callee": "torch.randn",
+          "lineNumber": 77
+        },
+        {
+          "caller": "test_initialization",
+          "callee": "CompressibleKVCache",
+          "lineNumber": 82
+        },
+        {
+          "caller": "test_initialization",
+          "callee": "cache.size",
+          "lineNumber": 87
+        },
+        {
+          "caller": "test_initialization",
+          "callee": "torch.any(cache.attention_mask).item",
+          "lineNumber": 107
+        },
+        {
+          "caller": "test_initialization",
+          "callee": "torch.any",
+          "lineNumber": 107
+        },
+        {
+          "caller": "test_reset",
+          "callee": "CompressibleKVCache",
+          "lineNumber": 112
+        },
+        {
+          "caller": "test_reset",
+          "callee": "_create_dummy_data",
+          "lineNumber": 116
+        },
+        {
+          "caller": "test_reset",
+          "callee": "cache.update",
+          "lineNumber": 123
+        },
+        {
+          "caller": "test_reset",
+          "callee": "cache.compress",
+          "lineNumber": 127
+        },
+        {
+          "caller": "test_reset",
+          "callee": "cache.size",
+          "lineNumber": 129
+        },
+        {
+          "caller": "test_reset",
+          "callee": "cache.reset",
+          "lineNumber": 132
+        },
+        {
+          "caller": "test_reset",
+          "callee": "cache.size",
+          "lineNumber": 133
+        },
+        {
+          "caller": "test_reset",
+          "callee": "torch.all(cache.k_cache == 0).item",
+          "lineNumber": 135
+        },
+        {
+          "caller": "test_reset",
+          "callee": "torch.all",
+          "lineNumber": 135
+        },
+        {
+          "caller": "test_reset",
+          "callee": "torch.all(cache.v_cache == 0).item",
+          "lineNumber": 136
+        },
+        {
+          "caller": "test_reset",
+          "callee": "torch.all",
+          "lineNumber": 136
+        },
+        {
+          "caller": "test_reset",
+          "callee": "torch.any(cache.attention_mask).item",
+          "lineNumber": 138
+        },
+        {
+          "caller": "test_reset",
+          "callee": "torch.any",
+          "lineNumber": 138
+        },
+        {
+          "caller": "test_update_simple",
+          "callee": "CompressibleKVCache",
+          "lineNumber": 143
+        },
+        {
+          "caller": "test_update_simple",
+          "callee": "_create_dummy_data",
+          "lineNumber": 148
+        },
+        {
+          "caller": "test_update_simple",
+          "callee": "cache.update",
+          "lineNumber": 156
+        },
+        {
+          "caller": "test_update_simple",
+          "callee": "cache.size",
+          "lineNumber": 160
+        },
+        {
+          "caller": "test_update_simple",
+          "callee": "torch.equal",
+          "lineNumber": 161
+        },
+        {
+          "caller": "test_update_simple",
+          "callee": "torch.equal",
+          "lineNumber": 162
+        },
+        {
+          "caller": "test_update_simple",
+          "callee": "torch.all(cache.k_cache[:, :, s_new:, :] == 0).item",
+          "lineNumber": 163
+        },
+        {
+          "caller": "test_update_simple",
+          "callee": "torch.all",
+          "lineNumber": 163
+        },
+        {
+          "caller": "test_update_multiple",
+          "callee": "CompressibleKVCache",
+          "lineNumber": 168
+        },
+        {
+          "caller": "test_update_multiple",
+          "callee": "_create_dummy_data",
+          "lineNumber": 173
+        },
+        {
+          "caller": "test_update_multiple",
+          "callee": "cache.update",
+          "lineNumber": 181
+        },
+        {
+          "caller": "test_update_multiple",
+          "callee": "cache.size",
+          "lineNumber": 185
+        },
+        {
+          "caller": "test_update_multiple",
+          "callee": "_create_dummy_data",
+          "lineNumber": 191
+        },
+        {
+          "caller": "test_update_multiple",
+          "callee": "cache.update",
+          "lineNumber": 199
+        },
+        {
+          "caller": "test_update_multiple",
+          "callee": "cache.size",
+          "lineNumber": 203
+        },
+        {
+          "caller": "test_update_multiple",
+          "callee": "torch.equal",
+          "lineNumber": 205
+        },
+        {
+          "caller": "test_update_multiple",
+          "callee": "torch.equal",
+          "lineNumber": 206
+        },
+        {
+          "caller": "test_update_overflow",
+          "callee": "CompressibleKVCache",
+          "lineNumber": 211
+        },
+        {
+          "caller": "test_update_overflow",
+          "callee": "_create_dummy_data",
+          "lineNumber": 213
+        },
+        {
+          "caller": "test_update_overflow",
+          "callee": "cache.update",
+          "lineNumber": 220
+        },
+        {
+          "caller": "test_update_overflow",
+          "callee": "_create_dummy_data",
+          "lineNumber": 226
+        },
+        {
+          "caller": "test_update_overflow",
+          "callee": "pytest.raises",
+          "lineNumber": 233
+        },
+        {
+          "caller": "test_update_overflow",
+          "callee": "cache.update",
+          "lineNumber": 234
+        },
+        {
+          "caller": "test_update_s_new_zero",
+          "callee": "CompressibleKVCache",
+          "lineNumber": 239
+        },
+        {
+          "caller": "test_update_s_new_zero",
+          "callee": "_create_dummy_data",
+          "lineNumber": 243
+        },
+        {
+          "caller": "test_update_s_new_zero",
+          "callee": "cache.update",
+          "lineNumber": 250
+        },
+        {
+          "caller": "test_update_s_new_zero",
+          "callee": "cache.size",
+          "lineNumber": 254
+        },
+        {
+          "caller": "test_compress_empty_cache",
+          "callee": "CompressibleKVCache",
+          "lineNumber": 259
+        },
+        {
+          "caller": "test_compress_empty_cache",
+          "callee": "cache.compress",
+          "lineNumber": 260
+        },
+        {
+          "caller": "test_compress_empty_cache",
+          "callee": "torch.any(mask).item",
+          "lineNumber": 261
+        },
+        {
+          "caller": "test_compress_empty_cache",
+          "callee": "torch.any",
+          "lineNumber": 261
+        },
+        {
+          "caller": "test_compress_target_zero",
+          "callee": "CompressibleKVCache",
+          "lineNumber": 273
+        },
+        {
+          "caller": "test_compress_target_zero",
+          "callee": "_create_dummy_data",
+          "lineNumber": 277
+        },
+        {
+          "caller": "test_compress_target_zero",
+          "callee": "cache.update",
+          "lineNumber": 284
+        },
+        {
+          "caller": "test_compress_target_zero",
+          "callee": "cache.compress",
+          "lineNumber": 288
+        },
+        {
+          "caller": "test_compress_target_zero",
+          "callee": "torch.any(mask).item",
+          "lineNumber": 289
+        },
+        {
+          "caller": "test_compress_target_zero",
+          "callee": "torch.any",
+          "lineNumber": 289
+        },
+        {
+          "caller": "test_compress_logic_single_head_strategy",
+          "callee": "CompressibleKVCache",
+          "lineNumber": 298
+        },
+        {
+          "caller": "test_compress_logic_single_head_strategy",
+          "callee": "_create_dummy_data",
+          "lineNumber": 304
+        },
+        {
+          "caller": "test_compress_logic_single_head_strategy",
+          "callee": "cache.update",
+          "lineNumber": 311
+        },
+        {
+          "caller": "test_compress_logic_single_head_strategy",
+          "callee": "cache.size",
+          "lineNumber": 315
+        },
+        {
+          "caller": "test_compress_logic_single_head_strategy",
+          "callee": "cache.compress",
+          "lineNumber": 318
+        },
+        {
+          "caller": "test_compress_logic_single_head_strategy",
+          "callee": "torch.zeros",
+          "lineNumber": 335
+        },
+        {
+          "caller": "test_compress_logic_single_head_strategy",
+          "callee": "torch.equal",
+          "lineNumber": 341
+        },
+        {
+          "caller": "test_compress_logic_single_head_strategy",
+          "callee": "torch.any(mask[:, :, s_active:]).item",
+          "lineNumber": 342
+        },
+        {
+          "caller": "test_compress_logic_single_head_strategy",
+          "callee": "torch.any",
+          "lineNumber": 342
+        },
+        {
+          "caller": "test_compress_invalid_target_size",
+          "callee": "CompressibleKVCache",
+          "lineNumber": 352
+        },
+        {
+          "caller": "test_compress_invalid_target_size",
+          "callee": "pytest.raises",
+          "lineNumber": 353
+        },
+        {
+          "caller": "test_compress_invalid_target_size",
+          "callee": "cache.compress",
+          "lineNumber": 354
+        },
+        {
+          "caller": "test_compress_invalid_target_size",
+          "callee": "pytest.raises",
+          "lineNumber": 355
+        },
+        {
+          "caller": "test_compress_invalid_target_size",
+          "callee": "cache.compress",
+          "lineNumber": 356
+        },
+        {
+          "caller": "test_num_kv_heads_zero",
+          "callee": "cache_params.copy",
+          "lineNumber": 360
+        },
+        {
+          "caller": "test_num_kv_heads_zero",
+          "callee": "CompressibleKVCache",
+          "lineNumber": 362
+        },
+        {
+          "caller": "test_num_kv_heads_zero",
+          "callee": "_create_dummy_data",
+          "lineNumber": 381
+        },
+        {
+          "caller": "test_num_kv_heads_zero",
+          "callee": "cache.update",
+          "lineNumber": 388
+        },
+        {
+          "caller": "test_num_kv_heads_zero",
+          "callee": "cache.size",
+          "lineNumber": 392
+        },
+        {
+          "caller": "test_num_kv_heads_zero",
+          "callee": "cache.compress",
+          "lineNumber": 394
+        },
+        {
+          "caller": "test_get_k_v_q_and_mask_sliced_output",
+          "callee": "CompressibleKVCache",
+          "lineNumber": 407
+        },
+        {
+          "caller": "test_get_k_v_q_and_mask_sliced_output",
+          "callee": "_create_dummy_data",
+          "lineNumber": 412
+        },
+        {
+          "caller": "test_get_k_v_q_and_mask_sliced_output",
+          "callee": "cache.update",
+          "lineNumber": 419
+        },
+        {
+          "caller": "test_get_k_v_q_and_mask_sliced_output",
+          "callee": "cache.compress",
+          "lineNumber": 422
+        },
+        {
+          "caller": "test_get_k_v_q_and_mask_sliced_output",
+          "callee": "torch.zeros",
+          "lineNumber": 429
+        },
+        {
+          "caller": "test_get_k_v_q_and_mask_sliced_output",
+          "callee": "torch.equal",
+          "lineNumber": 438
+        },
+        {
+          "caller": "test_get_k_v_q_and_mask_sliced_output",
+          "callee": "torch.any(internal_full_mask[:, :, s_active:]).item",
+          "lineNumber": 439
+        },
+        {
+          "caller": "test_get_k_v_q_and_mask_sliced_output",
+          "callee": "torch.any",
+          "lineNumber": 439
+        },
+        {
+          "caller": "test_get_k_v_q_and_mask_sliced_output",
+          "callee": "cache.get_k_v_and_mask_for_attention",
+          "lineNumber": 441
+        },
+        {
+          "caller": "test_get_k_v_q_and_mask_sliced_output",
+          "callee": "torch.equal",
+          "lineNumber": 462
+        },
+        {
+          "caller": "test_get_k_v_q_and_mask_sliced_output",
+          "callee": "torch.equal",
+          "lineNumber": 463
+        },
+        {
+          "caller": "test_get_k_v_q_and_mask_sliced_output",
+          "callee": "torch.equal",
+          "lineNumber": 465
+        },
+        {
+          "caller": "test_get_k_v_q_and_mask_full_length_output",
+          "callee": "CompressibleKVCache",
+          "lineNumber": 472
+        },
+        {
+          "caller": "test_get_k_v_q_and_mask_full_length_output",
+          "callee": "_create_dummy_data",
+          "lineNumber": 476
+        },
+        {
+          "caller": "test_get_k_v_q_and_mask_full_length_output",
+          "callee": "cache.update",
+          "lineNumber": 483
+        },
+        {
+          "caller": "test_get_k_v_q_and_mask_full_length_output",
+          "callee": "cache.compress",
+          "lineNumber": 486
+        },
+        {
+          "caller": "test_get_k_v_q_and_mask_full_length_output",
+          "callee": "cache.get_k_v_and_mask_for_attention",
+          "lineNumber": 488
+        },
+        {
+          "caller": "test_get_k_v_q_and_mask_full_length_output",
+          "callee": "torch.equal",
+          "lineNumber": 501
+        },
+        {
+          "caller": "test_get_k_v_q_and_mask_empty_cache_output",
+          "callee": "CompressibleKVCache",
+          "lineNumber": 508
+        },
+        {
+          "caller": "test_get_k_v_q_and_mask_empty_cache_output",
+          "callee": "cache.compress",
+          "lineNumber": 510
+        },
+        {
+          "caller": "test_get_k_v_q_and_mask_empty_cache_output",
+          "callee": "torch.any(internal_full_mask).item",
+          "lineNumber": 511
+        },
+        {
+          "caller": "test_get_k_v_q_and_mask_empty_cache_output",
+          "callee": "torch.any",
+          "lineNumber": 511
+        },
+        {
+          "caller": "test_get_k_v_q_and_mask_empty_cache_output",
+          "callee": "cache.get_k_v_and_mask_for_attention",
+          "lineNumber": 513
+        },
+        {
+          "caller": "test_get_k_v_q_and_mask_empty_cache_output",
+          "callee": "mask_out.sum",
+          "lineNumber": 534
+        },
+        {
+          "caller": "test_query_group_extraction_gqa",
+          "callee": "CompressibleKVCache",
+          "lineNumber": 539
+        },
+        {
+          "caller": "test_query_group_extraction_gqa",
+          "callee": "MockStrategy",
+          "lineNumber": 546
+        },
+        {
+          "caller": "test_query_group_extraction_gqa",
+          "callee": "torch.randn",
+          "lineNumber": 550
+        },
+        {
+          "caller": "test_query_group_extraction_gqa",
+          "callee": "torch.randn",
+          "lineNumber": 551
+        },
+        {
+          "caller": "test_query_group_extraction_gqa",
+          "callee": "torch.randn",
+          "lineNumber": 552
+        },
+        {
+          "caller": "test_query_group_extraction_gqa",
+          "callee": "cache.update",
+          "lineNumber": 554
+        },
+        {
+          "caller": "test_query_group_extraction_gqa",
+          "callee": "cache.get_queries_for_kv_head",
+          "lineNumber": 557
+        },
+        {
+          "caller": "test_query_group_extraction_gqa",
+          "callee": "cache.get_queries_for_kv_head",
+          "lineNumber": 558
+        },
+        {
+          "caller": "test_query_group_extraction_gqa",
+          "callee": "torch.equal",
+          "lineNumber": 564
+        },
+        {
+          "caller": "test_query_group_extraction_gqa",
+          "callee": "torch.equal",
+          "lineNumber": 565
+        },
+        {
+          "caller": "test_query_storage_without_queries",
+          "callee": "CompressibleKVCache",
+          "lineNumber": 570
+        },
+        {
+          "caller": "test_query_storage_without_queries",
+          "callee": "MockStrategy",
+          "lineNumber": 577
+        },
+        {
+          "caller": "test_query_storage_without_queries",
+          "callee": "torch.randn",
+          "lineNumber": 580
+        },
+        {
+          "caller": "test_query_storage_without_queries",
+          "callee": "torch.randn",
+          "lineNumber": 581
+        },
+        {
+          "caller": "test_query_storage_without_queries",
+          "callee": "cache.update",
+          "lineNumber": 584
+        },
+        {
+          "caller": "test_query_storage_without_queries",
+          "callee": "torch.all",
+          "lineNumber": 587
+        },
+        {
+          "caller": "test_query_storage_without_queries",
+          "callee": "cache.get_queries_for_kv_head",
+          "lineNumber": 592
+        },
+        {
+          "caller": "test_query_storage_without_queries",
+          "callee": "torch.all",
+          "lineNumber": 594
+        },
+        {
+          "caller": "test_query_storage_shape_mismatch",
+          "callee": "CompressibleKVCache",
+          "lineNumber": 599
+        },
+        {
+          "caller": "test_query_storage_shape_mismatch",
+          "callee": "MockStrategy",
+          "lineNumber": 606
+        },
+        {
+          "caller": "test_query_storage_shape_mismatch",
+          "callee": "torch.randn",
+          "lineNumber": 609
+        },
+        {
+          "caller": "test_query_storage_shape_mismatch",
+          "callee": "torch.randn",
+          "lineNumber": 610
+        },
+        {
+          "caller": "test_query_storage_shape_mismatch",
+          "callee": "torch.randn",
+          "lineNumber": 613
+        },
+        {
+          "caller": "test_query_storage_shape_mismatch",
+          "callee": "pytest.raises",
+          "lineNumber": 614
+        },
+        {
+          "caller": "test_query_storage_shape_mismatch",
+          "callee": "cache.update",
+          "lineNumber": 615
+        },
+        {
+          "caller": "test_query_storage_shape_mismatch",
+          "callee": "torch.randn",
+          "lineNumber": 618
+        },
+        {
+          "caller": "test_query_storage_shape_mismatch",
+          "callee": "pytest.raises",
+          "lineNumber": 619
+        },
+        {
+          "caller": "test_query_storage_shape_mismatch",
+          "callee": "cache.update",
+          "lineNumber": 620
+        },
+        {
+          "caller": "get_mask",
+          "callee": "torch.zeros",
+          "lineNumber": 645
+        },
+        {
+          "caller": "test_compression_strategy_receives_correct_query_groups",
+          "callee": "QueryCapturingStrategy",
+          "lineNumber": 653
+        },
+        {
+          "caller": "test_compression_strategy_receives_correct_query_groups",
+          "callee": "QueryCapturingStrategy",
+          "lineNumber": 654
+        },
+        {
+          "caller": "test_compression_strategy_receives_correct_query_groups",
+          "callee": "CompressibleKVCache",
+          "lineNumber": 656
+        },
+        {
+          "caller": "test_compression_strategy_receives_correct_query_groups",
+          "callee": "torch.randn",
+          "lineNumber": 667
+        },
+        {
+          "caller": "test_compression_strategy_receives_correct_query_groups",
+          "callee": "torch.randn",
+          "lineNumber": 668
+        },
+        {
+          "caller": "test_compression_strategy_receives_correct_query_groups",
+          "callee": "torch.randn",
+          "lineNumber": 669
+        },
+        {
+          "caller": "test_compression_strategy_receives_correct_query_groups",
+          "callee": "cache.update",
+          "lineNumber": 671
+        },
+        {
+          "caller": "test_compression_strategy_receives_correct_query_groups",
+          "callee": "cache.compress",
+          "lineNumber": 672
+        },
+        {
+          "caller": "test_compression_strategy_receives_correct_query_groups",
+          "callee": "torch.equal",
+          "lineNumber": 676
+        },
+        {
+          "caller": "test_compression_strategy_receives_correct_query_groups",
+          "callee": "torch.equal",
+          "lineNumber": 680
+        },
+        {
+          "caller": "test_get_queries_for_kv_head_edge_cases",
+          "callee": "CompressibleKVCache",
+          "lineNumber": 689
+        },
+        {
+          "caller": "test_get_queries_for_kv_head_edge_cases",
+          "callee": "MockStrategy",
+          "lineNumber": 696
+        },
+        {
+          "caller": "test_get_queries_for_kv_head_edge_cases",
+          "callee": "pytest.raises",
+          "lineNumber": 700
+        },
+        {
+          "caller": "test_get_queries_for_kv_head_edge_cases",
+          "callee": "cache.get_queries_for_kv_head",
+          "lineNumber": 701
+        },
+        {
+          "caller": "test_get_queries_for_kv_head_edge_cases",
+          "callee": "cache.get_queries_for_kv_head",
+          "lineNumber": 704
+        },
+        {
+          "caller": "test_get_queries_for_kv_head_edge_cases",
+          "callee": "torch.randn",
+          "lineNumber": 708
+        },
+        {
+          "caller": "test_get_queries_for_kv_head_edge_cases",
+          "callee": "torch.randn",
+          "lineNumber": 709
+        },
+        {
+          "caller": "test_get_queries_for_kv_head_edge_cases",
+          "callee": "torch.randn",
+          "lineNumber": 710
+        },
+        {
+          "caller": "test_get_queries_for_kv_head_edge_cases",
+          "callee": "cache.update",
+          "lineNumber": 712
+        },
+        {
+          "caller": "test_get_queries_for_kv_head_edge_cases",
+          "callee": "cache.get_queries_for_kv_head",
+          "lineNumber": 714
+        },
+        {
+          "caller": "test_get_queries_for_kv_head_edge_cases",
+          "callee": "cache.get_queries_for_kv_head",
+          "lineNumber": 715
+        },
+        {
+          "caller": "test_get_queries_for_kv_head_edge_cases",
+          "callee": "torch.equal",
+          "lineNumber": 719
+        },
+        {
+          "caller": "test_get_queries_for_kv_head_edge_cases",
+          "callee": "torch.equal",
+          "lineNumber": 720
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 25,
+        "functionCount": 23,
+        "classCount": 2
+      }
+    },
+    {
+      "path": "tests/test_kv_cache/test_flexattention_bfloat16.py",
+      "language": "python",
+      "fileCategory": "code",
+      "totalLines": 148,
+      "nonEmptyLines": 124,
+      "functions": [
+        {
+          "name": "test_flex_attention_vs_sdpa_numerical_equivalence",
+          "startLine": 15,
+          "endLine": 96,
+          "params": [
+            "dtype"
+          ]
+        },
+        {
+          "name": "test_flex_attention_vs_sdpa_small_example",
+          "startLine": 99,
+          "endLine": 148,
+          "params": []
+        }
+      ],
+      "exports": [
+        {
+          "name": "test_flex_attention_vs_sdpa_numerical_equivalence",
+          "line": 14,
+          "isDefault": false
+        },
+        {
+          "name": "test_flex_attention_vs_sdpa_small_example",
+          "line": 99,
+          "isDefault": false
+        }
+      ],
+      "callGraph": [
+        {
+          "caller": "test_flex_attention_vs_sdpa_numerical_equivalence",
+          "callee": "torch.device",
+          "lineNumber": 27
+        },
+        {
+          "caller": "test_flex_attention_vs_sdpa_numerical_equivalence",
+          "callee": "torch.cuda.is_available",
+          "lineNumber": 27
+        },
+        {
+          "caller": "test_flex_attention_vs_sdpa_numerical_equivalence",
+          "callee": "torch.manual_seed",
+          "lineNumber": 30
+        },
+        {
+          "caller": "test_flex_attention_vs_sdpa_numerical_equivalence",
+          "callee": "torch.randn",
+          "lineNumber": 31
+        },
+        {
+          "caller": "test_flex_attention_vs_sdpa_numerical_equivalence",
+          "callee": "torch.randn",
+          "lineNumber": 34
+        },
+        {
+          "caller": "test_flex_attention_vs_sdpa_numerical_equivalence",
+          "callee": "torch.randn",
+          "lineNumber": 37
+        },
+        {
+          "caller": "test_flex_attention_vs_sdpa_numerical_equivalence",
+          "callee": "torch.tril",
+          "lineNumber": 42
+        },
+        {
+          "caller": "test_flex_attention_vs_sdpa_numerical_equivalence",
+          "callee": "torch.ones",
+          "lineNumber": 43
+        },
+        {
+          "caller": "test_flex_attention_vs_sdpa_numerical_equivalence",
+          "callee": "torch.no_grad",
+          "lineNumber": 47
+        },
+        {
+          "caller": "test_flex_attention_vs_sdpa_numerical_equivalence",
+          "callee": "F.scaled_dot_product_attention",
+          "lineNumber": 48
+        },
+        {
+          "caller": "test_flex_attention_vs_sdpa_numerical_equivalence",
+          "callee": "create_block_mask",
+          "lineNumber": 60
+        },
+        {
+          "caller": "test_flex_attention_vs_sdpa_numerical_equivalence",
+          "callee": "torch.no_grad",
+          "lineNumber": 64
+        },
+        {
+          "caller": "test_flex_attention_vs_sdpa_numerical_equivalence",
+          "callee": "flex_attention",
+          "lineNumber": 65
+        },
+        {
+          "caller": "test_flex_attention_vs_sdpa_numerical_equivalence",
+          "callee": "(flex_output - sdpa_output).abs",
+          "lineNumber": 68
+        },
+        {
+          "caller": "test_flex_attention_vs_sdpa_numerical_equivalence",
+          "callee": "diff.max().item",
+          "lineNumber": 69
+        },
+        {
+          "caller": "test_flex_attention_vs_sdpa_numerical_equivalence",
+          "callee": "diff.max",
+          "lineNumber": 69
+        },
+        {
+          "caller": "test_flex_attention_vs_sdpa_numerical_equivalence",
+          "callee": "diff.mean().item",
+          "lineNumber": 70
+        },
+        {
+          "caller": "test_flex_attention_vs_sdpa_numerical_equivalence",
+          "callee": "diff.mean",
+          "lineNumber": 70
+        },
+        {
+          "caller": "test_flex_attention_vs_sdpa_numerical_equivalence",
+          "callee": "torch.allclose",
+          "lineNumber": 74
+        },
+        {
+          "caller": "test_flex_attention_vs_sdpa_numerical_equivalence",
+          "callee": "warnings.warn",
+          "lineNumber": 80
+        },
+        {
+          "caller": "test_flex_attention_vs_sdpa_numerical_equivalence",
+          "callee": "torch.allclose",
+          "lineNumber": 93
+        },
+        {
+          "caller": "test_flex_attention_vs_sdpa_small_example",
+          "callee": "torch.device",
+          "lineNumber": 105
+        },
+        {
+          "caller": "test_flex_attention_vs_sdpa_small_example",
+          "callee": "torch.cuda.is_available",
+          "lineNumber": 105
+        },
+        {
+          "caller": "test_flex_attention_vs_sdpa_small_example",
+          "callee": "torch.manual_seed",
+          "lineNumber": 108
+        },
+        {
+          "caller": "test_flex_attention_vs_sdpa_small_example",
+          "callee": "torch.randn",
+          "lineNumber": 109
+        },
+        {
+          "caller": "test_flex_attention_vs_sdpa_small_example",
+          "callee": "torch.randn",
+          "lineNumber": 112
+        },
+        {
+          "caller": "test_flex_attention_vs_sdpa_small_example",
+          "callee": "torch.randn",
+          "lineNumber": 115
+        },
+        {
+          "caller": "test_flex_attention_vs_sdpa_small_example",
+          "callee": "torch.no_grad",
+          "lineNumber": 120
+        },
+        {
+          "caller": "test_flex_attention_vs_sdpa_small_example",
+          "callee": "F.scaled_dot_product_attention",
+          "lineNumber": 121
+        },
+        {
+          "caller": "test_flex_attention_vs_sdpa_small_example",
+          "callee": "create_block_mask",
+          "lineNumber": 127
+        },
+        {
+          "caller": "test_flex_attention_vs_sdpa_small_example",
+          "callee": "torch.no_grad",
+          "lineNumber": 131
+        },
+        {
+          "caller": "test_flex_attention_vs_sdpa_small_example",
+          "callee": "flex_attention",
+          "lineNumber": 132
+        },
+        {
+          "caller": "test_flex_attention_vs_sdpa_small_example",
+          "callee": "(flex_output - sdpa_output).abs",
+          "lineNumber": 134
+        },
+        {
+          "caller": "test_flex_attention_vs_sdpa_small_example",
+          "callee": "diff.max().item",
+          "lineNumber": 135
+        },
+        {
+          "caller": "test_flex_attention_vs_sdpa_small_example",
+          "callee": "diff.max",
+          "lineNumber": 135
+        },
+        {
+          "caller": "test_flex_attention_vs_sdpa_small_example",
+          "callee": "warnings.warn",
+          "lineNumber": 141
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 2,
+        "functionCount": 2,
+        "classCount": 0
+      }
+    },
+    {
+      "path": "tests/test_kv_cache/test_patched_attention.py",
+      "language": "python",
+      "fileCategory": "code",
+      "totalLines": 424,
+      "nonEmptyLines": 375,
+      "functions": [
+        {
+          "name": "config",
+          "startLine": 59,
+          "endLine": 60,
+          "params": [
+            "request"
+          ]
+        },
+        {
+          "name": "create_mha_instance",
+          "startLine": 63,
+          "endLine": 128,
+          "params": [
+            "config",
+            "use_standard_kv_cache",
+            "device",
+            "mha_class"
+          ]
+        },
+        {
+          "name": "test_mha_patch_equivalence",
+          "startLine": 131,
+          "endLine": 277,
+          "params": [
+            "config"
+          ]
+        },
+        {
+          "name": "test_compressible_mha_equivalence",
+          "startLine": 280,
+          "endLine": 424,
+          "params": [
+            "config"
+          ]
+        }
+      ],
+      "exports": [
+        {
+          "name": "config",
+          "line": 58,
+          "isDefault": false
+        },
+        {
+          "name": "create_mha_instance",
+          "line": 63,
+          "isDefault": false
+        },
+        {
+          "name": "test_mha_patch_equivalence",
+          "line": 131,
+          "isDefault": false
+        },
+        {
+          "name": "test_compressible_mha_equivalence",
+          "line": 280,
+          "isDefault": false
+        }
+      ],
+      "callGraph": [
+        {
+          "caller": "create_mha_instance",
+          "callee": "nn.Linear",
+          "lineNumber": 69
+        },
+        {
+          "caller": "create_mha_instance",
+          "callee": "nn.Linear",
+          "lineNumber": 75
+        },
+        {
+          "caller": "create_mha_instance",
+          "callee": "nn.Linear",
+          "lineNumber": 81
+        },
+        {
+          "caller": "create_mha_instance",
+          "callee": "nn.Linear",
+          "lineNumber": 87
+        },
+        {
+          "caller": "create_mha_instance",
+          "callee": "KVCache",
+          "lineNumber": 97
+        },
+        {
+          "caller": "create_mha_instance",
+          "callee": "kv_cache_instance.to",
+          "lineNumber": 104
+        },
+        {
+          "caller": "create_mha_instance",
+          "callee": "mha_class",
+          "lineNumber": 108
+        },
+        {
+          "caller": "create_mha_instance",
+          "callee": "mha.to",
+          "lineNumber": 122
+        },
+        {
+          "caller": "create_mha_instance",
+          "callee": "mha.eval",
+          "lineNumber": 123
+        },
+        {
+          "caller": "test_mha_patch_equivalence",
+          "callee": "torch.manual_seed",
+          "lineNumber": 132
+        },
+        {
+          "caller": "test_mha_patch_equivalence",
+          "callee": "torch.device",
+          "lineNumber": 133
+        },
+        {
+          "caller": "test_mha_patch_equivalence",
+          "callee": "torch.cuda.is_available",
+          "lineNumber": 133
+        },
+        {
+          "caller": "test_mha_patch_equivalence",
+          "callee": "create_mha_instance",
+          "lineNumber": 136
+        },
+        {
+          "caller": "test_mha_patch_equivalence",
+          "callee": "create_mha_instance",
+          "lineNumber": 141
+        },
+        {
+          "caller": "test_mha_patch_equivalence",
+          "callee": "mha_patched.q_proj.load_state_dict",
+          "lineNumber": 144
+        },
+        {
+          "caller": "test_mha_patch_equivalence",
+          "callee": "mha_original.q_proj.state_dict",
+          "lineNumber": 144
+        },
+        {
+          "caller": "test_mha_patch_equivalence",
+          "callee": "mha_patched.k_proj.load_state_dict",
+          "lineNumber": 145
+        },
+        {
+          "caller": "test_mha_patch_equivalence",
+          "callee": "mha_original.k_proj.state_dict",
+          "lineNumber": 145
+        },
+        {
+          "caller": "test_mha_patch_equivalence",
+          "callee": "mha_patched.v_proj.load_state_dict",
+          "lineNumber": 146
+        },
+        {
+          "caller": "test_mha_patch_equivalence",
+          "callee": "mha_original.v_proj.state_dict",
+          "lineNumber": 146
+        },
+        {
+          "caller": "test_mha_patch_equivalence",
+          "callee": "mha_patched.output_proj.load_state_dict",
+          "lineNumber": 147
+        },
+        {
+          "caller": "test_mha_patch_equivalence",
+          "callee": "mha_original.output_proj.state_dict",
+          "lineNumber": 147
+        },
+        {
+          "caller": "test_mha_patch_equivalence",
+          "callee": "DummyCompressionStrategy",
+          "lineNumber": 150
+        },
+        {
+          "caller": "test_mha_patch_equivalence",
+          "callee": "CompressibleKVCache",
+          "lineNumber": 151
+        },
+        {
+          "caller": "test_mha_patch_equivalence",
+          "callee": "mock_comp_cache.to",
+          "lineNumber": 160
+        },
+        {
+          "caller": "test_mha_patch_equivalence",
+          "callee": "types.MethodType",
+          "lineNumber": 164
+        },
+        {
+          "caller": "test_mha_patch_equivalence",
+          "callee": "torch.randn",
+          "lineNumber": 167
+        },
+        {
+          "caller": "test_mha_patch_equivalence",
+          "callee": "torch.zeros",
+          "lineNumber": 178
+        },
+        {
+          "caller": "test_mha_patch_equivalence",
+          "callee": "torch.arange(config[\"seq_len_prefill\"], device=device, dtype=torch.long)\n        .unsqueeze(0)\n        .repeat",
+          "lineNumber": 188
+        },
+        {
+          "caller": "test_mha_patch_equivalence",
+          "callee": "torch.arange(config[\"seq_len_prefill\"], device=device, dtype=torch.long)\n        .unsqueeze",
+          "lineNumber": 188
+        },
+        {
+          "caller": "test_mha_patch_equivalence",
+          "callee": "torch.arange",
+          "lineNumber": 188
+        },
+        {
+          "caller": "test_mha_patch_equivalence",
+          "callee": "mha_original.kv_cache.reset",
+          "lineNumber": 195
+        },
+        {
+          "caller": "test_mha_patch_equivalence",
+          "callee": "mha_patched.kv_cache.reset",
+          "lineNumber": 196
+        },
+        {
+          "caller": "test_mha_patch_equivalence",
+          "callee": "mha_original",
+          "lineNumber": 199
+        },
+        {
+          "caller": "test_mha_patch_equivalence",
+          "callee": "mha_patched",
+          "lineNumber": 206
+        },
+        {
+          "caller": "test_mha_patch_equivalence",
+          "callee": "torch.allclose",
+          "lineNumber": 210
+        },
+        {
+          "caller": "test_mha_patch_equivalence",
+          "callee": "torch.randn",
+          "lineNumber": 216
+        },
+        {
+          "caller": "test_mha_patch_equivalence",
+          "callee": "torch.arange",
+          "lineNumber": 225
+        },
+        {
+          "caller": "test_mha_patch_equivalence",
+          "callee": "input_pos_decode_values.unsqueeze(0).repeat",
+          "lineNumber": 231
+        },
+        {
+          "caller": "test_mha_patch_equivalence",
+          "callee": "input_pos_decode_values.unsqueeze",
+          "lineNumber": 231
+        },
+        {
+          "caller": "test_mha_patch_equivalence",
+          "callee": "torch.zeros",
+          "lineNumber": 236
+        },
+        {
+          "caller": "test_mha_patch_equivalence",
+          "callee": "mha_original",
+          "lineNumber": 248
+        },
+        {
+          "caller": "test_mha_patch_equivalence",
+          "callee": "mha_patched",
+          "lineNumber": 255
+        },
+        {
+          "caller": "test_mha_patch_equivalence",
+          "callee": "torch.allclose",
+          "lineNumber": 259
+        },
+        {
+          "caller": "test_mha_patch_equivalence",
+          "callee": "mha_patched",
+          "lineNumber": 264
+        },
+        {
+          "caller": "test_mha_patch_equivalence",
+          "callee": "torch.allclose",
+          "lineNumber": 268
+        },
+        {
+          "caller": "test_mha_patch_equivalence",
+          "callee": "print",
+          "lineNumber": 275
+        },
+        {
+          "caller": "test_compressible_mha_equivalence",
+          "callee": "torch.manual_seed",
+          "lineNumber": 281
+        },
+        {
+          "caller": "test_compressible_mha_equivalence",
+          "callee": "torch.device",
+          "lineNumber": 282
+        },
+        {
+          "caller": "test_compressible_mha_equivalence",
+          "callee": "torch.cuda.is_available",
+          "lineNumber": 282
+        },
+        {
+          "caller": "test_compressible_mha_equivalence",
+          "callee": "create_mha_instance",
+          "lineNumber": 285
+        },
+        {
+          "caller": "test_compressible_mha_equivalence",
+          "callee": "create_mha_instance",
+          "lineNumber": 290
+        },
+        {
+          "caller": "test_compressible_mha_equivalence",
+          "callee": "mha_compressible.load_state_dict",
+          "lineNumber": 296
+        },
+        {
+          "caller": "test_compressible_mha_equivalence",
+          "callee": "mha_original.state_dict",
+          "lineNumber": 296
+        },
+        {
+          "caller": "test_compressible_mha_equivalence",
+          "callee": "DummyCompressionStrategy",
+          "lineNumber": 299
+        },
+        {
+          "caller": "test_compressible_mha_equivalence",
+          "callee": "CompressibleKVCache",
+          "lineNumber": 300
+        },
+        {
+          "caller": "test_compressible_mha_equivalence",
+          "callee": "mock_comp_cache.to",
+          "lineNumber": 309
+        },
+        {
+          "caller": "test_compressible_mha_equivalence",
+          "callee": "torch.randn",
+          "lineNumber": 314
+        },
+        {
+          "caller": "test_compressible_mha_equivalence",
+          "callee": "torch.zeros",
+          "lineNumber": 325
+        },
+        {
+          "caller": "test_compressible_mha_equivalence",
+          "callee": "torch.arange(config[\"seq_len_prefill\"], device=device, dtype=torch.long)\n        .unsqueeze(0)\n        .repeat",
+          "lineNumber": 335
+        },
+        {
+          "caller": "test_compressible_mha_equivalence",
+          "callee": "torch.arange(config[\"seq_len_prefill\"], device=device, dtype=torch.long)\n        .unsqueeze",
+          "lineNumber": 335
+        },
+        {
+          "caller": "test_compressible_mha_equivalence",
+          "callee": "torch.arange",
+          "lineNumber": 335
+        },
+        {
+          "caller": "test_compressible_mha_equivalence",
+          "callee": "mha_original.kv_cache.reset",
+          "lineNumber": 342
+        },
+        {
+          "caller": "test_compressible_mha_equivalence",
+          "callee": "mha_compressible.kv_cache.reset",
+          "lineNumber": 343
+        },
+        {
+          "caller": "test_compressible_mha_equivalence",
+          "callee": "mha_original",
+          "lineNumber": 346
+        },
+        {
+          "caller": "test_compressible_mha_equivalence",
+          "callee": "mha_compressible",
+          "lineNumber": 353
+        },
+        {
+          "caller": "test_compressible_mha_equivalence",
+          "callee": "torch.allclose",
+          "lineNumber": 357
+        },
+        {
+          "caller": "test_compressible_mha_equivalence",
+          "callee": "torch.randn",
+          "lineNumber": 363
+        },
+        {
+          "caller": "test_compressible_mha_equivalence",
+          "callee": "torch.arange",
+          "lineNumber": 372
+        },
+        {
+          "caller": "test_compressible_mha_equivalence",
+          "callee": "input_pos_decode_values.unsqueeze(0).repeat",
+          "lineNumber": 378
+        },
+        {
+          "caller": "test_compressible_mha_equivalence",
+          "callee": "input_pos_decode_values.unsqueeze",
+          "lineNumber": 378
+        },
+        {
+          "caller": "test_compressible_mha_equivalence",
+          "callee": "torch.zeros",
+          "lineNumber": 383
+        },
+        {
+          "caller": "test_compressible_mha_equivalence",
+          "callee": "mha_original",
+          "lineNumber": 395
+        },
+        {
+          "caller": "test_compressible_mha_equivalence",
+          "callee": "mha_compressible",
+          "lineNumber": 402
+        },
+        {
+          "caller": "test_compressible_mha_equivalence",
+          "callee": "torch.allclose",
+          "lineNumber": 406
+        },
+        {
+          "caller": "test_compressible_mha_equivalence",
+          "callee": "mha_compressible",
+          "lineNumber": 411
+        },
+        {
+          "caller": "test_compressible_mha_equivalence",
+          "callee": "torch.allclose",
+          "lineNumber": 415
+        },
+        {
+          "caller": "test_compressible_mha_equivalence",
+          "callee": "print",
+          "lineNumber": 422
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 4,
+        "functionCount": 4,
+        "classCount": 0
+      }
+    }
+  ]
+}

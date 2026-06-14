@@ -1,0 +1,121 @@
+{
+  "batchIndex": 3,
+  "files": [
+    {
+      "path": "src/kvcompression/constants.py",
+      "language": "python",
+      "sizeLines": 6,
+      "fileCategory": "code"
+    },
+    {
+      "path": "src/kvcompression/costs.py",
+      "language": "python",
+      "sizeLines": 145,
+      "fileCategory": "code"
+    },
+    {
+      "path": "src/kvcompression/rl/environments/kvsorting_env.py",
+      "language": "python",
+      "sizeLines": 428,
+      "fileCategory": "code"
+    },
+    {
+      "path": "src/kvcompression/rl/rewards/base_reward_strategy.py",
+      "language": "python",
+      "sizeLines": 30,
+      "fileCategory": "code"
+    },
+    {
+      "path": "src/kvcompression/rl/rewards/basic_strategies.py",
+      "language": "python",
+      "sizeLines": 15,
+      "fileCategory": "code"
+    },
+    {
+      "path": "src/kvcompression/rl/rewards/oracle.py",
+      "language": "python",
+      "sizeLines": 72,
+      "fileCategory": "code"
+    },
+    {
+      "path": "src/kvcompression/utils/utils.py",
+      "language": "python",
+      "sizeLines": 127,
+      "fileCategory": "code"
+    }
+  ],
+  "batchImportData": {
+    "src/kvcompression/constants.py": [],
+    "src/kvcompression/costs.py": [
+      "src/kvcompression/utils/utils.py"
+    ],
+    "src/kvcompression/rl/environments/kvsorting_env.py": [
+      "src/kvcompression/rl/rewards/base_reward_strategy.py",
+      "src/kvcompression/rl/rewards/basic_strategies.py",
+      "src/kvcompression/rl/rewards/oracle.py",
+      "src/kvcompression/utils/utils.py"
+    ],
+    "src/kvcompression/rl/rewards/base_reward_strategy.py": [
+      "src/kvcompression/costs.py"
+    ],
+    "src/kvcompression/rl/rewards/basic_strategies.py": [
+      "src/kvcompression/costs.py",
+      "src/kvcompression/rl/rewards/base_reward_strategy.py"
+    ],
+    "src/kvcompression/rl/rewards/oracle.py": [
+      "src/kvcompression/attention_utils.py",
+      "src/kvcompression/costs.py",
+      "src/kvcompression/utils/utils.py"
+    ],
+    "src/kvcompression/utils/utils.py": [
+      "src/kvcompression/constants.py"
+    ]
+  },
+  "neighborMap": {
+    "src/kvcompression/rl/rewards/oracle.py": [
+      {
+        "path": "src/kvcompression/attention_utils.py",
+        "batchIndex": 2,
+        "symbols": [
+          "materialize_attention_weights",
+          "get_attention_mask",
+          "expand_kv_for_gqa",
+          "expand_k_for_gqa"
+        ]
+      }
+    ],
+    "src/kvcompression/utils/utils.py": [
+      {
+        "path": "src/kvcompression/entrypoints/rl/train_agent_sampler_distributed.py",
+        "batchIndex": 1,
+        "symbols": [
+          "RLOOTrainingRecipeDistributed",
+          "launch_training",
+          "main"
+        ]
+      },
+      {
+        "path": "src/kvcompression/presses/sampler_agent_press.py",
+        "batchIndex": 4,
+        "symbols": [
+          "SamplerAgentPress"
+        ]
+      },
+      {
+        "path": "src/kvcompression/rl/trainers/rloo_terminal_trainer.py",
+        "batchIndex": 5,
+        "symbols": [
+          "RLOOTerminalTrainer"
+        ]
+      },
+      {
+        "path": "src/kvcompression/utils/training_checkpointer.py",
+        "batchIndex": 1,
+        "symbols": [
+          "ResumeInfo",
+          "TrainingCheckpointer"
+        ]
+      }
+    ]
+  }
+}

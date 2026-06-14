@@ -1,0 +1,1076 @@
+{
+  "scriptCompleted": true,
+  "filesAnalyzed": 7,
+  "filesSkipped": [],
+  "results": [
+    {
+      "path": "src/kvcompression/constants.py",
+      "language": "python",
+      "fileCategory": "code",
+      "totalLines": 6,
+      "nonEmptyLines": 5,
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0
+      }
+    },
+    {
+      "path": "src/kvcompression/costs.py",
+      "language": "python",
+      "fileCategory": "code",
+      "totalLines": 145,
+      "nonEmptyLines": 114,
+      "functions": [
+        {
+          "name": "reverse_cumsum",
+          "startLine": 38,
+          "endLine": 40,
+          "params": [
+            "x",
+            "dim"
+          ]
+        },
+        {
+          "name": "batched_compute_cost",
+          "startLine": 47,
+          "endLine": 145,
+          "params": [
+            "kv_rankings",
+            "kv_rankings_length",
+            "attention_weights",
+            "seq_lengths"
+          ]
+        }
+      ],
+      "classes": [
+        {
+          "name": "CostResult",
+          "startLine": 17,
+          "endLine": 35,
+          "methods": [
+            "to"
+          ],
+          "properties": [
+            "cost",
+            "cost_per_cachesize",
+            "valid_lengths"
+          ]
+        }
+      ],
+      "exports": [
+        {
+          "name": "CostResult",
+          "line": 17,
+          "isDefault": false
+        },
+        {
+          "name": "reverse_cumsum",
+          "line": 38,
+          "isDefault": false
+        },
+        {
+          "name": "batched_compute_cost",
+          "line": 43,
+          "isDefault": false
+        }
+      ],
+      "callGraph": [
+        {
+          "caller": "to",
+          "callee": "self._asdict().items",
+          "lineNumber": 30
+        },
+        {
+          "caller": "to",
+          "callee": "self._asdict",
+          "lineNumber": 30
+        },
+        {
+          "caller": "to",
+          "callee": "isinstance",
+          "lineNumber": 31
+        },
+        {
+          "caller": "to",
+          "callee": "value.to",
+          "lineNumber": 32
+        },
+        {
+          "caller": "to",
+          "callee": "CostResult",
+          "lineNumber": 35
+        },
+        {
+          "caller": "reverse_cumsum",
+          "callee": "x.flip(dim).cumsum(dim).flip",
+          "lineNumber": 40
+        },
+        {
+          "caller": "reverse_cumsum",
+          "callee": "x.flip(dim).cumsum",
+          "lineNumber": 40
+        },
+        {
+          "caller": "reverse_cumsum",
+          "callee": "x.flip",
+          "lineNumber": 40
+        },
+        {
+          "caller": "batched_compute_cost",
+          "callee": "math.prod",
+          "lineNumber": 74
+        },
+        {
+          "caller": "batched_compute_cost",
+          "callee": "len",
+          "lineNumber": 78
+        },
+        {
+          "caller": "batched_compute_cost",
+          "callee": "math.prod",
+          "lineNumber": 81
+        },
+        {
+          "caller": "batched_compute_cost",
+          "callee": "kv_rankings.view",
+          "lineNumber": 83
+        },
+        {
+          "caller": "batched_compute_cost",
+          "callee": "kv_rankings_length.view",
+          "lineNumber": 86
+        },
+        {
+          "caller": "batched_compute_cost",
+          "callee": "torch.arange(indn_samples, device=attention_weights.device).expand_as",
+          "lineNumber": 90
+        },
+        {
+          "caller": "batched_compute_cost",
+          "callee": "torch.arange",
+          "lineNumber": 90
+        },
+        {
+          "caller": "batched_compute_cost",
+          "callee": "attention_weights.amax",
+          "lineNumber": 96
+        },
+        {
+          "caller": "batched_compute_cost",
+          "callee": "reverse_cumsum",
+          "lineNumber": 98
+        },
+        {
+          "caller": "batched_compute_cost",
+          "callee": "future_attention_continuous.view",
+          "lineNumber": 99
+        },
+        {
+          "caller": "batched_compute_cost",
+          "callee": "seq_lengths.view(1, indn_samples, 1).to",
+          "lineNumber": 107
+        },
+        {
+          "caller": "batched_compute_cost",
+          "callee": "seq_lengths.view",
+          "lineNumber": 107
+        },
+        {
+          "caller": "batched_compute_cost",
+          "callee": "torch.arange(\n        kv_rankings.shape[-1], device=kv_rankings.device\n    ).expand_as",
+          "lineNumber": 109
+        },
+        {
+          "caller": "batched_compute_cost",
+          "callee": "torch.arange",
+          "lineNumber": 109
+        },
+        {
+          "caller": "batched_compute_cost",
+          "callee": "kv_rankings_length.view(\n        n_samples // indn_samples, indn_samples, 1\n    ).expand_as",
+          "lineNumber": 112
+        },
+        {
+          "caller": "batched_compute_cost",
+          "callee": "kv_rankings_length.view",
+          "lineNumber": 112
+        },
+        {
+          "caller": "batched_compute_cost",
+          "callee": "continuous_costs_dp.masked_fill_",
+          "lineNumber": 115
+        },
+        {
+          "caller": "batched_compute_cost",
+          "callee": "continuous_costs_dp.view",
+          "lineNumber": 116
+        },
+        {
+          "caller": "batched_compute_cost",
+          "callee": "torch.arange",
+          "lineNumber": 120
+        },
+        {
+          "caller": "batched_compute_cost",
+          "callee": "torch.sort",
+          "lineNumber": 125
+        },
+        {
+          "caller": "batched_compute_cost",
+          "callee": "torch.sum",
+          "lineNumber": 128
+        },
+        {
+          "caller": "batched_compute_cost",
+          "callee": "torch.clamp",
+          "lineNumber": 132
+        },
+        {
+          "caller": "batched_compute_cost",
+          "callee": "future_attention_normalized.sum",
+          "lineNumber": 139
+        },
+        {
+          "caller": "batched_compute_cost",
+          "callee": "CostResult",
+          "lineNumber": 141
+        },
+        {
+          "caller": "batched_compute_cost",
+          "callee": "future_attention_auc_normalized.view",
+          "lineNumber": 142
+        },
+        {
+          "caller": "batched_compute_cost",
+          "callee": "future_attention_normalized.view",
+          "lineNumber": 143
+        },
+        {
+          "caller": "batched_compute_cost",
+          "callee": "kv_rankings_length.view",
+          "lineNumber": 144
+        }
+      ],
+      "metrics": {
+        "importCount": 1,
+        "exportCount": 3,
+        "functionCount": 2,
+        "classCount": 1
+      }
+    },
+    {
+      "path": "src/kvcompression/rl/environments/kvsorting_env.py",
+      "language": "python",
+      "fileCategory": "code",
+      "totalLines": 428,
+      "nonEmptyLines": 361,
+      "classes": [
+        {
+          "name": "KVSortingEnvironmentV2",
+          "startLine": 25,
+          "endLine": 428,
+          "methods": [
+            "__init__",
+            "_create_legacy_reward_strategy",
+            "_initialize_info_dict",
+            "_extract_info_from_oracle_result",
+            "_compute_reward",
+            "length",
+            "recreate_iterator",
+            "_get_next_batch",
+            "reset_iterator",
+            "reset",
+            "_get_observation",
+            "step",
+            "get_valid_actions",
+            "compute_rewards_for_chunk"
+          ],
+          "properties": []
+        }
+      ],
+      "exports": [
+        {
+          "name": "KVSortingEnvironmentV2",
+          "line": 25,
+          "isDefault": false
+        }
+      ],
+      "callGraph": [
+        {
+          "caller": "__init__",
+          "callee": "isinstance",
+          "lineNumber": 39
+        },
+        {
+          "caller": "__init__",
+          "callee": "self._create_legacy_reward_strategy",
+          "lineNumber": 41
+        },
+        {
+          "caller": "__init__",
+          "callee": "pylogger.warning",
+          "lineNumber": 42
+        },
+        {
+          "caller": "__init__",
+          "callee": "hasattr",
+          "lineNumber": 48
+        },
+        {
+          "caller": "__init__",
+          "callee": "config.instantiate",
+          "lineNumber": 50
+        },
+        {
+          "caller": "__init__",
+          "callee": "OmegaConf.create",
+          "lineNumber": 50
+        },
+        {
+          "caller": "__init__",
+          "callee": "pylogger.info",
+          "lineNumber": 53
+        },
+        {
+          "caller": "__init__",
+          "callee": "type",
+          "lineNumber": 53
+        },
+        {
+          "caller": "__init__",
+          "callee": "torch.device",
+          "lineNumber": 56
+        },
+        {
+          "caller": "__init__",
+          "callee": "torch.get_default_dtype",
+          "lineNumber": 57
+        },
+        {
+          "caller": "__init__",
+          "callee": "iter",
+          "lineNumber": 66
+        },
+        {
+          "caller": "_create_legacy_reward_strategy",
+          "callee": "ValueError",
+          "lineNumber": 85
+        },
+        {
+          "caller": "_initialize_info_dict",
+          "callee": "self._info_key_dtypes.get",
+          "lineNumber": 93
+        },
+        {
+          "caller": "_initialize_info_dict",
+          "callee": "float",
+          "lineNumber": 94
+        },
+        {
+          "caller": "_initialize_info_dict",
+          "callee": "torch.full",
+          "lineNumber": 96
+        },
+        {
+          "caller": "_extract_info_from_oracle_result",
+          "callee": "self._info_key_map.get",
+          "lineNumber": 114
+        },
+        {
+          "caller": "_extract_info_from_oracle_result",
+          "callee": "hasattr",
+          "lineNumber": 117
+        },
+        {
+          "caller": "_extract_info_from_oracle_result",
+          "callee": "getattr",
+          "lineNumber": 118
+        },
+        {
+          "caller": "_extract_info_from_oracle_result",
+          "callee": "value.view",
+          "lineNumber": 120
+        },
+        {
+          "caller": "_extract_info_from_oracle_result",
+          "callee": "self._info_key_dtypes.get",
+          "lineNumber": 122
+        },
+        {
+          "caller": "_extract_info_from_oracle_result",
+          "callee": "float",
+          "lineNumber": 123
+        },
+        {
+          "caller": "_extract_info_from_oracle_result",
+          "callee": "torch.full",
+          "lineNumber": 124
+        },
+        {
+          "caller": "_compute_reward",
+          "callee": "self.reward_strategy.compute_reward",
+          "lineNumber": 134
+        },
+        {
+          "caller": "length",
+          "callee": "len",
+          "lineNumber": 137
+        },
+        {
+          "caller": "recreate_iterator",
+          "callee": "torchtune.utils.log_rank_zero",
+          "lineNumber": 146
+        },
+        {
+          "caller": "recreate_iterator",
+          "callee": "iter",
+          "lineNumber": 152
+        },
+        {
+          "caller": "recreate_iterator",
+          "callee": "pylogger.error",
+          "lineNumber": 154
+        },
+        {
+          "caller": "recreate_iterator",
+          "callee": "dist.get_rank",
+          "lineNumber": 155
+        },
+        {
+          "caller": "recreate_iterator",
+          "callee": "dist.is_initialized",
+          "lineNumber": 155
+        },
+        {
+          "caller": "_get_next_batch",
+          "callee": "next",
+          "lineNumber": 163
+        },
+        {
+          "caller": "_get_next_batch",
+          "callee": "torchtune.utils.log_rank_zero",
+          "lineNumber": 170
+        },
+        {
+          "caller": "_get_next_batch",
+          "callee": "self.recreate_iterator",
+          "lineNumber": 175
+        },
+        {
+          "caller": "_get_next_batch",
+          "callee": "next",
+          "lineNumber": 176
+        },
+        {
+          "caller": "_get_next_batch",
+          "callee": "pylogger.error",
+          "lineNumber": 178
+        },
+        {
+          "caller": "_get_next_batch",
+          "callee": "batch_to_device",
+          "lineNumber": 181
+        },
+        {
+          "caller": "reset_iterator",
+          "callee": "pylogger.info",
+          "lineNumber": 186
+        },
+        {
+          "caller": "reset_iterator",
+          "callee": "iter",
+          "lineNumber": 187
+        },
+        {
+          "caller": "reset",
+          "callee": "self._get_next_batch",
+          "lineNumber": 191
+        },
+        {
+          "caller": "reset",
+          "callee": "ValueError",
+          "lineNumber": 198
+        },
+        {
+          "caller": "reset",
+          "callee": "self.prompt_len.numel",
+          "lineNumber": 203
+        },
+        {
+          "caller": "reset",
+          "callee": "self.prompt_len.amax",
+          "lineNumber": 206
+        },
+        {
+          "caller": "reset",
+          "callee": "RuntimeError",
+          "lineNumber": 211
+        },
+        {
+          "caller": "reset",
+          "callee": "torch.zeros",
+          "lineNumber": 217
+        },
+        {
+          "caller": "reset",
+          "callee": "torch.full",
+          "lineNumber": 222
+        },
+        {
+          "caller": "reset",
+          "callee": "torch.zeros",
+          "lineNumber": 228
+        },
+        {
+          "caller": "reset",
+          "callee": "self._initialize_info_dict",
+          "lineNumber": 232
+        },
+        {
+          "caller": "reset",
+          "callee": "self._get_observation",
+          "lineNumber": 233
+        },
+        {
+          "caller": "_get_observation",
+          "callee": "RuntimeError",
+          "lineNumber": 245
+        },
+        {
+          "caller": "step",
+          "callee": "RuntimeError",
+          "lineNumber": 294
+        },
+        {
+          "caller": "step",
+          "callee": "ValueError",
+          "lineNumber": 297
+        },
+        {
+          "caller": "step",
+          "callee": "torch.where",
+          "lineNumber": 302
+        },
+        {
+          "caller": "step",
+          "callee": "active_indices.numel",
+          "lineNumber": 303
+        },
+        {
+          "caller": "step",
+          "callee": "torch.zeros",
+          "lineNumber": 315
+        },
+        {
+          "caller": "step",
+          "callee": "self._initialize_info_dict",
+          "lineNumber": 319
+        },
+        {
+          "caller": "step",
+          "callee": "torch.any",
+          "lineNumber": 323
+        },
+        {
+          "caller": "step",
+          "callee": "torch.where",
+          "lineNumber": 324
+        },
+        {
+          "caller": "step",
+          "callee": "self.oracle.compute_cost",
+          "lineNumber": 334
+        },
+        {
+          "caller": "step",
+          "callee": "keys_for_oracle.to",
+          "lineNumber": 337
+        },
+        {
+          "caller": "step",
+          "callee": "queries_for_oracle.to",
+          "lineNumber": 338
+        },
+        {
+          "caller": "step",
+          "callee": "self._compute_reward",
+          "lineNumber": 342
+        },
+        {
+          "caller": "step",
+          "callee": "self._extract_info_from_oracle_result",
+          "lineNumber": 343
+        },
+        {
+          "caller": "step",
+          "callee": "cost_info.items",
+          "lineNumber": 346
+        },
+        {
+          "caller": "step",
+          "callee": "value.to",
+          "lineNumber": 347
+        },
+        {
+          "caller": "step",
+          "callee": "self._get_observation",
+          "lineNumber": 349
+        },
+        {
+          "caller": "get_valid_actions",
+          "callee": "RuntimeError",
+          "lineNumber": 359
+        },
+        {
+          "caller": "compute_rewards_for_chunk",
+          "callee": "RuntimeError",
+          "lineNumber": 390
+        },
+        {
+          "caller": "compute_rewards_for_chunk",
+          "callee": "self.current_batch[\"keys\"][batch_indices_chunk].to",
+          "lineNumber": 393
+        },
+        {
+          "caller": "compute_rewards_for_chunk",
+          "callee": "self.current_batch[\"queries\"][batch_indices_chunk].to",
+          "lineNumber": 394
+        },
+        {
+          "caller": "compute_rewards_for_chunk",
+          "callee": "torch.arange",
+          "lineNumber": 402
+        },
+        {
+          "caller": "compute_rewards_for_chunk",
+          "callee": "self.oracle.compute_cost",
+          "lineNumber": 409
+        },
+        {
+          "caller": "compute_rewards_for_chunk",
+          "callee": "self._extract_info_from_oracle_result",
+          "lineNumber": 417
+        },
+        {
+          "caller": "compute_rewards_for_chunk",
+          "callee": "self._compute_reward",
+          "lineNumber": 420
+        },
+        {
+          "caller": "compute_rewards_for_chunk",
+          "callee": "torch.all",
+          "lineNumber": 422
+        },
+        {
+          "caller": "compute_rewards_for_chunk",
+          "callee": "torch.isfinite",
+          "lineNumber": 422
+        },
+        {
+          "caller": "compute_rewards_for_chunk",
+          "callee": "pylogger.warning",
+          "lineNumber": 423
+        },
+        {
+          "caller": "compute_rewards_for_chunk",
+          "callee": "torch.nan_to_num",
+          "lineNumber": 425
+        }
+      ],
+      "metrics": {
+        "importCount": 4,
+        "exportCount": 1,
+        "functionCount": 0,
+        "classCount": 1
+      }
+    },
+    {
+      "path": "src/kvcompression/rl/rewards/base_reward_strategy.py",
+      "language": "python",
+      "fileCategory": "code",
+      "totalLines": 30,
+      "nonEmptyLines": 21,
+      "classes": [
+        {
+          "name": "RewardStrategy",
+          "startLine": 13,
+          "endLine": 30,
+          "methods": [
+            "compute_reward"
+          ],
+          "properties": []
+        }
+      ],
+      "exports": [
+        {
+          "name": "RewardStrategy",
+          "line": 13,
+          "isDefault": false
+        }
+      ],
+      "metrics": {
+        "importCount": 1,
+        "exportCount": 1,
+        "functionCount": 0,
+        "classCount": 1
+      }
+    },
+    {
+      "path": "src/kvcompression/rl/rewards/basic_strategies.py",
+      "language": "python",
+      "fileCategory": "code",
+      "totalLines": 15,
+      "nonEmptyLines": 11,
+      "classes": [
+        {
+          "name": "FutureAttentionAucNormalizedReward",
+          "startLine": 11,
+          "endLine": 15,
+          "methods": [
+            "compute_reward"
+          ],
+          "properties": []
+        }
+      ],
+      "exports": [
+        {
+          "name": "FutureAttentionAucNormalizedReward",
+          "line": 11,
+          "isDefault": false
+        }
+      ],
+      "callGraph": [
+        {
+          "caller": "compute_reward",
+          "callee": "cost_result.cost.squeeze",
+          "lineNumber": 15
+        }
+      ],
+      "metrics": {
+        "importCount": 2,
+        "exportCount": 1,
+        "functionCount": 0,
+        "classCount": 1
+      }
+    },
+    {
+      "path": "src/kvcompression/rl/rewards/oracle.py",
+      "language": "python",
+      "fileCategory": "code",
+      "totalLines": 72,
+      "nonEmptyLines": 61,
+      "classes": [
+        {
+          "name": "Oracle",
+          "startLine": 18,
+          "endLine": 72,
+          "methods": [
+            "compute_cost"
+          ],
+          "properties": []
+        }
+      ],
+      "exports": [
+        {
+          "name": "Oracle",
+          "line": 18,
+          "isDefault": false
+        }
+      ],
+      "callGraph": [
+        {
+          "caller": "compute_cost",
+          "callee": "all_keys.unsqueeze",
+          "lineNumber": 53
+        },
+        {
+          "caller": "compute_cost",
+          "callee": "materialize_attention_weights",
+          "lineNumber": 55
+        },
+        {
+          "caller": "compute_cost",
+          "callee": "all_queries.to",
+          "lineNumber": 56
+        },
+        {
+          "caller": "compute_cost",
+          "callee": "all_keys.to",
+          "lineNumber": 57
+        },
+        {
+          "caller": "compute_cost",
+          "callee": "attention_weights.amax",
+          "lineNumber": 65
+        },
+        {
+          "caller": "compute_cost",
+          "callee": "batched_compute_cost",
+          "lineNumber": 67
+        },
+        {
+          "caller": "compute_cost",
+          "callee": "kv_rankings_length.contiguous",
+          "lineNumber": 69
+        }
+      ],
+      "metrics": {
+        "importCount": 3,
+        "exportCount": 1,
+        "functionCount": 0,
+        "classCount": 1
+      }
+    },
+    {
+      "path": "src/kvcompression/utils/utils.py",
+      "language": "python",
+      "fileCategory": "code",
+      "totalLines": 127,
+      "nonEmptyLines": 98,
+      "functions": [
+        {
+          "name": "get_underlying_model",
+          "startLine": 25,
+          "endLine": 30,
+          "params": [
+            "model_instance"
+          ]
+        },
+        {
+          "name": "instantiate_agent_from_ckpt",
+          "startLine": 33,
+          "endLine": 62,
+          "params": [
+            "checkpoint_path",
+            "model_key"
+          ]
+        },
+        {
+          "name": "_select_seed_randomly",
+          "startLine": 69,
+          "endLine": 72,
+          "params": [
+            "min_seed_value",
+            "max_seed_value"
+          ]
+        },
+        {
+          "name": "seed_everything",
+          "startLine": 75,
+          "endLine": 101,
+          "params": [
+            "seed"
+          ]
+        },
+        {
+          "name": "is_torch_compile_disabled",
+          "startLine": 104,
+          "endLine": 106,
+          "params": []
+        },
+        {
+          "name": "batch_to_device",
+          "startLine": 109,
+          "endLine": 127,
+          "params": [
+            "batch",
+            "device",
+            "**kwargs"
+          ]
+        }
+      ],
+      "exports": [
+        {
+          "name": "get_underlying_model",
+          "line": 25,
+          "isDefault": false
+        },
+        {
+          "name": "instantiate_agent_from_ckpt",
+          "line": 33,
+          "isDefault": false
+        },
+        {
+          "name": "_select_seed_randomly",
+          "line": 69,
+          "isDefault": false
+        },
+        {
+          "name": "seed_everything",
+          "line": 75,
+          "isDefault": false
+        },
+        {
+          "name": "is_torch_compile_disabled",
+          "line": 104,
+          "isDefault": false
+        },
+        {
+          "name": "batch_to_device",
+          "line": 109,
+          "isDefault": false
+        }
+      ],
+      "callGraph": [
+        {
+          "caller": "get_underlying_model",
+          "callee": "isinstance",
+          "lineNumber": 27
+        },
+        {
+          "caller": "instantiate_agent_from_ckpt",
+          "callee": "torch.load",
+          "lineNumber": 44
+        },
+        {
+          "caller": "instantiate_agent_from_ckpt",
+          "callee": "OmegaConf.create",
+          "lineNumber": 45
+        },
+        {
+          "caller": "instantiate_agent_from_ckpt",
+          "callee": "config.instantiate",
+          "lineNumber": 46
+        },
+        {
+          "caller": "instantiate_agent_from_ckpt",
+          "callee": "any",
+          "lineNumber": 51
+        },
+        {
+          "caller": "instantiate_agent_from_ckpt",
+          "callee": "key.startswith",
+          "lineNumber": 52
+        },
+        {
+          "caller": "instantiate_agent_from_ckpt",
+          "callee": "model_state_dict.keys",
+          "lineNumber": 52
+        },
+        {
+          "caller": "instantiate_agent_from_ckpt",
+          "callee": "model_state_dict.items",
+          "lineNumber": 57
+        },
+        {
+          "caller": "instantiate_agent_from_ckpt",
+          "callee": "key.startswith",
+          "lineNumber": 58
+        },
+        {
+          "caller": "instantiate_agent_from_ckpt",
+          "callee": "agent.load_state_dict",
+          "lineNumber": 61
+        },
+        {
+          "caller": "_select_seed_randomly",
+          "callee": "random.randint",
+          "lineNumber": 72
+        },
+        {
+          "caller": "seed_everything",
+          "callee": "_select_seed_randomly",
+          "lineNumber": 84
+        },
+        {
+          "caller": "seed_everything",
+          "callee": "pylogger.warn",
+          "lineNumber": 85
+        },
+        {
+          "caller": "seed_everything",
+          "callee": "isinstance",
+          "lineNumber": 86
+        },
+        {
+          "caller": "seed_everything",
+          "callee": "int",
+          "lineNumber": 87
+        },
+        {
+          "caller": "seed_everything",
+          "callee": "pylogger.warn",
+          "lineNumber": 90
+        },
+        {
+          "caller": "seed_everything",
+          "callee": "_select_seed_randomly",
+          "lineNumber": 93
+        },
+        {
+          "caller": "seed_everything",
+          "callee": "pylogger.info",
+          "lineNumber": 95
+        },
+        {
+          "caller": "seed_everything",
+          "callee": "random.seed",
+          "lineNumber": 96
+        },
+        {
+          "caller": "seed_everything",
+          "callee": "np.random.seed",
+          "lineNumber": 97
+        },
+        {
+          "caller": "seed_everything",
+          "callee": "torch.manual_seed",
+          "lineNumber": 98
+        },
+        {
+          "caller": "seed_everything",
+          "callee": "torch.cuda.manual_seed_all",
+          "lineNumber": 99
+        },
+        {
+          "caller": "is_torch_compile_disabled",
+          "callee": "os.environ.get",
+          "lineNumber": 106
+        },
+        {
+          "caller": "batch_to_device",
+          "callee": "batch.items",
+          "lineNumber": 118
+        },
+        {
+          "caller": "batch_to_device",
+          "callee": "isinstance",
+          "lineNumber": 119
+        },
+        {
+          "caller": "batch_to_device",
+          "callee": "batch_to_device",
+          "lineNumber": 120
+        },
+        {
+          "caller": "batch_to_device",
+          "callee": "isinstance",
+          "lineNumber": 121
+        },
+        {
+          "caller": "batch_to_device",
+          "callee": "v.to",
+          "lineNumber": 122
+        },
+        {
+          "caller": "batch_to_device",
+          "callee": "ValueError",
+          "lineNumber": 124
+        },
+        {
+          "caller": "batch_to_device",
+          "callee": "type",
+          "lineNumber": 126
+        }
+      ],
+      "metrics": {
+        "importCount": 1,
+        "exportCount": 6,
+        "functionCount": 6,
+        "classCount": 0
+      }
+    }
+  ]
+}

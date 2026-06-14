@@ -1,0 +1,89 @@
+{
+  "batchIndex": 5,
+  "files": [
+    {
+      "path": "src/kvcompression/rl/agents/base_agent.py",
+      "language": "python",
+      "sizeLines": 125,
+      "fileCategory": "code"
+    },
+    {
+      "path": "src/kvcompression/rl/agents/kv_sorting_agent.py",
+      "language": "python",
+      "sizeLines": 273,
+      "fileCategory": "code"
+    },
+    {
+      "path": "src/kvcompression/rl/environments/base_env.py",
+      "language": "python",
+      "sizeLines": 27,
+      "fileCategory": "code"
+    },
+    {
+      "path": "src/kvcompression/rl/trainers/compute_advantages.py",
+      "language": "python",
+      "sizeLines": 110,
+      "fileCategory": "code"
+    },
+    {
+      "path": "src/kvcompression/rl/trainers/rloo_gumbel_terminal_trainer.py",
+      "language": "python",
+      "sizeLines": 300,
+      "fileCategory": "code"
+    },
+    {
+      "path": "src/kvcompression/rl/trainers/rloo_terminal_trainer.py",
+      "language": "python",
+      "sizeLines": 747,
+      "fileCategory": "code"
+    }
+  ],
+  "batchImportData": {
+    "src/kvcompression/rl/agents/base_agent.py": [],
+    "src/kvcompression/rl/agents/kv_sorting_agent.py": [
+      "src/kvcompression/rl/agents/base_agent.py"
+    ],
+    "src/kvcompression/rl/environments/base_env.py": [],
+    "src/kvcompression/rl/trainers/compute_advantages.py": [],
+    "src/kvcompression/rl/trainers/rloo_gumbel_terminal_trainer.py": [
+      "src/kvcompression/rl/trainers/rloo_terminal_trainer.py"
+    ],
+    "src/kvcompression/rl/trainers/rloo_terminal_trainer.py": [
+      "src/kvcompression/metrics/__init__.py",
+      "src/kvcompression/rl/agents/base_agent.py",
+      "src/kvcompression/rl/environments/base_env.py",
+      "src/kvcompression/rl/trainers/compute_advantages.py",
+      "src/kvcompression/utils/utils.py"
+    ]
+  },
+  "neighborMap": {
+    "src/kvcompression/rl/trainers/rloo_terminal_trainer.py": [
+      {
+        "path": "src/kvcompression/metrics/__init__.py",
+        "batchIndex": 1,
+        "symbols": []
+      },
+      {
+        "path": "src/kvcompression/utils/utils.py",
+        "batchIndex": 3,
+        "symbols": [
+          "get_underlying_model",
+          "instantiate_agent_from_ckpt",
+          "_select_seed_randomly",
+          "seed_everything",
+          "is_torch_compile_disabled",
+          "batch_to_device"
+        ]
+      },
+      {
+        "path": "src/kvcompression/entrypoints/rl/train_agent_sampler_distributed.py",
+        "batchIndex": 1,
+        "symbols": [
+          "RLOOTrainingRecipeDistributed",
+          "launch_training",
+          "main"
+        ]
+      }
+    ]
+  }
+}

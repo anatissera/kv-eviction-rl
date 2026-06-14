@@ -1,0 +1,83 @@
+{
+  "nodes": [
+    {
+      "id": "config:.env.template",
+      "type": "config",
+      "name": ".env.template",
+      "filePath": ".env.template",
+      "summary": "Template for runtime environment variables covering data root path, HuggingFace model ID, S3 bucket, Weights & Biases settings, and optional torch.compile disable flag; intended to be copied to .env and sourced before running preprocessing, training, or inference scripts.",
+      "tags": ["configuration", "environment", "infrastructure", "security"],
+      "complexity": "simple"
+    },
+    {
+      "id": "config:.pre-commit-config.yaml",
+      "type": "config",
+      "name": ".pre-commit-config.yaml",
+      "filePath": ".pre-commit-config.yaml",
+      "summary": "Pre-commit hook configuration enforcing trailing-whitespace removal, end-of-file fixing, YAML validity, merge-conflict detection, and Ruff-based linting and formatting on every commit.",
+      "tags": ["configuration", "code-quality", "build-system", "linting"],
+      "complexity": "simple",
+      "languageNotes": "Uses Ruff (astral-sh/ruff-pre-commit v0.9.6) for both lint (--fix) and format passes, replacing older flake8/black combos."
+    },
+    {
+      "id": "document:CODE_OF_CONDUCT.md",
+      "type": "document",
+      "name": "CODE_OF_CONDUCT.md",
+      "filePath": "CODE_OF_CONDUCT.md",
+      "summary": "Contributor Covenant Code of Conduct (7 sections) defining community standards, maintainer responsibilities, scope of enforcement, and reporting procedures for unacceptable behavior.",
+      "tags": ["documentation", "governance", "community"],
+      "complexity": "moderate"
+    },
+    {
+      "id": "document:CONTRIBUTING.md",
+      "type": "document",
+      "name": "CONTRIBUTING.md",
+      "filePath": "CONTRIBUTING.md",
+      "summary": "Brief contribution guide directing contributors to read CODE_OF_CONDUCT.md before getting started; serves as the entry point for new contributors.",
+      "tags": ["documentation", "governance", "development"],
+      "complexity": "simple"
+    },
+    {
+      "id": "document:README.md",
+      "type": "document",
+      "name": "README.md",
+      "filePath": "README.md",
+      "summary": "Primary project documentation covering installation, dataset generation, training, and inference for the KVP (KV Policy) framework — lightweight per-head RL agents that learn to rank KV cache entries by predicted future utility for adaptive LLM eviction; includes citation, acknowledgements, and license sections.",
+      "tags": ["documentation", "entry-point", "overview"],
+      "complexity": "moderate"
+    },
+    {
+      "id": "config:pyproject.toml",
+      "type": "config",
+      "name": "pyproject.toml",
+      "filePath": "pyproject.toml",
+      "summary": "Python project manifest for the kvcompression package defining build system (setuptools + git-versioning), runtime dependencies (PyTorch, flash-attn, transformers, torchtune, wandb, s3fs, etc.), uv workspace source and dual PyTorch index configuration for CPU vs CUDA 12.8 platforms, and tool settings for pytest, mypy, and ruff.",
+      "tags": ["configuration", "build-system", "dependency-management", "packaging"],
+      "complexity": "moderate",
+      "languageNotes": "Uses uv workspace with explicit PyTorch package indexes split by sys_platform to serve CPU wheels on non-Linux and CUDA 12.8 wheels on Linux; flash-attn requires special extra-build-dependencies workaround due to a known uv issue."
+    }
+  ],
+  "edges": [
+    {
+      "source": "document:CONTRIBUTING.md",
+      "target": "document:CODE_OF_CONDUCT.md",
+      "type": "related",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "document:README.md",
+      "target": "config:pyproject.toml",
+      "type": "related",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "config:pyproject.toml",
+      "target": "config:.pre-commit-config.yaml",
+      "type": "related",
+      "direction": "forward",
+      "weight": 0.5
+    }
+  ]
+}

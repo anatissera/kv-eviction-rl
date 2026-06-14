@@ -1,0 +1,399 @@
+{
+  "nodes": [
+    {
+      "id": "file:src/kvcompression/constants.py",
+      "type": "file",
+      "name": "constants.py",
+      "filePath": "src/kvcompression/constants.py",
+      "summary": "Defines project-wide constants used across the kvcompression package, providing a single source of truth for shared literal values.",
+      "tags": ["utility", "configuration", "constants"],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:src/kvcompression/costs.py",
+      "type": "file",
+      "name": "costs.py",
+      "filePath": "src/kvcompression/costs.py",
+      "summary": "Implements the core KV cache eviction cost computation, measuring the attention loss incurred by evicting cache entries at various cache sizes via batched tensor operations.",
+      "tags": ["utility", "data-model", "validation"],
+      "complexity": "complex",
+      "languageNotes": "Uses PyTorch named-tuple-style dataclass (NamedTuple) for CostResult with a `.to(device)` convenience method; the batched_compute_cost function applies dynamic programming over sorted rankings to compute AUC-normalized future-attention cost."
+    },
+    {
+      "id": "class:src/kvcompression/costs.py:CostResult",
+      "type": "class",
+      "name": "CostResult",
+      "filePath": "src/kvcompression/costs.py",
+      "lineRange": [17, 35],
+      "summary": "Named-tuple-style dataclass holding the output of batched_compute_cost: per-sample cost, cost-per-cache-size, and valid sequence lengths, with a `.to(device)` method for device transfer.",
+      "tags": ["data-model", "utility"],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/kvcompression/costs.py:batched_compute_cost",
+      "type": "function",
+      "name": "batched_compute_cost",
+      "filePath": "src/kvcompression/costs.py",
+      "lineRange": [47, 145],
+      "summary": "Computes the batched KV eviction cost for a set of rankings against ground-truth attention weights, returning AUC-normalized future-attention scores across all cache sizes.",
+      "tags": ["utility", "validation"],
+      "complexity": "complex"
+    },
+    {
+      "id": "file:src/kvcompression/rl/environments/kvsorting_env.py",
+      "type": "file",
+      "name": "kvsorting_env.py",
+      "filePath": "src/kvcompression/rl/environments/kvsorting_env.py",
+      "summary": "Defines KVSortingEnvironmentV2, the RL environment in which per-head agents learn to rank KV cache entries by iteratively selecting tokens to evict and receiving rewards based on oracle-computed attention cost.",
+      "tags": ["service", "event-handler", "middleware"],
+      "complexity": "complex",
+      "languageNotes": "Implements a gym-style step/reset API adapted for batched, multi-head KV ranking; supports both online stepping and offline chunked reward computation for RLOO training."
+    },
+    {
+      "id": "class:src/kvcompression/rl/environments/kvsorting_env.py:KVSortingEnvironmentV2",
+      "type": "class",
+      "name": "KVSortingEnvironmentV2",
+      "filePath": "src/kvcompression/rl/environments/kvsorting_env.py",
+      "lineRange": [25, 428],
+      "summary": "RL environment managing KV cache ranking episodes: loads batches of keys/queries, orchestrates step-wise token selection, computes oracle-based rewards, and exposes a chunk-level reward API for RLOO policy optimization.",
+      "tags": ["service", "event-handler", "middleware"],
+      "complexity": "complex"
+    },
+    {
+      "id": "file:src/kvcompression/rl/rewards/base_reward_strategy.py",
+      "type": "file",
+      "name": "base_reward_strategy.py",
+      "filePath": "src/kvcompression/rl/rewards/base_reward_strategy.py",
+      "summary": "Defines the abstract RewardStrategy base class that all reward implementations must extend, specifying the compute_reward interface for deriving scalar rewards from oracle cost results.",
+      "tags": ["type-definition", "middleware", "service"],
+      "complexity": "simple"
+    },
+    {
+      "id": "class:src/kvcompression/rl/rewards/base_reward_strategy.py:RewardStrategy",
+      "type": "class",
+      "name": "RewardStrategy",
+      "filePath": "src/kvcompression/rl/rewards/base_reward_strategy.py",
+      "lineRange": [13, 30],
+      "summary": "Abstract base class defining the compute_reward(cost_result) interface that concrete reward strategies implement to convert oracle cost output into RL reward signals.",
+      "tags": ["type-definition", "middleware"],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:src/kvcompression/rl/rewards/basic_strategies.py",
+      "type": "file",
+      "name": "basic_strategies.py",
+      "filePath": "src/kvcompression/rl/rewards/basic_strategies.py",
+      "summary": "Provides the FutureAttentionAucNormalizedReward concrete strategy that extracts the AUC-normalized future attention cost from oracle results as the RL reward signal.",
+      "tags": ["service", "utility"],
+      "complexity": "simple"
+    },
+    {
+      "id": "class:src/kvcompression/rl/rewards/basic_strategies.py:FutureAttentionAucNormalizedReward",
+      "type": "class",
+      "name": "FutureAttentionAucNormalizedReward",
+      "filePath": "src/kvcompression/rl/rewards/basic_strategies.py",
+      "lineRange": [11, 15],
+      "summary": "Concrete RewardStrategy that returns the squeezed AUC-normalized future-attention cost from a CostResult as the agent reward.",
+      "tags": ["service", "utility"],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:src/kvcompression/rl/rewards/oracle.py",
+      "type": "file",
+      "name": "oracle.py",
+      "filePath": "src/kvcompression/rl/rewards/oracle.py",
+      "summary": "Implements the Oracle class that materializes full attention weights from keys/queries and computes ground-truth KV eviction costs, serving as the reward signal source for RL training.",
+      "tags": ["service", "utility"],
+      "complexity": "moderate"
+    },
+    {
+      "id": "class:src/kvcompression/rl/rewards/oracle.py:Oracle",
+      "type": "class",
+      "name": "Oracle",
+      "filePath": "src/kvcompression/rl/rewards/oracle.py",
+      "lineRange": [18, 72],
+      "summary": "Computes oracle KV eviction cost by materializing exact attention weights from raw keys and queries, then calling batched_compute_cost to score agent rankings against the ground truth.",
+      "tags": ["service", "utility"],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:src/kvcompression/utils/utils.py",
+      "type": "file",
+      "name": "utils.py",
+      "filePath": "src/kvcompression/utils/utils.py",
+      "summary": "General utility functions for the kvcompression package: model unwrapping, agent checkpoint loading, reproducibility seeding, torch-compile detection, and recursive batch-to-device transfer.",
+      "tags": ["utility", "service"],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:src/kvcompression/utils/utils.py:instantiate_agent_from_ckpt",
+      "type": "function",
+      "name": "instantiate_agent_from_ckpt",
+      "filePath": "src/kvcompression/utils/utils.py",
+      "lineRange": [33, 62],
+      "summary": "Loads an agent model from a checkpoint file by reconstructing it with OmegaConf/Hydra config instantiation and restoring its state dict, stripping any module prefix from keys.",
+      "tags": ["utility", "factory"],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:src/kvcompression/utils/utils.py:seed_everything",
+      "type": "function",
+      "name": "seed_everything",
+      "filePath": "src/kvcompression/utils/utils.py",
+      "lineRange": [75, 101],
+      "summary": "Sets random seeds across Python random, NumPy, and PyTorch (CPU and CUDA) for full reproducibility, falling back to a random seed when none is provided.",
+      "tags": ["utility"],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/kvcompression/utils/utils.py:batch_to_device",
+      "type": "function",
+      "name": "batch_to_device",
+      "filePath": "src/kvcompression/utils/utils.py",
+      "lineRange": [109, 127],
+      "summary": "Recursively transfers all tensors in a nested dict batch to the specified device, used throughout the training and environment code to move data from CPU to GPU.",
+      "tags": ["utility"],
+      "complexity": "simple"
+    }
+  ],
+  "edges": [
+    {
+      "source": "file:src/kvcompression/costs.py",
+      "target": "file:src/kvcompression/utils/utils.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:src/kvcompression/rl/environments/kvsorting_env.py",
+      "target": "file:src/kvcompression/rl/rewards/base_reward_strategy.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:src/kvcompression/rl/environments/kvsorting_env.py",
+      "target": "file:src/kvcompression/rl/rewards/basic_strategies.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:src/kvcompression/rl/environments/kvsorting_env.py",
+      "target": "file:src/kvcompression/rl/rewards/oracle.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:src/kvcompression/rl/environments/kvsorting_env.py",
+      "target": "file:src/kvcompression/utils/utils.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:src/kvcompression/rl/rewards/base_reward_strategy.py",
+      "target": "file:src/kvcompression/costs.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:src/kvcompression/rl/rewards/basic_strategies.py",
+      "target": "file:src/kvcompression/costs.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:src/kvcompression/rl/rewards/basic_strategies.py",
+      "target": "file:src/kvcompression/rl/rewards/base_reward_strategy.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:src/kvcompression/rl/rewards/oracle.py",
+      "target": "file:src/kvcompression/attention_utils.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:src/kvcompression/rl/rewards/oracle.py",
+      "target": "file:src/kvcompression/costs.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:src/kvcompression/rl/rewards/oracle.py",
+      "target": "file:src/kvcompression/utils/utils.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:src/kvcompression/utils/utils.py",
+      "target": "file:src/kvcompression/constants.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:src/kvcompression/costs.py",
+      "target": "class:src/kvcompression/costs.py:CostResult",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/kvcompression/costs.py",
+      "target": "function:src/kvcompression/costs.py:batched_compute_cost",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/kvcompression/costs.py",
+      "target": "class:src/kvcompression/costs.py:CostResult",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/kvcompression/costs.py",
+      "target": "function:src/kvcompression/costs.py:batched_compute_cost",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/kvcompression/rl/environments/kvsorting_env.py",
+      "target": "class:src/kvcompression/rl/environments/kvsorting_env.py:KVSortingEnvironmentV2",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/kvcompression/rl/environments/kvsorting_env.py",
+      "target": "class:src/kvcompression/rl/environments/kvsorting_env.py:KVSortingEnvironmentV2",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/kvcompression/rl/rewards/base_reward_strategy.py",
+      "target": "class:src/kvcompression/rl/rewards/base_reward_strategy.py:RewardStrategy",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/kvcompression/rl/rewards/base_reward_strategy.py",
+      "target": "class:src/kvcompression/rl/rewards/base_reward_strategy.py:RewardStrategy",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/kvcompression/rl/rewards/basic_strategies.py",
+      "target": "class:src/kvcompression/rl/rewards/basic_strategies.py:FutureAttentionAucNormalizedReward",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/kvcompression/rl/rewards/basic_strategies.py",
+      "target": "class:src/kvcompression/rl/rewards/basic_strategies.py:FutureAttentionAucNormalizedReward",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "class:src/kvcompression/rl/rewards/basic_strategies.py:FutureAttentionAucNormalizedReward",
+      "target": "class:src/kvcompression/rl/rewards/base_reward_strategy.py:RewardStrategy",
+      "type": "inherits",
+      "direction": "forward",
+      "weight": 0.9
+    },
+    {
+      "source": "file:src/kvcompression/rl/rewards/oracle.py",
+      "target": "class:src/kvcompression/rl/rewards/oracle.py:Oracle",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/kvcompression/rl/rewards/oracle.py",
+      "target": "class:src/kvcompression/rl/rewards/oracle.py:Oracle",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "class:src/kvcompression/rl/rewards/oracle.py:Oracle",
+      "target": "function:src/kvcompression/costs.py:batched_compute_cost",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "class:src/kvcompression/rl/rewards/oracle.py:Oracle",
+      "target": "function:src/kvcompression/attention_utils.py:materialize_attention_weights",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/kvcompression/utils/utils.py",
+      "target": "function:src/kvcompression/utils/utils.py:instantiate_agent_from_ckpt",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/kvcompression/utils/utils.py",
+      "target": "function:src/kvcompression/utils/utils.py:seed_everything",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/kvcompression/utils/utils.py",
+      "target": "function:src/kvcompression/utils/utils.py:batch_to_device",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/kvcompression/utils/utils.py",
+      "target": "function:src/kvcompression/utils/utils.py:instantiate_agent_from_ckpt",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/kvcompression/utils/utils.py",
+      "target": "function:src/kvcompression/utils/utils.py:seed_everything",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/kvcompression/utils/utils.py",
+      "target": "function:src/kvcompression/utils/utils.py:batch_to_device",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "class:src/kvcompression/rl/environments/kvsorting_env.py:KVSortingEnvironmentV2",
+      "target": "function:src/kvcompression/utils/utils.py:batch_to_device",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    }
+  ]
+}

@@ -1,0 +1,54 @@
+{
+  "issues": [],
+  "warnings": [
+    "Node 'config:.env.template' has no edges (orphan)",
+    "Node 'file:.understand-anything/.understandignore' has no edges (orphan)",
+    "Node 'file:ACKNOWLEDGEMENTS' has no edges (orphan)",
+    "Node 'file:configs/setups/preprocessing_setup.sh' has no edges (orphan)",
+    "Node 'file:notebooks/inference_demo.ipynb' has no edges (orphan)",
+    "Node 'file:src/kvcompression/data/__init__.py' has no edges (orphan)",
+    "Node 'file:src/kvcompression/entrypoints/__init__.py' has no edges (orphan)",
+    "Node 'file:src/kvcompression/entrypoints/datagen/__init__.py' has no edges (orphan)",
+    "Node 'file:src/kvcompression/entrypoints/rl/__init__.py' has no edges (orphan)",
+    "Node 'file:src/kvcompression/hooks/__init__.py' has no edges (orphan)",
+    "Node 'file:src/kvcompression/presses/__init__.py' has no edges (orphan)",
+    "Node 'file:src/kvcompression/rl/__init__.py' has no edges (orphan)",
+    "Node 'file:src/kvcompression/rl/agents/__init__.py' has no edges (orphan)",
+    "Node 'file:src/kvcompression/rl/environments/__init__.py' has no edges (orphan)",
+    "Node 'file:src/kvcompression/rl/rewards/__init__.py' has no edges (orphan)",
+    "Node 'file:src/kvcompression/rl/trainers/__init__.py' has no edges (orphan)",
+    "Node 'file:tests/__init__.py' has no edges (orphan)",
+    "Node 'file:tests/conftest.py' has no edges (orphan)",
+    "Node 'file:tests/data/test_chunk_sampler.py' has no edges (orphan)",
+    "Node 'file:tests/rl/test_compute_advantages.py' has no edges (orphan)",
+    "Node 'file:tests/rl/test_masked_logprob_entropy.py' has no edges (orphan)",
+    "Node 'file:tests/test_attention_utils.py' has no edges (orphan)",
+    "Node 'file:tests/test_costs.py' has no edges (orphan)",
+    "Node 'file:tests/test_kv_cache/test_compressible_kv_cache.py' has no edges (orphan)",
+    "Node 'file:tests/test_kv_cache/test_flexattention_bfloat16.py' has no edges (orphan)",
+    "Node 'file:tests/test_kv_cache/test_patched_attention.py' has no edges (orphan)"
+  ],
+  "stats": {
+    "totalNodes": 179,
+    "totalEdges": 290,
+    "totalLayers": 7,
+    "tourSteps": 15,
+    "nodeTypes": {
+      "file": 80,
+      "function": 53,
+      "class": 36,
+      "config": 5,
+      "document": 5
+    },
+    "edgeTypes": {
+      "contains": 88,
+      "exports": 84,
+      "imports": 63,
+      "calls": 36,
+      "depends_on": 6,
+      "implements": 2,
+      "inherits": 5,
+      "related": 6
+    }
+  }
+}

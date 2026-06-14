@@ -1,0 +1,1361 @@
+{
+  "scriptCompleted": true,
+  "filesAnalyzed": 7,
+  "filesSkipped": [],
+  "results": [
+    {
+      "path": "src/kvcompression/attention_utils.py",
+      "language": "python",
+      "fileCategory": "code",
+      "totalLines": 220,
+      "nonEmptyLines": 182,
+      "functions": [
+        {
+          "name": "materialize_attention_weights",
+          "startLine": 12,
+          "endLine": 134,
+          "params": [
+            "query",
+            "key",
+            "query_seq_lengths",
+            "key_seq_lengths",
+            "attn_mask",
+            "is_causal"
+          ]
+        },
+        {
+          "name": "get_attention_mask",
+          "startLine": 137,
+          "endLine": 159,
+          "params": [
+            "batch_size",
+            "q_seq_len",
+            "kv_seq_len",
+            "device"
+          ]
+        },
+        {
+          "name": "expand_kv_for_gqa",
+          "startLine": 162,
+          "endLine": 194,
+          "params": [
+            "k_cache",
+            "v_cache",
+            "num_q_heads",
+            "num_kv_heads"
+          ]
+        },
+        {
+          "name": "expand_k_for_gqa",
+          "startLine": 197,
+          "endLine": 220,
+          "params": [
+            "k_cache",
+            "num_q_heads",
+            "num_kv_heads"
+          ]
+        }
+      ],
+      "exports": [
+        {
+          "name": "materialize_attention_weights",
+          "line": 12,
+          "isDefault": false
+        },
+        {
+          "name": "get_attention_mask",
+          "line": 137,
+          "isDefault": false
+        },
+        {
+          "name": "expand_kv_for_gqa",
+          "line": 162,
+          "isDefault": false
+        },
+        {
+          "name": "expand_k_for_gqa",
+          "line": 197,
+          "isDefault": false
+        }
+      ],
+      "callGraph": [
+        {
+          "caller": "materialize_attention_weights",
+          "callee": "math.sqrt",
+          "lineNumber": 41
+        },
+        {
+          "caller": "materialize_attention_weights",
+          "callee": "query.size",
+          "lineNumber": 41
+        },
+        {
+          "caller": "materialize_attention_weights",
+          "callee": "query.size",
+          "lineNumber": 42
+        },
+        {
+          "caller": "materialize_attention_weights",
+          "callee": "key.size",
+          "lineNumber": 42
+        },
+        {
+          "caller": "materialize_attention_weights",
+          "callee": "list",
+          "lineNumber": 45
+        },
+        {
+          "caller": "materialize_attention_weights",
+          "callee": "torch.zeros",
+          "lineNumber": 46
+        },
+        {
+          "caller": "materialize_attention_weights",
+          "callee": "torch.triu",
+          "lineNumber": 50
+        },
+        {
+          "caller": "materialize_attention_weights",
+          "callee": "torch.ones",
+          "lineNumber": 51
+        },
+        {
+          "caller": "materialize_attention_weights",
+          "callee": "attn_bias.masked_fill_",
+          "lineNumber": 53
+        },
+        {
+          "caller": "materialize_attention_weights",
+          "callee": "float",
+          "lineNumber": 53
+        },
+        {
+          "caller": "materialize_attention_weights",
+          "callee": "_effective_attn_mask.size",
+          "lineNumber": 62
+        },
+        {
+          "caller": "materialize_attention_weights",
+          "callee": "query.size",
+          "lineNumber": 62
+        },
+        {
+          "caller": "materialize_attention_weights",
+          "callee": "_effective_attn_mask.size",
+          "lineNumber": 63
+        },
+        {
+          "caller": "materialize_attention_weights",
+          "callee": "_effective_attn_mask.size",
+          "lineNumber": 64
+        },
+        {
+          "caller": "materialize_attention_weights",
+          "callee": "attn_bias.masked_fill_",
+          "lineNumber": 69
+        },
+        {
+          "caller": "materialize_attention_weights",
+          "callee": "_effective_attn_mask.logical_not",
+          "lineNumber": 69
+        },
+        {
+          "caller": "materialize_attention_weights",
+          "callee": "float",
+          "lineNumber": 69
+        },
+        {
+          "caller": "materialize_attention_weights",
+          "callee": "key.size",
+          "lineNumber": 75
+        },
+        {
+          "caller": "materialize_attention_weights",
+          "callee": "key_seq_lengths.size",
+          "lineNumber": 77
+        },
+        {
+          "caller": "materialize_attention_weights",
+          "callee": "torch.arange",
+          "lineNumber": 82
+        },
+        {
+          "caller": "materialize_attention_weights",
+          "callee": "ValueError",
+          "lineNumber": 93
+        },
+        {
+          "caller": "materialize_attention_weights",
+          "callee": "attn_bias.masked_fill_",
+          "lineNumber": 94
+        },
+        {
+          "caller": "materialize_attention_weights",
+          "callee": "float",
+          "lineNumber": 94
+        },
+        {
+          "caller": "materialize_attention_weights",
+          "callee": "query_seq_lengths.size",
+          "lineNumber": 100
+        },
+        {
+          "caller": "materialize_attention_weights",
+          "callee": "torch.arange",
+          "lineNumber": 104
+        },
+        {
+          "caller": "materialize_attention_weights",
+          "callee": "ValueError",
+          "lineNumber": 111
+        },
+        {
+          "caller": "materialize_attention_weights",
+          "callee": "attn_bias.masked_fill_",
+          "lineNumber": 114
+        },
+        {
+          "caller": "materialize_attention_weights",
+          "callee": "float",
+          "lineNumber": 114
+        },
+        {
+          "caller": "materialize_attention_weights",
+          "callee": "attn_bias.to",
+          "lineNumber": 116
+        },
+        {
+          "caller": "materialize_attention_weights",
+          "callee": "torch.full",
+          "lineNumber": 119
+        },
+        {
+          "caller": "materialize_attention_weights",
+          "callee": "float",
+          "lineNumber": 120
+        },
+        {
+          "caller": "materialize_attention_weights",
+          "callee": "torch.matmul",
+          "lineNumber": 123
+        },
+        {
+          "caller": "materialize_attention_weights",
+          "callee": "key.transpose",
+          "lineNumber": 123
+        },
+        {
+          "caller": "materialize_attention_weights",
+          "callee": "attn_weight.softmax",
+          "lineNumber": 125
+        },
+        {
+          "caller": "materialize_attention_weights",
+          "callee": "torch.isnan",
+          "lineNumber": 129
+        },
+        {
+          "caller": "materialize_attention_weights",
+          "callee": "torch.any",
+          "lineNumber": 130
+        },
+        {
+          "caller": "materialize_attention_weights",
+          "callee": "nan_query_rows_mask.unsqueeze(-1).expand_as",
+          "lineNumber": 131
+        },
+        {
+          "caller": "materialize_attention_weights",
+          "callee": "nan_query_rows_mask.unsqueeze",
+          "lineNumber": 131
+        },
+        {
+          "caller": "materialize_attention_weights",
+          "callee": "attn_weight.masked_fill",
+          "lineNumber": 132
+        },
+        {
+          "caller": "get_attention_mask",
+          "callee": "torch.tril",
+          "lineNumber": 152
+        },
+        {
+          "caller": "get_attention_mask",
+          "callee": "torch.ones",
+          "lineNumber": 153
+        },
+        {
+          "caller": "expand_kv_for_gqa",
+          "callee": "k_cache.unsqueeze(2)\n            .expand(batch_size, num_kv_heads, q_per_kv, seq_len, head_dim)\n            .flatten",
+          "lineNumber": 183
+        },
+        {
+          "caller": "expand_kv_for_gqa",
+          "callee": "k_cache.unsqueeze(2)\n            .expand",
+          "lineNumber": 183
+        },
+        {
+          "caller": "expand_kv_for_gqa",
+          "callee": "k_cache.unsqueeze",
+          "lineNumber": 183
+        },
+        {
+          "caller": "expand_kv_for_gqa",
+          "callee": "v_cache.unsqueeze(2)\n            .expand(batch_size, num_kv_heads, q_per_kv, seq_len, v_cache.shape[-1])\n            .flatten",
+          "lineNumber": 188
+        },
+        {
+          "caller": "expand_kv_for_gqa",
+          "callee": "v_cache.unsqueeze(2)\n            .expand",
+          "lineNumber": 188
+        },
+        {
+          "caller": "expand_kv_for_gqa",
+          "callee": "v_cache.unsqueeze",
+          "lineNumber": 188
+        },
+        {
+          "caller": "expand_k_for_gqa",
+          "callee": "k_cache.unsqueeze(2)\n            .expand(batch_size, num_kv_heads, q_per_kv, seq_len, head_dim)\n            .flatten",
+          "lineNumber": 214
+        },
+        {
+          "caller": "expand_k_for_gqa",
+          "callee": "k_cache.unsqueeze(2)\n            .expand",
+          "lineNumber": 214
+        },
+        {
+          "caller": "expand_k_for_gqa",
+          "callee": "k_cache.unsqueeze",
+          "lineNumber": 214
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 4,
+        "functionCount": 4,
+        "classCount": 0
+      }
+    },
+    {
+      "path": "src/kvcompression/hooks/compressor.py",
+      "language": "python",
+      "fileCategory": "code",
+      "totalLines": 272,
+      "nonEmptyLines": 231,
+      "classes": [
+        {
+          "name": "LayerHeadCompressionConfig",
+          "startLine": 27,
+          "endLine": 57,
+          "methods": [
+            "matches",
+            "specificity",
+            "__lt__"
+          ],
+          "properties": [
+            "layer",
+            "head",
+            "strategy",
+            "strategy_name"
+          ]
+        },
+        {
+          "name": "KVCompressor",
+          "startLine": 60,
+          "endLine": 272,
+          "methods": [
+            "__init__",
+            "_validate_config_consistency",
+            "_check_exact_location_conflicts",
+            "_check_wildcard_conflicts",
+            "_check_wildcard_vs_specific_conflicts",
+            "_configs_conflict",
+            "__enter__",
+            "__exit__",
+            "compress_caches",
+            "mha_attention_post_hook"
+          ],
+          "properties": []
+        }
+      ],
+      "exports": [
+        {
+          "name": "LayerHeadCompressionConfig",
+          "line": 26,
+          "isDefault": false
+        },
+        {
+          "name": "KVCompressor",
+          "line": 60,
+          "isDefault": false
+        }
+      ],
+      "callGraph": [
+        {
+          "caller": "__lt__",
+          "callee": "isinstance",
+          "lineNumber": 47
+        },
+        {
+          "caller": "__init__",
+          "callee": "LayerHeadCompressionConfig",
+          "lineNumber": 90
+        },
+        {
+          "caller": "__init__",
+          "callee": "repr",
+          "lineNumber": 91
+        },
+        {
+          "caller": "__init__",
+          "callee": "isinstance",
+          "lineNumber": 93
+        },
+        {
+          "caller": "__init__",
+          "callee": "self._validate_config_consistency",
+          "lineNumber": 99
+        },
+        {
+          "caller": "bound_setup_cache",
+          "callee": "monkey_patched_setup_cache",
+          "lineNumber": 103
+        },
+        {
+          "caller": "__init__",
+          "callee": "monkeypatch_multihead_attention",
+          "lineNumber": 112
+        },
+        {
+          "caller": "_validate_config_consistency",
+          "callee": "isinstance",
+          "lineNumber": 123
+        },
+        {
+          "caller": "_validate_config_consistency",
+          "callee": "ValueError",
+          "lineNumber": 124
+        },
+        {
+          "caller": "_validate_config_consistency",
+          "callee": "ValueError",
+          "lineNumber": 129
+        },
+        {
+          "caller": "_validate_config_consistency",
+          "callee": "isinstance",
+          "lineNumber": 133
+        },
+        {
+          "caller": "_validate_config_consistency",
+          "callee": "ValueError",
+          "lineNumber": 134
+        },
+        {
+          "caller": "_validate_config_consistency",
+          "callee": "self._check_exact_location_conflicts",
+          "lineNumber": 139
+        },
+        {
+          "caller": "_validate_config_consistency",
+          "callee": "self._check_wildcard_conflicts",
+          "lineNumber": 140
+        },
+        {
+          "caller": "_validate_config_consistency",
+          "callee": "self._check_wildcard_vs_specific_conflicts",
+          "lineNumber": 141
+        },
+        {
+          "caller": "_check_exact_location_conflicts",
+          "callee": "ValueError",
+          "lineNumber": 153
+        },
+        {
+          "caller": "_check_wildcard_conflicts",
+          "callee": "wildcard_types[\"global\"].append",
+          "lineNumber": 172
+        },
+        {
+          "caller": "_check_wildcard_conflicts",
+          "callee": "wildcard_types[\"head_specific\"].append",
+          "lineNumber": 174
+        },
+        {
+          "caller": "_check_wildcard_conflicts",
+          "callee": "wildcard_types[\"layer_specific\"].append",
+          "lineNumber": 176
+        },
+        {
+          "caller": "_check_wildcard_conflicts",
+          "callee": "ValueError",
+          "lineNumber": 182
+        },
+        {
+          "caller": "_check_wildcard_conflicts",
+          "callee": "ValueError",
+          "lineNumber": 191
+        },
+        {
+          "caller": "_check_wildcard_vs_specific_conflicts",
+          "callee": "self._configs_conflict",
+          "lineNumber": 212
+        },
+        {
+          "caller": "_check_wildcard_vs_specific_conflicts",
+          "callee": "ValueError",
+          "lineNumber": 213
+        },
+        {
+          "caller": "__enter__",
+          "callee": "self._context_manager.__enter__",
+          "lineNumber": 249
+        },
+        {
+          "caller": "__exit__",
+          "callee": "self._context_manager.__exit__",
+          "lineNumber": 256
+        },
+        {
+          "caller": "compress_caches",
+          "callee": "enumerate",
+          "lineNumber": 263
+        },
+        {
+          "caller": "compress_caches",
+          "callee": "hasattr",
+          "lineNumber": 264
+        },
+        {
+          "caller": "compress_caches",
+          "callee": "isinstance",
+          "lineNumber": 264
+        },
+        {
+          "caller": "compress_caches",
+          "callee": "layer.attn.kv_cache.compress",
+          "lineNumber": 267
+        }
+      ],
+      "metrics": {
+        "importCount": 4,
+        "exportCount": 2,
+        "functionCount": 0,
+        "classCount": 2
+      }
+    },
+    {
+      "path": "src/kvcompression/kv_cache/__init__.py",
+      "language": "python",
+      "fileCategory": "code",
+      "totalLines": 12,
+      "nonEmptyLines": 10,
+      "metrics": {
+        "importCount": 2,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0
+      }
+    },
+    {
+      "path": "src/kvcompression/kv_cache/compressible_attention.py",
+      "language": "python",
+      "fileCategory": "code",
+      "totalLines": 270,
+      "nonEmptyLines": 215,
+      "functions": [
+        {
+          "name": "monkey_patched_setup_cache",
+          "startLine": 38,
+          "endLine": 74,
+          "params": [
+            "batch_size",
+            "dtype",
+            "max_seq_len",
+            "layer_head_configs"
+          ]
+        },
+        {
+          "name": "_build_head_strategy_mapping",
+          "startLine": 77,
+          "endLine": 124,
+          "params": [
+            "layer_idx",
+            "num_kv_heads",
+            "layer_head_configs"
+          ]
+        },
+        {
+          "name": "monkey_patched_mha_forward",
+          "startLine": 127,
+          "endLine": 270,
+          "params": [
+            "x",
+            "y",
+            "mask",
+            "input_pos"
+          ]
+        }
+      ],
+      "exports": [
+        {
+          "name": "monkey_patched_setup_cache",
+          "line": 38,
+          "isDefault": false
+        },
+        {
+          "name": "_build_head_strategy_mapping",
+          "line": 77,
+          "isDefault": false
+        },
+        {
+          "name": "monkey_patched_mha_forward",
+          "line": 127,
+          "isDefault": false
+        }
+      ],
+      "callGraph": [
+        {
+          "caller": "monkey_patched_setup_cache",
+          "callee": "_build_head_strategy_mapping",
+          "lineNumber": 56
+        },
+        {
+          "caller": "monkey_patched_setup_cache",
+          "callee": "list",
+          "lineNumber": 62
+        },
+        {
+          "caller": "monkey_patched_setup_cache",
+          "callee": "head_to_strategy_map.values",
+          "lineNumber": 62
+        },
+        {
+          "caller": "monkey_patched_setup_cache",
+          "callee": "CompressibleKVCache",
+          "lineNumber": 64
+        },
+        {
+          "caller": "_build_head_strategy_mapping",
+          "callee": "range",
+          "lineNumber": 96
+        },
+        {
+          "caller": "_build_head_strategy_mapping",
+          "callee": "config.matches",
+          "lineNumber": 100
+        },
+        {
+          "caller": "_build_head_strategy_mapping",
+          "callee": "matching_configs.sort",
+          "lineNumber": 104
+        },
+        {
+          "caller": "_build_head_strategy_mapping",
+          "callee": "c.specificity",
+          "lineNumber": 104
+        },
+        {
+          "caller": "_build_head_strategy_mapping",
+          "callee": "logger.debug",
+          "lineNumber": 107
+        },
+        {
+          "caller": "_build_head_strategy_mapping",
+          "callee": "logger.debug",
+          "lineNumber": 113
+        },
+        {
+          "caller": "_build_head_strategy_mapping",
+          "callee": "DummyCompressionStrategy",
+          "lineNumber": 116
+        },
+        {
+          "caller": "_build_head_strategy_mapping",
+          "callee": "len",
+          "lineNumber": 119
+        },
+        {
+          "caller": "_build_head_strategy_mapping",
+          "callee": "ValueError",
+          "lineNumber": 120
+        },
+        {
+          "caller": "_build_head_strategy_mapping",
+          "callee": "len",
+          "lineNumber": 121
+        },
+        {
+          "caller": "monkey_patched_mha_forward",
+          "callee": "self.q_proj",
+          "lineNumber": 155
+        },
+        {
+          "caller": "monkey_patched_mha_forward",
+          "callee": "q.view",
+          "lineNumber": 157
+        },
+        {
+          "caller": "monkey_patched_mha_forward",
+          "callee": "self.pos_embeddings",
+          "lineNumber": 160
+        },
+        {
+          "caller": "monkey_patched_mha_forward",
+          "callee": "q.transpose",
+          "lineNumber": 161
+        },
+        {
+          "caller": "monkey_patched_mha_forward",
+          "callee": "self.q_norm",
+          "lineNumber": 164
+        },
+        {
+          "caller": "monkey_patched_mha_forward",
+          "callee": "self.k_proj",
+          "lineNumber": 167
+        },
+        {
+          "caller": "monkey_patched_mha_forward",
+          "callee": "self.v_proj",
+          "lineNumber": 168
+        },
+        {
+          "caller": "monkey_patched_mha_forward",
+          "callee": "k.view",
+          "lineNumber": 169
+        },
+        {
+          "caller": "monkey_patched_mha_forward",
+          "callee": "v.view",
+          "lineNumber": 170
+        },
+        {
+          "caller": "monkey_patched_mha_forward",
+          "callee": "self.pos_embeddings",
+          "lineNumber": 173
+        },
+        {
+          "caller": "monkey_patched_mha_forward",
+          "callee": "k.transpose",
+          "lineNumber": 175
+        },
+        {
+          "caller": "monkey_patched_mha_forward",
+          "callee": "v.transpose",
+          "lineNumber": 176
+        },
+        {
+          "caller": "monkey_patched_mha_forward",
+          "callee": "self.k_norm",
+          "lineNumber": 179
+        },
+        {
+          "caller": "monkey_patched_mha_forward",
+          "callee": "self.kv_cache.update",
+          "lineNumber": 186
+        },
+        {
+          "caller": "monkey_patched_mha_forward",
+          "callee": "logger.warning",
+          "lineNumber": 188
+        },
+        {
+          "caller": "monkey_patched_mha_forward",
+          "callee": "self.kv_cache.update",
+          "lineNumber": 191
+        },
+        {
+          "caller": "monkey_patched_mha_forward",
+          "callee": "self.kv_cache.get_k_v_and_mask_for_attention",
+          "lineNumber": 194
+        },
+        {
+          "caller": "monkey_patched_mha_forward",
+          "callee": "expand_kv_for_gqa",
+          "lineNumber": 197
+        },
+        {
+          "caller": "monkey_patched_mha_forward",
+          "callee": "and_masks",
+          "lineNumber": 229
+        },
+        {
+          "caller": "monkey_patched_mha_forward",
+          "callee": "_external_mask_c.expand",
+          "lineNumber": 235
+        },
+        {
+          "caller": "monkey_patched_mha_forward",
+          "callee": "_external_mask_c.expand",
+          "lineNumber": 238
+        },
+        {
+          "caller": "monkey_patched_mha_forward",
+          "callee": "and_masks",
+          "lineNumber": 247
+        },
+        {
+          "caller": "monkey_patched_mha_forward",
+          "callee": "create_block_mask_compiled",
+          "lineNumber": 249
+        },
+        {
+          "caller": "monkey_patched_mha_forward",
+          "callee": "flex_attention_compiled",
+          "lineNumber": 258
+        },
+        {
+          "caller": "monkey_patched_mha_forward",
+          "callee": "torch.nn.functional.dropout",
+          "lineNumber": 267
+        },
+        {
+          "caller": "monkey_patched_mha_forward",
+          "callee": "attn_output.transpose(1, 2).contiguous().view",
+          "lineNumber": 269
+        },
+        {
+          "caller": "monkey_patched_mha_forward",
+          "callee": "attn_output.transpose(1, 2).contiguous",
+          "lineNumber": 269
+        },
+        {
+          "caller": "monkey_patched_mha_forward",
+          "callee": "attn_output.transpose",
+          "lineNumber": 269
+        },
+        {
+          "caller": "monkey_patched_mha_forward",
+          "callee": "self.output_proj",
+          "lineNumber": 270
+        }
+      ],
+      "metrics": {
+        "importCount": 3,
+        "exportCount": 3,
+        "functionCount": 3,
+        "classCount": 0
+      }
+    },
+    {
+      "path": "src/kvcompression/kv_cache/compressible_kv_cache.py",
+      "language": "python",
+      "fileCategory": "code",
+      "totalLines": 298,
+      "nonEmptyLines": 244,
+      "classes": [
+        {
+          "name": "CompressibleKVCache",
+          "startLine": 19,
+          "endLine": 298,
+          "methods": [
+            "__init__",
+            "reset",
+            "size",
+            "num_active_entries",
+            "update",
+            "compress",
+            "get_k_v_and_mask_for_attention",
+            "get_queries_for_kv_head",
+            "get_all_queries_active"
+          ],
+          "properties": []
+        }
+      ],
+      "exports": [
+        {
+          "name": "CompressibleKVCache",
+          "line": 19,
+          "isDefault": false
+        }
+      ],
+      "callGraph": [
+        {
+          "caller": "__init__",
+          "callee": "super().__init__",
+          "lineNumber": 50
+        },
+        {
+          "caller": "__init__",
+          "callee": "super",
+          "lineNumber": 50
+        },
+        {
+          "caller": "__init__",
+          "callee": "logger.error",
+          "lineNumber": 53
+        },
+        {
+          "caller": "__init__",
+          "callee": "len",
+          "lineNumber": 58
+        },
+        {
+          "caller": "__init__",
+          "callee": "ValueError",
+          "lineNumber": 59
+        },
+        {
+          "caller": "__init__",
+          "callee": "len",
+          "lineNumber": 61
+        },
+        {
+          "caller": "__init__",
+          "callee": "self.register_buffer",
+          "lineNumber": 76
+        },
+        {
+          "caller": "__init__",
+          "callee": "torch.zeros",
+          "lineNumber": 77
+        },
+        {
+          "caller": "__init__",
+          "callee": "self.register_buffer",
+          "lineNumber": 79
+        },
+        {
+          "caller": "__init__",
+          "callee": "torch.zeros",
+          "lineNumber": 80
+        },
+        {
+          "caller": "__init__",
+          "callee": "self.register_buffer",
+          "lineNumber": 84
+        },
+        {
+          "caller": "__init__",
+          "callee": "torch.zeros",
+          "lineNumber": 85
+        },
+        {
+          "caller": "__init__",
+          "callee": "self.register_buffer",
+          "lineNumber": 88
+        },
+        {
+          "caller": "__init__",
+          "callee": "torch.tensor",
+          "lineNumber": 89
+        },
+        {
+          "caller": "__init__",
+          "callee": "self.register_buffer",
+          "lineNumber": 96
+        },
+        {
+          "caller": "__init__",
+          "callee": "torch.zeros",
+          "lineNumber": 98
+        },
+        {
+          "caller": "reset",
+          "callee": "self.k_cache.zero_",
+          "lineNumber": 104
+        },
+        {
+          "caller": "reset",
+          "callee": "self.v_cache.zero_",
+          "lineNumber": 105
+        },
+        {
+          "caller": "reset",
+          "callee": "self.q_cache.zero_",
+          "lineNumber": 106
+        },
+        {
+          "caller": "reset",
+          "callee": "self.attention_mask.fill_",
+          "lineNumber": 107
+        },
+        {
+          "caller": "reset",
+          "callee": "self._current_seq_len.zero_",
+          "lineNumber": 108
+        },
+        {
+          "caller": "num_active_entries",
+          "callee": "torch.sum(self.attention_mask).item",
+          "lineNumber": 117
+        },
+        {
+          "caller": "num_active_entries",
+          "callee": "torch.sum",
+          "lineNumber": 117
+        },
+        {
+          "caller": "update",
+          "callee": "ValueError",
+          "lineNumber": 142
+        },
+        {
+          "caller": "update",
+          "callee": "slice",
+          "lineNumber": 147
+        },
+        {
+          "caller": "update",
+          "callee": "ValueError",
+          "lineNumber": 156
+        },
+        {
+          "caller": "update",
+          "callee": "self._current_seq_len.add_",
+          "lineNumber": 162
+        },
+        {
+          "caller": "compress",
+          "callee": "ValueError",
+          "lineNumber": 182
+        },
+        {
+          "caller": "compress",
+          "callee": "min",
+          "lineNumber": 187
+        },
+        {
+          "caller": "compress",
+          "callee": "self.attention_mask.zero_",
+          "lineNumber": 190
+        },
+        {
+          "caller": "compress",
+          "callee": "self.attention_mask.zero_",
+          "lineNumber": 194
+        },
+        {
+          "caller": "compress",
+          "callee": "slice",
+          "lineNumber": 197
+        },
+        {
+          "caller": "compress",
+          "callee": "range",
+          "lineNumber": 207
+        },
+        {
+          "caller": "compress",
+          "callee": "min",
+          "lineNumber": 218
+        },
+        {
+          "caller": "compress",
+          "callee": "strategy.get_mask",
+          "lineNumber": 230
+        },
+        {
+          "caller": "compress",
+          "callee": "ValueError",
+          "lineNumber": 239
+        },
+        {
+          "caller": "compress",
+          "callee": "head_masks_list.append",
+          "lineNumber": 242
+        },
+        {
+          "caller": "compress",
+          "callee": "torch.cat",
+          "lineNumber": 244
+        },
+        {
+          "caller": "compress",
+          "callee": "ValueError",
+          "lineNumber": 247
+        },
+        {
+          "caller": "get_queries_for_kv_head",
+          "callee": "ValueError",
+          "lineNumber": 279
+        }
+      ],
+      "metrics": {
+        "importCount": 1,
+        "exportCount": 1,
+        "functionCount": 0,
+        "classCount": 1
+      }
+    },
+    {
+      "path": "src/kvcompression/kv_cache/compressible_mha_layer.py",
+      "language": "python",
+      "fileCategory": "code",
+      "totalLines": 96,
+      "nonEmptyLines": 79,
+      "classes": [
+        {
+          "name": "CompressibleMultiHeadAttention",
+          "startLine": 20,
+          "endLine": 96,
+          "methods": [
+            "__init__",
+            "reset_cache"
+          ],
+          "properties": []
+        }
+      ],
+      "exports": [
+        {
+          "name": "CompressibleMultiHeadAttention",
+          "line": 20,
+          "isDefault": false
+        }
+      ],
+      "callGraph": [
+        {
+          "caller": "__init__",
+          "callee": "super().__init__",
+          "lineNumber": 48
+        },
+        {
+          "caller": "__init__",
+          "callee": "super",
+          "lineNumber": 48
+        },
+        {
+          "caller": "__init__",
+          "callee": "ValueError",
+          "lineNumber": 50
+        },
+        {
+          "caller": "__init__",
+          "callee": "ValueError",
+          "lineNumber": 56
+        },
+        {
+          "caller": "__init__",
+          "callee": "ValueError",
+          "lineNumber": 61
+        },
+        {
+          "caller": "__init__",
+          "callee": "bool",
+          "lineNumber": 63
+        },
+        {
+          "caller": "__init__",
+          "callee": "bool",
+          "lineNumber": 63
+        },
+        {
+          "caller": "__init__",
+          "callee": "ValueError",
+          "lineNumber": 64
+        },
+        {
+          "caller": "reset_cache",
+          "callee": "RuntimeError",
+          "lineNumber": 91
+        },
+        {
+          "caller": "reset_cache",
+          "callee": "self.kv_cache.reset",
+          "lineNumber": 94
+        }
+      ],
+      "metrics": {
+        "importCount": 1,
+        "exportCount": 1,
+        "functionCount": 0,
+        "classCount": 1
+      }
+    },
+    {
+      "path": "src/kvcompression/kv_cache/compression_strategy_protocol.py",
+      "language": "python",
+      "fileCategory": "code",
+      "totalLines": 197,
+      "nonEmptyLines": 165,
+      "classes": [
+        {
+          "name": "CompressionStrategy",
+          "startLine": 18,
+          "endLine": 56,
+          "methods": [
+            "__repr__",
+            "get_mask"
+          ],
+          "properties": []
+        },
+        {
+          "name": "DummyCompressionStrategy",
+          "startLine": 59,
+          "endLine": 73,
+          "methods": [
+            "get_mask"
+          ],
+          "properties": []
+        },
+        {
+          "name": "RandomCompressionStrategy",
+          "startLine": 76,
+          "endLine": 93,
+          "methods": [
+            "get_mask"
+          ],
+          "properties": []
+        },
+        {
+          "name": "PressCompressionStrategy",
+          "startLine": 96,
+          "endLine": 197,
+          "methods": [
+            "__init__",
+            "__repr__",
+            "get_mask"
+          ],
+          "properties": []
+        }
+      ],
+      "exports": [
+        {
+          "name": "CompressionStrategy",
+          "line": 18,
+          "isDefault": false
+        },
+        {
+          "name": "DummyCompressionStrategy",
+          "line": 59,
+          "isDefault": false
+        },
+        {
+          "name": "RandomCompressionStrategy",
+          "line": 76,
+          "isDefault": false
+        },
+        {
+          "name": "PressCompressionStrategy",
+          "line": 96,
+          "isDefault": false
+        }
+      ],
+      "callGraph": [
+        {
+          "caller": "get_mask",
+          "callee": "NotImplementedError",
+          "lineNumber": 56
+        },
+        {
+          "caller": "get_mask",
+          "callee": "torch.ones",
+          "lineNumber": 71
+        },
+        {
+          "caller": "get_mask",
+          "callee": "torch.rand",
+          "lineNumber": 88
+        },
+        {
+          "caller": "__repr__",
+          "callee": "repr",
+          "lineNumber": 103
+        },
+        {
+          "caller": "get_mask",
+          "callee": "self.press.requires_attention_weights",
+          "lineNumber": 116
+        },
+        {
+          "caller": "get_mask",
+          "callee": "expand_k_for_gqa",
+          "lineNumber": 123
+        },
+        {
+          "caller": "get_mask",
+          "callee": "torch.full",
+          "lineNumber": 128
+        },
+        {
+          "caller": "get_mask",
+          "callee": "materialize_attention_weights",
+          "lineNumber": 135
+        },
+        {
+          "caller": "get_mask",
+          "callee": "ValueError",
+          "lineNumber": 143
+        },
+        {
+          "caller": "get_mask",
+          "callee": "self.press",
+          "lineNumber": 148
+        },
+        {
+          "caller": "get_mask",
+          "callee": "ValueError",
+          "lineNumber": 158
+        },
+        {
+          "caller": "get_mask",
+          "callee": "min",
+          "lineNumber": 165
+        },
+        {
+          "caller": "get_mask",
+          "callee": "torch.zeros",
+          "lineNumber": 169
+        },
+        {
+          "caller": "get_mask",
+          "callee": "prefix_indices.numel",
+          "lineNumber": 177
+        },
+        {
+          "caller": "get_mask",
+          "callee": "torch.any",
+          "lineNumber": 178
+        },
+        {
+          "caller": "get_mask",
+          "callee": "torch.any",
+          "lineNumber": 178
+        },
+        {
+          "caller": "get_mask",
+          "callee": "ValueError",
+          "lineNumber": 179
+        },
+        {
+          "caller": "get_mask",
+          "callee": "torch.max",
+          "lineNumber": 180
+        },
+        {
+          "caller": "get_mask",
+          "callee": "torch.min",
+          "lineNumber": 181
+        },
+        {
+          "caller": "get_mask",
+          "callee": "torch.zeros",
+          "lineNumber": 184
+        },
+        {
+          "caller": "get_mask",
+          "callee": "prefix_indices.numel",
+          "lineNumber": 190
+        },
+        {
+          "caller": "get_mask",
+          "callee": "mask.scatter_",
+          "lineNumber": 191
+        },
+        {
+          "caller": "get_mask",
+          "callee": "torch.ones_like",
+          "lineNumber": 194
+        }
+      ],
+      "metrics": {
+        "importCount": 2,
+        "exportCount": 4,
+        "functionCount": 0,
+        "classCount": 4
+      }
+    }
+  ]
+}
