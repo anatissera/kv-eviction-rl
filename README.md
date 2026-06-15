@@ -82,6 +82,100 @@ uv run python scripts/orchestration/assignment_generator.py write-composites <sw
 
 See [`notebooks/inference_demo.ipynb`](notebooks/inference_demo.ipynb) for a demo of generation with learned KV cache compression.
 
+---
+
+## Qwen2-1.5B Experiment (PPO vs RLOO)
+
+This branch extends the original paper by (1) running on the smaller **Qwen2-1.5B-Instruct** model and (2) adding **PPO** as an alternative to the paper's RLOO algorithm.
+
+### Prerequisites
+
+Requires Python >= 3.10, [uv](https://docs.astral.sh/uv/), and a CUDA GPU with ≥ 8 GB VRAM.
+
+```bash
+uv sync
+cp .env.template .env   # set PROJECT_ROOT and KVCOMPRESSION_DATA_ROOT
+```
+
+Download model weights:
+
+```bash
+uv run tune download Qwen/Qwen2-1.5B-Instruct \
+    --output-dir models/Qwen2-1.5B-Instruct --ignore-patterns "original/*"
+```
+
+If `nvidia-smi` fails on your machine, load the kernel module first:
+
+```bash
+sudo modprobe nvidia nvidia_uvm
+```
+
+### Run the full pipeline (data gen → train → eval)
+
+```bash
+./run_experiment.sh
+```
+
+This script runs three phases in sequence:
+1. **Data generation** — loads Qwen2-1.5B, captures Q/K/V activations from ~100 RULER examples, writes safetensors to `$KVCOMPRESSION_DATA_ROOT`
+2. **Training** — trains one RLOO agent per `(layer, head)` pair specified by `LAYERS`/`HEADS`
+3. **Evaluation** — compares learned agents vs `RandomPress` heuristic baseline
+
+Key tunables (pass as env vars):
+
+```bash
+NUM_EXAMPLES=100   # how many RULER samples to generate
+LAYERS="0 1 2"     # which layers to train agents for (default: 0 only)
+HEADS="0 1"        # Qwen2-1.5B has 2 KV heads per layer
+SWEEP=qwen1b_validation
+DEVICE=cuda:0
+./run_experiment.sh
+```
+
+For the full 56-agent model (all 28 layers × 2 heads):
+
+```bash
+LAYERS="$(seq 0 27)" HEADS="0 1" ./run_experiment.sh
+```
+
+### Train with PPO instead of RLOO
+
+```bash
+uv run tune run src/kvcompression/entrypoints/rl/train_agent_sampler_distributed.py \
+    --config configs/train_qwen1b_ppo.yaml \
+    distributed=False device=cuda dtype=bf16 \
+    target_layer_idx=0 kv_head_idx=0 \
+    'loader.train.batch_size=16' 'loader.eval.batch_size=8' \
+    'loader.train.dataloader_num_workers=2' \
+    'training.num_epochs_or_steps=200' 'training.eval_interval=50'
+```
+
+### Compare RLOO vs PPO learning curves
+
+After running both algorithms, generate the side-by-side comparison plot:
+
+```bash
+python scripts/plot_rloo_vs_ppo.py   # auto-discovers latest checkpoints
+# or point explicitly:
+python scripts/plot_rloo_vs_ppo.py \
+    --ppo  agents/grouped/qwen1b_ppo_validation/.../checkpoints/000000000200.pth \
+    --rloo agents/grouped/qwen1b_rloo_cpu/.../checkpoints/000000000200.pth \
+    --out  learning_curves.png
+```
+
+### Quick local test (Mac CPU, no GPU needed)
+
+Proves the code runs without real data or a GPU:
+
+```bash
+bash run_ppo_local.sh          # PPO,  50 steps, layer 0 head 0
+# or RLOO:
+tune run src/kvcompression/entrypoints/rl/train_agent_sampler_distributed.py \
+    --config configs/train_qwen1b_rloo_cpu.yaml distributed=False
+```
+
+---
+
 ## Citation
 
 If you find our work useful, please cite the following paper:
