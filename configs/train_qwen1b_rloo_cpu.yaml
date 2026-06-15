@@ -75,7 +75,7 @@ environment:
     info_keys_to_log: ${trainer.info_keys_to_log}
 trainer:
   _component_: kvcompression.rl.trainers.rloo_gumbel_terminal_trainer.RLOOGumbelTrainer
-  entropy_coef: 0.01
+  entropy_coef: 0           # match paper (train_qwen1b.yaml)
   max_grad_norm: 5
   normalize_advantages: True
   ema_burnin_steps: 5
