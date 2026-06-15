@@ -1,0 +1,190 @@
+# Train a single KVP agent on Qwen2-1.5B-Instruct activations (short, local, single-GPU).
+#
+# Reads the Q/K/V activations produced by configs/preprocess_qwen1b.yaml and trains one
+# RL agent for a single (layer, head). Qwen2-1.5B has 28 layers x 2 KV heads = 56 agents.
+#
+# Prerequisites:
+#   1. Run preprocessing (configs/preprocess_qwen1b.yaml) so the activations exist at
+#      data/gqa_safetensors/simonjegou_ruler/Qwen2-1.5B-Instruct/temperature_0.00/
+#   2. Copy the RULER split files into that directory (run_experiment.sh does this):
+#        cp assets/ruler_split/*.txt <that dir>/
+#
+# Run (single GPU / single process):
+#   uv run tune run src/kvcompression/entrypoints/rl/train_agent_sampler_distributed.py \
+#       --config configs/train_qwen1b.yaml distributed=False
+#
+# Train a different (layer, head):  ... target_layer_idx=15 kv_head_idx=1
+
+# Target layer and head to train. Valid for Qwen2-1.5B: layer 0..27, head 0..1.
+target_layer_idx: 0
+kv_head_idx: 0
+
+sweep_name: "qwen1b_validation"
+
+# General Configuration
+seed: 42
+device: "cuda"
+dtype: "bf16"
+deterministic_cudnn: False
+compile_agent: False          # off for a light, debuggable local run (also see DISABLE_TORCH_COMPILER)
+distributed: False            # single process; override to True only under torchrun
+
+home_dir: ${oc.env:PROJECT_ROOT}
+remote_dir: s3://kvp-local-noupload   # required by the trainer; upload fails fast, agents kept locally
+
+# Trained agents are saved under: agents/grouped/{sweep_name}/layer_XXXXXX/kv_head_XXX/
+storage_dir: ${home_dir}/agents/grouped/${sweep_name}/layer_${fmt:${target_layer_idx},06d}/kv_head_${fmt:${kv_head_idx},03d}
+
+# Reward strategy - continuous attention-based reward
+reward_strategy:
+  _component_: kvcompression.rl.rewards.basic_strategies.FutureAttentionAucNormalizedReward
+
+# Data Configuration
+data:
+  dataset:
+    train:
+      _component_: kvcompression.data.activations_dataset.QKVDataset
+      dataset_path: "${oc.env:KVCOMPRESSION_DATA_ROOT}/gqa_safetensors/simonjegou_ruler/Qwen2-1.5B-Instruct/temperature_0.00"
+      target_layer_idx: ${target_layer_idx}
+      kv_head_idx: ${kv_head_idx}
+      split_file: "train.txt"
+      query_idx_within_group: null
+      keep_dim: False
+      mmap: True
+      randomize_prompt_len: False   # RULER specific
+      min_prompt_len: 8
+      dtype: ${dtype}
+
+    val:
+      _component_: kvcompression.data.activations_dataset.QKVDataset
+      dataset_path: "${oc.env:KVCOMPRESSION_DATA_ROOT}/gqa_safetensors/simonjegou_ruler/Qwen2-1.5B-Instruct/temperature_0.00"
+      target_layer_idx: ${target_layer_idx}
+      kv_head_idx: ${kv_head_idx}
+      split_file: "val.txt"
+      query_idx_within_group: null
+      keep_dim: False
+      mmap: True
+      randomize_prompt_len: False
+      dtype: ${dtype}
+
+# Agent Architecture.
+# head_dim=128 is unchanged from the 7B config (Qwen2-1.5B also has head_dim 128).
+# num_queries_per_group=6 reflects Qwen2-1.5B's GQA group size (12 attn / 2 KV heads);
+# it is only consumed when query_aggregation="learned" (default here uses neither queries).
+agent:
+  _component_: "kvcompression.rl.agents.kv_sorting_agent.KVSamplingGroupedQueryAgent"
+  head_dim: 128
+  max_seq_length: 6000
+  mlp_hidden_size: 256
+  num_mlp_layers: 2
+  num_queries_per_group: 6
+  pos_embedding_dim: 32
+  processing_dim: 256
+  query_aggregation: null
+  use_kv_queries: false
+
+# EMA Configuration
+ema:
+  decay: 0.99
+
+# Oracle for reward computation
+oracle:
+  _component_: kvcompression.rl.rewards.oracle.Oracle
+
+# Data Loader Configuration (conservative for 8GB VRAM / small validation set)
+loader:
+  train:
+    batch_size: 16
+    dataloader_num_workers: 2
+    prefetch_factor: 2
+    dataloader_pin_memory: True
+  eval:
+    batch_size: 8
+    dataloader_num_workers: 2
+    prefetch_factor: 2
+    dataloader_pin_memory: True
+
+# Environment Configuration
+environment:
+  train:
+    _component_: kvcompression.rl.environments.kvsorting_env.KVSortingEnvironmentV2
+    reward_strategy: ${reward_strategy}
+    info_keys_to_log: ${trainer.info_keys_to_log}
+  eval:
+    _component_: kvcompression.rl.environments.kvsorting_env.KVSortingEnvironmentV2
+    reward_strategy: ${reward_strategy}
+    info_keys_to_log: ${trainer.info_keys_to_log}
+
+# Trainer Configuration (RLOO with Gumbel softmax)
+trainer:
+  _component_: kvcompression.rl.trainers.rloo_gumbel_terminal_trainer.RLOOGumbelTrainer
+  entropy_coef: 0
+  max_grad_norm: 5
+  normalize_advantages: True
+  ema_burnin_steps: 20
+  optimizer_config:
+    _component_: torch.optim.AdamW
+    lr: 5.0e-5
+    eps: 1.0e-8
+    weight_decay: 1e-3
+  scheduler_config:
+    _component_: kvcompression.utils.scheduler_factory.SequentialWarmupCosineScheduler
+    warmup_steps: 20
+    total_steps: ${training.num_epochs_or_steps}
+    warmup_start_factor: 0.01
+    cosine_eta_min: 1.0e-6
+  info_keys_to_log: []
+
+# Training Loop Configuration (short run: enough to see the loss/reward move)
+training:
+  num_epochs_or_steps: 200
+  eval_interval: 50
+  eval_episodes: null
+  save_best_model: True
+  storage_dir: ${storage_dir}
+  save_best_on_metric: "eval_reward"
+
+resume:
+  checkpoint_interval: 50
+  max_checkpoints_to_keep: 2
+
+# Logging Configuration
+logging:
+  tqdm_smoothing_window: 20
+  tqdm_train_metrics: ["total_loss", "episode_reward", "avg_entropy"]
+  tqdm_eval_metrics: ["eval_reward", "eval_length"]
+
+# Plotting Configuration (figures saved under figures/, gitignored)
+plotting:
+  enabled: True
+  smoothing_window: 20
+  plot_training_curves: True
+  plot_loss_curves: True
+  plot_eval_metrics: True
+  custom_metric_grids: []
+
+# Final Evaluation Configuration
+final_evaluation:
+  enabled: True
+  eval_episodes: null
+
+# WandB Configuration (disabled locally; WANDB_MODE=disabled in .env also enforces this)
+wandb:
+  enabled: false
+  name: "${sweep_name}_L${target_layer_idx}_H${kv_head_idx}"
+  project: "kvcompression"
+  entity: null
+
+# Profiler Configuration
+profiler:
+  enabled: False
+  cpu: True
+  cuda: True
+  wait_steps: 1
+  warmup_steps: 1
+  active_steps: 3
+  num_cycles: 2
+  profile_memory: False
+  with_stack: False
+  record_shapes: True
+  with_flops: False

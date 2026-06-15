@@ -184,7 +184,7 @@ class KVSortingEnvironmentV2:
     def reset_iterator(self):
         """Resets the internal dataloader iterator to start from the beginning."""
         pylogger.info("Resetting evaluation dataloader iterator.")
-        self.iterator = iter(self.dataloader)
+        self.dataloader_iter = iter(self.dataloader)
 
     def reset(self, raise_stop_iteration: bool = False) -> Dict[str, torch.Tensor]:
         """Resets the environment with the next batch."""

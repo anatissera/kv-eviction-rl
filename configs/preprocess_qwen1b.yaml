@@ -1,0 +1,72 @@
+# Qwen2-1.5B-Instruct RULER Data Preprocessing (pipeline-validation scale)
+#
+# Extracts Q/K/V activations from RULER for offline KVP agent training, using the
+# small Qwen2-1.5B-Instruct model instead of the paper's Qwen2.5-7B-Instruct.
+#
+# Prerequisites:
+#   1. Download weights:
+#        uv run tune download Qwen/Qwen2-1.5B-Instruct \
+#            --output-dir models/Qwen2-1.5B-Instruct --ignore-patterns "original/*"
+#      (must yield model.safetensors, vocab.json, merges.txt in that dir)
+#   2. cp .env.template .env   (or use the provided .env)
+#
+# Run (single GPU, capped sample count is handled by run_experiment.sh via
+# total_num_chunks; see that script). Manual single-chunk run:
+#   uv run tune run src/kvcompression/entrypoints/datagen/unroll_and_store.py \
+#       --config configs/preprocess_qwen1b.yaml \
+#       device=cuda:0 total_num_chunks=1 current_chunk=0
+#
+# Output: data/gqa_safetensors/simonjegou_ruler/Qwen2-1.5B-Instruct/temperature_0.00/
+
+home_dir: ${oc.env:PROJECT_ROOT}
+remote_dir: s3://kvp-local-noupload   # placeholder; S3 upload fails fast, local data is kept
+output_dir: ${oc.env:KVCOMPRESSION_DATA_ROOT}/gqa_safetensors
+
+device: cuda
+dtype: bf16
+
+seed: 1234
+batch_size: 1
+executor_max_workers: 1
+max_new_tokens: 128          # conservative generation length for validation
+temperature: 0               # greedy decoding for reproducibility
+top_k: 300
+
+enable_kv_cache: True
+compile: False               # compiling does not support attention wrapping
+
+# Model configuration: Qwen2-1.5B-Instruct (28 layers, 12 attn heads, 2 KV heads, head_dim 128)
+model_name: Qwen2-1.5B-Instruct
+model_dir: ${oc.env:PROJECT_ROOT}/models/${model_name}
+
+model:
+  _component_: torchtune.models.qwen2.qwen2_1_5b
+
+checkpointer:
+  _component_: torchtune.training.FullModelHFCheckpointer
+  checkpoint_dir: ${model_dir}
+  checkpoint_files: [
+    model.safetensors,       # Qwen2-1.5B ships a single safetensors shard
+  ]
+  output_dir: ${output_dir}
+  model_type: QWEN2
+
+tokenizer:
+  _component_: torchtune.models.qwen2.qwen2_tokenizer
+  path: ${model_dir}/vocab.json
+  merges_file: ${model_dir}/merges.txt
+  # RULER's smallest config is 4096 tokens; truncate to honor the <=2048 target
+  # and to keep the KV cache / compute footprint small for validation.
+  max_seq_len: 2048
+
+max_context_length: null
+
+# RULER dataset from HuggingFace. data_dir is the context-length bucket; 4096 is the
+# smallest available (the tokenizer max_seq_len above truncates it down to 2048).
+dataset_name: simonjegou/ruler
+data_dir: "4096"
+
+# Sample count is controlled by run_experiment.sh, which sets total_num_chunks =
+# ceil(dataset_len / NUM_EXAMPLES) and current_chunk=0 to process ~NUM_EXAMPLES samples.
+total_num_chunks: 1
+current_chunk: 0
