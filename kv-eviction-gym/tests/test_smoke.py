@@ -56,7 +56,11 @@ def test_capture_shapes(tiny_model_and_tokenizer, tiny_examples):
     assert cap.Q.shape == (L, H, T, D), f"Q shape mismatch: {cap.Q.shape}"
     assert cap.K.shape == (L, H, T, D)
     assert cap.V.shape == (L, H, T, D)
+    assert cap.attn_score.shape == (L, H, T), f"attn_score shape: {cap.attn_score.shape}"
     assert cap.future_attn.shape == (L, H, T)
+
+    # attn_score should be non-negative (column sums of softmax weights)
+    assert (cap.attn_score >= 0).all(), "attn_score has negative values"
 
     # future_attn should be normalized: each head sums to ~1
     row_sums = cap.future_attn.sum(dim=-1)  # [L, H]

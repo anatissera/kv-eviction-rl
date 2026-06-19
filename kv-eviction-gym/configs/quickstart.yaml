@@ -1,0 +1,36 @@
+# Quickstart: 1 GSM8K example, tiny budget, fast iteration on CPU.
+# Use this to verify the training loop runs end-to-end before scaling up.
+#
+# Run:
+#   cd kv-eviction-gym
+#   pip install -e .
+#   python scripts/train.py --config configs/quickstart.yaml
+
+model_name:   qwen-1.5b
+device:       cpu
+reward_mode:  auc
+
+# Single example — cycles indefinitely through just this one episode
+n_examples: 1
+seed: 0
+
+# Keep 8 tokens out of ~100-150 in the prompt
+budget:  8
+max_len: 256
+
+# Tiny MLP to keep it fast
+hidden: 32
+
+# PPO: collect 1 episode worth of steps per rollout
+# With 56 envs all terminating together, each rollout = 56 * (T - budget) steps
+# For T~100, budget=8: ~56 * 92 = 5152 steps per rollout
+n_steps:         5152   # overridden at runtime if T differs — just a ceiling
+batch_size:      512
+n_epochs:        4
+gamma:           0.99
+gae_lambda:      0.95
+clip_range:      0.2
+ent_coef:        0.0
+total_timesteps: 50000  # ~10 rollouts — enough to see if loss moves
+
+save_path: checkpoints/quickstart

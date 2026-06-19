@@ -115,7 +115,9 @@ class SharedKVVecEnv(VecEnv):
         L, H = self.n_layers, self.n_heads
 
         self.resident   = torch.ones(L, H, T, dtype=torch.bool)
-        self.attn_score = recompute_all_heads(cap.Q, cap.K, self.resident)
+        # Use the hook-captured prefill attention scores as the initial feature.
+        # After each eviction we recompute via recompute_all_heads (exact, with Q approx).
+        self.attn_score = cap.attn_score.clone()
 
         # Flat views: reshape [L, H, T, D] → [n_envs, T, D]
         self._K_flat  = cap.K.view(L * H, T, self.head_dim)

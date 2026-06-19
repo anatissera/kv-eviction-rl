@@ -1,25 +1,44 @@
 """
 Run one LLM prefill+decode on a GSM8K example and capture all per-head tensors.
 
-One call to `capture()` yields Q, K, V, and future-attention weights for
-every (layer, head) pair simultaneously. SharedKVVecEnv calls this once
-per episode reset to feed all 56 environments.
+Memory-efficient strategy (adapted from internal-signals-context-compression/
+src/scoring/hook_capture.py):
 
-Strategy: two forward passes, both with hooks on each layer's self_attn module.
-  Pass 1 (prefill only):   capture Q, K, V for every head via q/k/v_proj hooks.
-  Pass 2 (greedy decode):  accumulate per-token cross-attention from new tokens
-                            back onto prompt positions to build future_attn.
+  For each attention layer, register a pre-hook that injects
+  output_attentions=True into THAT LAYER's kwargs only, and a post-hook
+  that immediately reads output[1] (the [1,H,Q,K] attention matrix),
+  reduces it to [H, K], and sets output[1] = None so the full matrix is
+  freed before the next layer runs.
 
-We avoid output_attentions=True during generate() because HuggingFace's
-attention output format differs between eager/sdpa/flash backends and
-across transformer versions. Hooks are backend-agnostic.
+  Peak memory = model weights + KV cache + ONE layer's attention matrix,
+  regardless of the number of layers.
 
-Requires attn_implementation="eager" so the model exposes q/k/v_proj.
+Two passes:
+
+  Pass 1 (prefill, use_cache=True):
+    - Q: captured from q_proj(hidden_states) before RoPE.
+      NOTE: this is a mild approximation for the env attn recompute feature.
+      RoPE affects absolute magnitudes but not relative orderings, so the
+      policy can still learn from these scores.
+    - K, V: read from past_key_values after the forward pass.
+      These have RoPE applied (correct for cache use).
+    - attn_score (initial feature): per-head column sums of the softmax
+      attention from the prefill, captured via the post-hook.
+
+  Pass 2 (greedy decode, max_new_tokens steps):
+    - future_attn: accumulated per decode step.
+      Each step the attention hook fires for each layer with a [1,H,1,T+s]
+      matrix. We take [:,:,0,:prompt_len], immediately add [H,prompt_len]
+      to the accumulator, then free.
+      This uses the actual softmax weights with RoPE — correct.
+
+Source: /Users/alexanderbodner/Documents/Udesa/5to/tesis/internal-signals-context-compression
 """
 
 from __future__ import annotations
 
 from dataclasses import dataclass
+from typing import Any
 
 import torch
 from torch import Tensor
@@ -29,13 +48,31 @@ from kv_gym.vendor.prompts import format_gsm8k
 
 @dataclass
 class AllHeadCapture:
-    Q:            Tensor  # [n_layers, n_heads, prompt_len, head_dim]
-    K:            Tensor  # [n_layers, n_heads, prompt_len, head_dim]
+    Q:            Tensor  # [n_layers, n_heads, prompt_len, head_dim]  (no RoPE — approx)
+    K:            Tensor  # [n_layers, n_heads, prompt_len, head_dim]  (with RoPE — correct)
     V:            Tensor  # [n_layers, n_heads, prompt_len, head_dim]
-    future_attn:  Tensor  # [n_layers, n_heads, prompt_len]  normalized to sum=1
+    attn_score:   Tensor  # [n_layers, n_heads, prompt_len]  — prefill column-sum attention
+    future_attn:  Tensor  # [n_layers, n_heads, prompt_len]  — decode attention, normalized
     prompt_len:   int
     gold_answer:  str
 
+
+# ---------------------------------------------------------------------------
+# Pre-hook: inject output_attentions=True for one layer at a time
+# ---------------------------------------------------------------------------
+
+def _inject_output_attentions(
+    module: torch.nn.Module,
+    args: tuple,
+    kwargs: dict,
+) -> tuple[tuple, dict]:
+    kwargs["output_attentions"] = True
+    return args, kwargs
+
+
+# ---------------------------------------------------------------------------
+# Main capture function
+# ---------------------------------------------------------------------------
 
 def capture(
     model,
@@ -44,14 +81,14 @@ def capture(
     device: torch.device,
     max_new_tokens: int = 64,
 ) -> AllHeadCapture:
-    """Two-pass capture: Q/K/V from prefill, future_attn from generation.
+    """Capture Q/K/V, prefill attn scores, and future_attn for all heads.
 
     Args:
         model:          HuggingFace CausalLM with attn_implementation="eager".
         tokenizer:      Matching tokenizer.
         example:        GSM8K dict with "prompt_text" and "gold_answers".
         device:         Model device.
-        max_new_tokens: Generation length for future_attn accumulation.
+        max_new_tokens: How many decode steps to accumulate future_attn from.
 
     Returns:
         AllHeadCapture with all tensors on CPU.
@@ -60,115 +97,125 @@ def capture(
     inputs = tokenizer(prompt_text, return_tensors="pt").to(device)
     prompt_len = inputs["input_ids"].shape[1]
 
-    n_layers = model.config.num_hidden_layers
-    n_heads  = model.config.num_attention_heads
-    n_kv_heads = getattr(model.config, "num_key_value_heads", n_heads)
-    head_dim = model.config.hidden_size // n_heads
+    n_layers    = model.config.num_hidden_layers
+    n_heads     = model.config.num_attention_heads
+    n_kv_heads  = getattr(model.config, "num_key_value_heads", n_heads)
+    head_dim    = model.config.hidden_size // n_heads
 
     # ------------------------------------------------------------------ #
-    # Pass 1: prefill → capture Q, K, V for all heads                    #
+    # Pass 1: prefill                                                     #
+    # Captures Q (no RoPE), K/V (from past_key_values, with RoPE),       #
+    # and per-head prefill attention column sums.                         #
     # ------------------------------------------------------------------ #
 
-    captured_qkv: dict[int, dict[str, Tensor]] = {}
+    captured_q: dict[int, Tensor] = {}    # layer_idx → [H, T, D]  (no RoPE)
+    prefill_attn: dict[int, Tensor] = {}  # layer_idx → [H, T]  (col-sum softmax)
 
-    def make_qkv_hook(layer_idx: int):
-        def hook(module, args, kwargs, output):
+    handles: list[Any] = []
+
+    def make_q_hook(layer_idx: int):
+        """Post-hook: capture Q from q_proj, and attention col-sums."""
+        def hook(module, input, output):
             with torch.no_grad():
-                # args[0] is hidden_states: [batch, seq, hidden]
-                h = args[0] if args else kwargs.get("hidden_states")
-                if h is None:
-                    return
-                q = module.q_proj(h)
-                k = module.k_proj(h)
-                v = module.v_proj(h)
-
+                # Get hidden_states from input (first positional arg)
+                h = input[0]  # [1, T, hidden]
+                q = module.q_proj(h)           # [1, T, H*D]
                 bsz, seq, _ = q.shape
-                H   = module.num_heads
+                H  = module.num_heads
                 KVH = module.num_key_value_heads
-                D   = module.head_dim
-
-                q = q.view(bsz, seq, H,   D).squeeze(0).permute(1, 0, 2)   # [H, T, D]
-                k = k.view(bsz, seq, KVH, D).squeeze(0).permute(1, 0, 2)   # [KVH, T, D]
-                v = v.view(bsz, seq, KVH, D).squeeze(0).permute(1, 0, 2)   # [KVH, T, D]
-
+                D  = module.head_dim
+                q = q.view(bsz, seq, H, D).squeeze(0).permute(1, 0, 2)  # [H, T, D]
                 if KVH != H:
-                    repeats = H // KVH
-                    k = k.repeat_interleave(repeats, dim=0)
-                    v = v.repeat_interleave(repeats, dim=0)
+                    # GQA: repeat to match Q heads (for env observation)
+                    pass  # Q stays at [H, T, D] — we want per-Q-head features
+                captured_q[layer_idx] = q.cpu()
 
-                captured_qkv[layer_idx] = {
-                    "Q": q.cpu(), "K": k.cpu(), "V": v.cpu()
-                }
+                # Capture per-head attention column sums from output[1]
+                # output[1]: [1, H, T, T]  (injected by pre-hook)
+                attn_weights = output[1]
+                if attn_weights is not None:
+                    # sum over query dim → [H, T]  (how much each key is attended to)
+                    col_sum = attn_weights.squeeze(0).sum(dim=1)  # [H, T]
+                    prefill_attn[layer_idx] = col_sum.cpu()
+
+            # Free the full attention matrix immediately
+            return (output[0], None) + output[2:]
         return hook
 
-    hooks = []
     for i, layer in enumerate(model.model.layers):
-        h = layer.self_attn.register_forward_hook(make_qkv_hook(i), with_kwargs=True)
-        hooks.append(h)
+        h_pre = layer.self_attn.register_forward_pre_hook(
+            _inject_output_attentions, with_kwargs=True
+        )
+        h_post = layer.self_attn.register_forward_hook(make_q_hook(i))
+        handles += [h_pre, h_post]
 
     model.eval()
     with torch.no_grad():
-        model(**inputs)
+        prefill_out = model(**inputs, use_cache=True)
 
-    for h in hooks:
+    for h in handles:
         h.remove()
+    handles.clear()
 
-    Q_all = torch.stack([captured_qkv[i]["Q"] for i in range(n_layers)])  # [L, H, T, D]
-    K_all = torch.stack([captured_qkv[i]["K"] for i in range(n_layers)])
-    V_all = torch.stack([captured_qkv[i]["V"] for i in range(n_layers)])
+    # Read K and V from past_key_values (RoPE already applied)
+    # past_key_values[layer_idx] is a tuple (k, v) each [1, n_kv_heads, T, D]
+    past_kv = prefill_out.past_key_values
+    K_list, V_list = [], []
+    for layer_idx in range(n_layers):
+        k = past_kv[layer_idx][0].squeeze(0)  # [n_kv_heads, T, D]
+        v = past_kv[layer_idx][1].squeeze(0)  # [n_kv_heads, T, D]
+        if n_kv_heads != n_heads:
+            repeats = n_heads // n_kv_heads
+            k = k.repeat_interleave(repeats, dim=0)  # [H, T, D]
+            v = v.repeat_interleave(repeats, dim=0)
+        K_list.append(k.cpu())
+        V_list.append(v.cpu())
+
+    Q_all    = torch.stack([captured_q[i]    for i in range(n_layers)])  # [L, H, T, D]
+    K_all    = torch.stack(K_list)                                        # [L, H, T, D]
+    V_all    = torch.stack(V_list)
+    attn_all = torch.stack([prefill_attn.get(i, torch.zeros(n_heads, prompt_len))
+                             for i in range(n_layers)])                   # [L, H, T]
 
     # ------------------------------------------------------------------ #
-    # Pass 2: greedy decode → accumulate future_attn via attention hooks  #
+    # Pass 2: greedy decode → accumulate future_attn per step             #
+    # Each step's attention is [1, H, 1, cache_len]. We take              #
+    # [:, :, 0, :prompt_len] → [H, prompt_len] and accumulate.           #
+    # Only one layer's [H, 1, T] lives in memory at a time.              #
     # ------------------------------------------------------------------ #
-    # For each generated token, we capture the softmax attention weights
-    # from that one new query position over all past key positions.
-    # We sum those weights (over the prompt_len positions only) to get
-    # a proxy for how important each prompt token is to the generation.
 
     future_attn = torch.zeros(n_layers, n_heads, prompt_len)
 
-    def make_attn_hook(layer_idx: int):
-        def hook(module, args, kwargs, output):
-            with torch.no_grad():
-                h = args[0] if args else kwargs.get("hidden_states")
-                if h is None or h.shape[1] == prompt_len:
-                    # Skip the prefill step (seq == prompt_len)
-                    return
-                # h: [1, 1, hidden] — single new token
-                q_new = module.q_proj(h)                              # [1, 1, H*D]
-                H   = module.num_heads
-                KVH = module.num_key_value_heads
-                D   = module.head_dim
-                q_new = q_new.view(1, H, D)                           # [1, H, D]
-
-                # Retrieve cached K up to this point and slice prompt portion
-                # We use K_all (prompt keys) as a proxy — this avoids needing
-                # access to the running KV cache during generation.
-                K_prompt = K_all[layer_idx, :, :, :].to(device)      # [H, T, D]
-                # q_new: [1, H, D] → [H, 1, D]
-                q_new = q_new.permute(1, 0, 2)                        # [H, 1, D]
-                scale = D ** -0.5
-                logits = torch.bmm(q_new, K_prompt.transpose(1, 2)) * scale  # [H, 1, T]
-                weights = torch.softmax(logits, dim=-1)               # [H, 1, T]
-                future_attn[layer_idx] += weights[:, 0, :].cpu()     # [H, T]
+    def make_future_hook(layer_idx: int):
+        def hook(module, input, output):
+            attn_weights = output[1]  # [1, H, 1, cache_len]  or None
+            if attn_weights is not None and attn_weights.shape[2] == 1:
+                # Decode step (query_len == 1). Take attention over prompt portion.
+                step_attn = attn_weights[0, :, 0, :prompt_len]  # [H, prompt_len]
+                future_attn[layer_idx].add_(step_attn.cpu())
+            # Free immediately
+            return (output[0], None) + output[2:]
         return hook
 
-    hooks = []
     for i, layer in enumerate(model.model.layers):
-        h = layer.self_attn.register_forward_hook(make_attn_hook(i), with_kwargs=True)
-        hooks.append(h)
+        h_pre = layer.self_attn.register_forward_pre_hook(
+            _inject_output_attentions, with_kwargs=True
+        )
+        h_post = layer.self_attn.register_forward_hook(make_future_hook(i))
+        handles += [h_pre, h_post]
 
     with torch.no_grad():
         model.generate(
             **inputs,
             max_new_tokens=max_new_tokens,
             do_sample=False,
+            past_key_values=None,  # fresh decode from prompt (no reuse of pass 1 cache)
         )
 
-    for h in hooks:
+    for h in handles:
         h.remove()
 
-    # Normalize so each head's future_attn sums to 1
+    # Normalize future_attn: each head sums to 1 (makes AUC reward scale-invariant)
     row_sum = future_attn.sum(dim=-1, keepdim=True).clamp(min=1e-8)
     future_attn = future_attn / row_sum
 
@@ -176,6 +223,7 @@ def capture(
         Q=Q_all,
         K=K_all,
         V=V_all,
+        attn_score=attn_all,
         future_attn=future_attn,
         prompt_len=prompt_len,
         gold_answer=example["gold_answers"][0],
