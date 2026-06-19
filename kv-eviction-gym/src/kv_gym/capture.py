@@ -115,19 +115,13 @@ def capture(
 
     def make_q_hook(layer_idx: int):
         """Post-hook: capture Q from q_proj, and attention col-sums."""
-        def hook(module, input, output):
+        def hook(module, args, kwargs, output):
             with torch.no_grad():
-                # Get hidden_states from input (first positional arg)
-                h = input[0]  # [1, T, hidden]
+                h = args[0] if args else kwargs.get("hidden_states")
                 q = module.q_proj(h)           # [1, T, H*D]
                 bsz, seq, _ = q.shape
-                H  = module.num_heads
-                KVH = module.num_key_value_heads
-                D  = module.head_dim
-                q = q.view(bsz, seq, H, D).squeeze(0).permute(1, 0, 2)  # [H, T, D]
-                if KVH != H:
-                    # GQA: repeat to match Q heads (for env observation)
-                    pass  # Q stays at [H, T, D] — we want per-Q-head features
+                # Use config-level head counts (Qwen2Attention has no num_heads attr)
+                q = q.view(bsz, seq, n_heads, head_dim).squeeze(0).permute(1, 0, 2)  # [H, T, D]
                 captured_q[layer_idx] = q.cpu()
 
                 # Capture per-head attention column sums from output[1]
@@ -146,7 +140,7 @@ def capture(
         h_pre = layer.self_attn.register_forward_pre_hook(
             _inject_output_attentions, with_kwargs=True
         )
-        h_post = layer.self_attn.register_forward_hook(make_q_hook(i))
+        h_post = layer.self_attn.register_forward_hook(make_q_hook(i), with_kwargs=True)
         handles += [h_pre, h_post]
 
     model.eval()
@@ -160,10 +154,23 @@ def capture(
     # Read K and V from past_key_values (RoPE already applied)
     # past_key_values[layer_idx] is a tuple (k, v) each [1, n_kv_heads, T, D]
     past_kv = prefill_out.past_key_values
+    # Transformers >= 4.47 uses DynamicCache with .layers[i].keys / .values
+    # Transformers 4.40-4.46 used .key_cache / .value_cache lists
+    # Older versions returned tuple-of-tuples
+    def _get_kv(layer_idx):
+        if hasattr(past_kv, "layers"):
+            # New API: DynamicCache with CacheLayer objects
+            return past_kv.layers[layer_idx].keys, past_kv.layers[layer_idx].values
+        elif hasattr(past_kv, "key_cache"):
+            return past_kv.key_cache[layer_idx], past_kv.value_cache[layer_idx]
+        else:
+            return past_kv[layer_idx][0], past_kv[layer_idx][1]
+
     K_list, V_list = [], []
     for layer_idx in range(n_layers):
-        k = past_kv[layer_idx][0].squeeze(0)  # [n_kv_heads, T, D]
-        v = past_kv[layer_idx][1].squeeze(0)  # [n_kv_heads, T, D]
+        k, v = _get_kv(layer_idx)
+        k = k.squeeze(0)  # [n_kv_heads, T, D]
+        v = v.squeeze(0)  # [n_kv_heads, T, D]
         if n_kv_heads != n_heads:
             repeats = n_heads // n_kv_heads
             k = k.repeat_interleave(repeats, dim=0)  # [H, T, D]
@@ -187,7 +194,7 @@ def capture(
     future_attn = torch.zeros(n_layers, n_heads, prompt_len)
 
     def make_future_hook(layer_idx: int):
-        def hook(module, input, output):
+        def hook(module, args, kwargs, output):
             attn_weights = output[1]  # [1, H, 1, cache_len]  or None
             if attn_weights is not None and attn_weights.shape[2] == 1:
                 # Decode step (query_len == 1). Take attention over prompt portion.
@@ -201,7 +208,7 @@ def capture(
         h_pre = layer.self_attn.register_forward_pre_hook(
             _inject_output_attentions, with_kwargs=True
         )
-        h_post = layer.self_attn.register_forward_hook(make_future_hook(i))
+        h_post = layer.self_attn.register_forward_hook(make_future_hook(i), with_kwargs=True)
         handles += [h_pre, h_post]
 
     with torch.no_grad():
