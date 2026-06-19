@@ -1,0 +1,29 @@
+# Phase 1: AUC reward — no LLM call during RL steps (fast)
+# Train locally on CPU with small budget for quick iteration.
+
+model_name:   qwen-1.5b
+device:       cpu          # change to cuda on GPU server
+reward_mode:  auc
+
+# Data
+n_examples: 200
+seed: 0
+
+# Budget: keep 32 tokens out of ~150 per head (~21% retention)
+budget:  32
+max_len: 256             # pad observations to this width
+
+# Policy MLP hidden size
+hidden: 64
+
+# PPO hyperparameters
+n_steps:         560     # 10 episodes × 56 envs
+batch_size:      560
+n_epochs:        4
+gamma:           0.99
+gae_lambda:      0.95
+clip_range:      0.2
+ent_coef:        0.0     # no entropy regularisation (matches the paper)
+total_timesteps: 500000
+
+save_path: checkpoints/phase1
