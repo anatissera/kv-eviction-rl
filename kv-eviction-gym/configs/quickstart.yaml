@@ -1,4 +1,4 @@
-# Quickstart: 1 GSM8K example, tiny budget, fast iteration on CPU.
+# Quickstart: 1 GSM8K example on local Mac (CPU or MPS).
 # Use this to verify the training loop runs end-to-end before scaling up.
 #
 # Run:
@@ -7,30 +7,29 @@
 #   python scripts/train.py --config configs/quickstart.yaml
 
 model_name:   qwen-1.5b
-device:       cpu
+device:       auto          # auto = MPS on Apple Silicon, else CPU
 reward_mode:  auc
 
-# Single example — cycles indefinitely through just this one episode
+# Single example — policy must memorise the optimal eviction for this one prompt
 n_examples: 1
 seed: 0
 
-# Keep 8 tokens out of ~100-150 in the prompt
+# Keep 8 tokens out of ~100-150 prompt tokens  (episode length ≈ 90-140 steps)
 budget:  8
 max_len: 256
 
 # Tiny MLP to keep it fast
 hidden: 32
 
-# PPO: collect 1 episode worth of steps per rollout
-# With 56 envs all terminating together, each rollout = 56 * (T - budget) steps
-# For T~100, budget=8: ~56 * 92 = 5152 steps per rollout
-n_steps:         5152   # overridden at runtime if T differs — just a ceiling
-batch_size:      512
+# PPO — n_steps is per-env per rollout update.
+# With 56 envs and episode_length≈130, n_steps=256 collects ~2 episodes per rollout.
+n_steps:         256
+batch_size:      256
 n_epochs:        4
 gamma:           0.99
 gae_lambda:      0.95
 clip_range:      0.2
 ent_coef:        0.0
-total_timesteps: 50000  # ~10 rollouts — enough to see if loss moves
+total_timesteps: 100000   # ~7 rollouts × 56 envs × 256 steps
 
 save_path: checkpoints/quickstart

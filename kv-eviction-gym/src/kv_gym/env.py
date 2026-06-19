@@ -8,9 +8,11 @@ observation_space: Box([max_len, feature_dim])
 action_space:      Discrete(max_len)
 n_envs:            n_layers * n_heads  (56 for Qwen2-1.5B-Instruct)
 
-Action masking: the environment exposes `action_masks()` returning a
-bool array [n_envs, max_len] which MaskablePPO uses to zero logits for
-evicted or out-of-range positions.
+SB3 VecEnv contract:
+  - step_wait() auto-resets all envs on done and returns fresh obs.
+    Terminal obs is saved in infos[i]["terminal_observation"].
+  - action_masks() returns [n_envs, max_len] bool for MaskablePPO.
+  - env_method("action_masks") also works (older sb3-contrib versions).
 """
 
 from __future__ import annotations
@@ -35,7 +37,7 @@ class SharedKVVecEnv(VecEnv):
     Args:
         model:       HuggingFace CausalLM loaded with attn_implementation="eager".
         tokenizer:   Matching tokenizer.
-        examples:    Iterable of GSM8K example dicts (cycled infinitely).
+        examples:    List of GSM8K example dicts (cycled indefinitely).
         budget:      Number of KV tokens to keep per head at episode end.
         max_len:     Fixed observation width (pad prompt to this length).
         reward_mode: "auc" (Phase 1, no LLM during steps) or "correctness"
@@ -65,14 +67,12 @@ class SharedKVVecEnv(VecEnv):
         self.reward_mode = reward_mode
         self.device    = device or next(model.parameters()).device
 
-        # Infer n_layers / n_heads from model config
         cfg = model.config
         self.n_layers = cfg.num_hidden_layers
         self.n_heads  = cfg.num_attention_heads
         self.head_dim = cfg.hidden_size // cfg.num_attention_heads
         n_envs = self.n_layers * self.n_heads
 
-        # Flat list of (layer, head) indices matching env index
         self.head_indices = [
             (l, h) for l in range(self.n_layers) for h in range(self.n_heads)
         ]
@@ -86,21 +86,17 @@ class SharedKVVecEnv(VecEnv):
 
         super().__init__(n_envs, obs_space, act_space)
 
-        # Cycle through examples indefinitely
         self._example_iter: Iterator[dict] = itertools.cycle(examples)
-
-        # Pending actions buffer (set by step_async, consumed by step_wait)
         self._pending_actions: np.ndarray | None = None
 
-        # Episode state (set in reset)
+        # Episode state (initialised in reset)
         self.capture: AllHeadCapture | None = None
-        self.resident: torch.Tensor | None = None   # [L, H, T]  bool
+        self.resident: torch.Tensor | None = None    # [L, H, T]  bool
         self.attn_score: torch.Tensor | None = None  # [L, H, T]
 
-        # Flat views used in step() — [n_envs, T, D] etc.
         self._K_flat: torch.Tensor | None = None
         self._V_flat: torch.Tensor | None = None
-        self._fa_flat: torch.Tensor | None = None  # future_attn flat
+        self._fa_flat: torch.Tensor | None = None
 
     # ------------------------------------------------------------------
     # VecEnv interface
@@ -115,11 +111,8 @@ class SharedKVVecEnv(VecEnv):
         L, H = self.n_layers, self.n_heads
 
         self.resident   = torch.ones(L, H, T, dtype=torch.bool)
-        # Use the hook-captured prefill attention scores as the initial feature.
-        # After each eviction we recompute via recompute_all_heads (exact, with Q approx).
         self.attn_score = cap.attn_score.clone()
 
-        # Flat views: reshape [L, H, T, D] → [n_envs, T, D]
         self._K_flat  = cap.K.view(L * H, T, self.head_dim)
         self._V_flat  = cap.V.view(L * H, T, self.head_dim)
         self._fa_flat = cap.future_attn.view(L * H, T)
@@ -145,19 +138,27 @@ class SharedKVVecEnv(VecEnv):
             self.capture.Q, self.capture.K, self.resident
         )
 
-        # Check termination: all heads reached budget
         n_resident = self.resident.sum(dim=-1)  # [L, H]
         done = bool((n_resident <= self.budget).all())
 
         if done:
             rewards = self._terminal_reward()
             dones   = np.ones(self.num_envs, dtype=bool)
+
+            # Save terminal obs before resetting (SB3 reads this from infos)
+            terminal_obs = self._obs()
+            infos = [{"terminal_observation": terminal_obs[i]}
+                     for i in range(self.num_envs)]
+
+            # Auto-reset: SB3 VecEnv contract requires this
+            new_obs = self.reset()
         else:
             rewards = np.zeros(self.num_envs, dtype=np.float32)
             dones   = np.zeros(self.num_envs, dtype=bool)
+            infos   = [{} for _ in range(self.num_envs)]
+            new_obs = self._obs()
 
-        infos = [{} for _ in range(self.num_envs)]
-        return self._obs(), rewards, dones, infos
+        return new_obs, rewards, dones, infos
 
     def action_masks(self) -> np.ndarray:
         """Return [n_envs, max_len] bool — True where action is valid."""
@@ -165,8 +166,9 @@ class SharedKVVecEnv(VecEnv):
         T = self.capture.prompt_len if self.capture else 0
 
         masks = np.zeros((self.num_envs, self.max_len), dtype=bool)
-        res_flat = self.resident.view(L * H, T).cpu().numpy()
-        masks[:, :T] = res_flat
+        if T > 0:
+            res_flat = self.resident.view(L * H, T).cpu().numpy()
+            masks[:, :T] = res_flat
         return masks
 
     # ------------------------------------------------------------------
@@ -175,12 +177,22 @@ class SharedKVVecEnv(VecEnv):
 
     def close(self): pass
 
-    def get_attr(self, attr_name, indices=None): raise NotImplementedError
+    def get_attr(self, attr_name, indices=None):
+        if indices is None:
+            indices = list(range(self.num_envs))
+        val = getattr(self, attr_name, None)
+        return [val] * len(indices)
 
-    def set_attr(self, attr_name, value, indices=None): raise NotImplementedError
+    def set_attr(self, attr_name, value, indices=None): pass
 
     def env_method(self, method_name, *method_args, indices=None, **method_kwargs):
-        raise NotImplementedError
+        # sb3-contrib calls env_method("action_masks") on older versions
+        if method_name == "action_masks":
+            masks = self.action_masks()
+            n = self.num_envs if indices is None else len(indices)
+            idx = list(range(self.num_envs)) if indices is None else list(indices)
+            return [masks[i] for i in idx]
+        raise NotImplementedError(f"env_method('{method_name}') not supported")
 
     def env_is_wrapped(self, wrapper_class, indices=None):
         return [False] * self.num_envs
@@ -203,7 +215,6 @@ class SharedKVVecEnv(VecEnv):
             [h / max(H - 1, 1) for l, h in self.head_indices], dtype=torch.float32
         )
 
-        # Pad K/V flat tensors to max_len
         n_envs = self.num_envs
         K_pad = torch.zeros(n_envs, self.max_len, self.head_dim)
         V_pad = torch.zeros(n_envs, self.max_len, self.head_dim)
@@ -222,9 +233,8 @@ class SharedKVVecEnv(VecEnv):
         if self.reward_mode == "auc":
             L, H = self.n_layers, self.n_heads
             T = self.capture.prompt_len
-            fa   = self._fa_flat                           # [n_envs, T]
-            res  = self.resident.view(L * H, T)            # [n_envs, T]
+            fa   = self._fa_flat
+            res  = self.resident.view(L * H, T)
             rew  = future_attention_auc(fa, res, self.budget)
             return rew.cpu().numpy().astype(np.float32)
-        else:
-            raise NotImplementedError("correctness reward not wired yet")
+        raise NotImplementedError("correctness reward not wired yet")

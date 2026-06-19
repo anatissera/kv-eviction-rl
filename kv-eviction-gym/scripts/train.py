@@ -36,12 +36,14 @@ def main():
     args = parse_args()
     cfg  = load_config(args.config)
 
-    device = torch.device(cfg.get("device", "cpu"))
+    device_cfg = cfg.get("device", "auto")
+    device = None if device_cfg == "auto" else torch.device(device_cfg)
     model, tokenizer, device = load_model_and_tokenizer(
         name=cfg.get("model_name", "qwen-1.5b"),
         device=device,
         attn_implementation="eager",
     )
+    print(f"Using device: {device}")
 
     examples = load_gsm8k(n=cfg.get("n_examples", 200), seed=cfg.get("seed", 0))
 
