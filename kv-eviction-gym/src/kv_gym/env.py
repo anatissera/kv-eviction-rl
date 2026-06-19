@@ -89,6 +89,9 @@ class SharedKVVecEnv(VecEnv):
         # Cycle through examples indefinitely
         self._example_iter: Iterator[dict] = itertools.cycle(examples)
 
+        # Pending actions buffer (set by step_async, consumed by step_wait)
+        self._pending_actions: np.ndarray | None = None
+
         # Episode state (set in reset)
         self.capture: AllHeadCapture | None = None
         self.resident: torch.Tensor | None = None   # [L, H, T]  bool
