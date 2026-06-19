@@ -22,7 +22,9 @@ max_len: 256
 hidden: 32
 
 # PPO — n_steps is per-env per rollout update.
-# With 56 envs and episode_length≈130, n_steps=256 collects ~2 episodes per rollout.
+# With 56 envs (28 layers × 2 KV-heads) and n_steps=256:
+#   one rollout = 256 × 56 = 14336 transitions
+#   total_timesteps=300000 → ~21 gradient updates → enough to see loss curves
 n_steps:         256
 batch_size:      256
 n_epochs:        4
@@ -30,6 +32,6 @@ gamma:           0.99
 gae_lambda:      0.95
 clip_range:      0.2
 ent_coef:        0.0
-total_timesteps: 100000   # ~7 rollouts × 56 envs × 256 steps
+total_timesteps: 300000   # ~21 rollouts × 14336 steps each
 
 save_path: checkpoints/quickstart

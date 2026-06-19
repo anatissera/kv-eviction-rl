@@ -48,16 +48,18 @@ def test_capture_shapes(tiny_model_and_tokenizer, tiny_examples):
     cap = capture(model, tokenizer, tiny_examples[0], device, max_new_tokens=4)
 
     cfg = model.config
-    L = cfg.num_hidden_layers
-    H = cfg.num_attention_heads
-    D = cfg.hidden_size // H
-    T = cap.prompt_len
+    L   = cfg.num_hidden_layers
+    n_q = cfg.num_attention_heads
+    Hkv = getattr(cfg, "num_key_value_heads", n_q)
+    D   = cfg.hidden_size // n_q
+    T   = cap.prompt_len
 
-    assert cap.Q.shape == (L, H, T, D), f"Q shape mismatch: {cap.Q.shape}"
-    assert cap.K.shape == (L, H, T, D)
-    assert cap.V.shape == (L, H, T, D)
-    assert cap.attn_score.shape == (L, H, T), f"attn_score shape: {cap.attn_score.shape}"
-    assert cap.future_attn.shape == (L, H, T)
+    # All captured tensors use KV-head count (Q-heads averaged into groups)
+    assert cap.Q.shape == (L, Hkv, T, D), f"Q shape mismatch: {cap.Q.shape}"
+    assert cap.K.shape == (L, Hkv, T, D)
+    assert cap.V.shape == (L, Hkv, T, D)
+    assert cap.attn_score.shape == (L, Hkv, T), f"attn_score shape: {cap.attn_score.shape}"
+    assert cap.future_attn.shape == (L, Hkv, T)
 
     # attn_score should be non-negative (column sums of softmax weights)
     assert (cap.attn_score >= 0).all(), "attn_score has negative values"

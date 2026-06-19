@@ -48,11 +48,11 @@ from kv_gym.vendor.prompts import format_gsm8k
 
 @dataclass
 class AllHeadCapture:
-    Q:            Tensor  # [n_layers, n_heads, prompt_len, head_dim]  (no RoPE — approx)
-    K:            Tensor  # [n_layers, n_heads, prompt_len, head_dim]  (with RoPE — correct)
-    V:            Tensor  # [n_layers, n_heads, prompt_len, head_dim]
-    attn_score:   Tensor  # [n_layers, n_heads, prompt_len]  — prefill column-sum attention
-    future_attn:  Tensor  # [n_layers, n_heads, prompt_len]  — decode attention, normalized
+    Q:            Tensor  # [n_layers, n_kv_heads, prompt_len, head_dim]  averaged over Q-group
+    K:            Tensor  # [n_layers, n_kv_heads, prompt_len, head_dim]  (with RoPE — correct)
+    V:            Tensor  # [n_layers, n_kv_heads, prompt_len, head_dim]
+    attn_score:   Tensor  # [n_layers, n_kv_heads, prompt_len]  — prefill col-sum, averaged
+    future_attn:  Tensor  # [n_layers, n_kv_heads, prompt_len]  — decode attention, normalized
     prompt_len:   int
     gold_answer:  str
 
@@ -171,18 +171,22 @@ def capture(
         k, v = _get_kv(layer_idx)
         k = k.squeeze(0)  # [n_kv_heads, T, D]
         v = v.squeeze(0)  # [n_kv_heads, T, D]
-        if n_kv_heads != n_heads:
-            repeats = n_heads // n_kv_heads
-            k = k.repeat_interleave(repeats, dim=0)  # [H, T, D]
-            v = v.repeat_interleave(repeats, dim=0)
         K_list.append(k.cpu())
         V_list.append(v.cpu())
 
-    Q_all    = torch.stack([captured_q[i]    for i in range(n_layers)])  # [L, H, T, D]
-    K_all    = torch.stack(K_list)                                        # [L, H, T, D]
+    # Q and attn were captured per Q-head [L, n_heads, T, D].
+    # For GQA models (n_kv_heads < n_heads), average Q-heads within each
+    # KV group so that Q/K/V shapes all agree on n_kv_heads.
+    Q_all    = torch.stack([captured_q[i]    for i in range(n_layers)])  # [L, n_heads, T, D]
+    K_all    = torch.stack(K_list)                                        # [L, n_kv_heads, T, D]
     V_all    = torch.stack(V_list)
     attn_all = torch.stack([prefill_attn.get(i, torch.zeros(n_heads, prompt_len))
-                             for i in range(n_layers)])                   # [L, H, T]
+                             for i in range(n_layers)])                   # [L, n_heads, T]
+
+    if n_kv_heads != n_heads:
+        q_per_kv = n_heads // n_kv_heads
+        Q_all    = Q_all.view(n_layers, n_kv_heads, q_per_kv, prompt_len, head_dim).mean(dim=2)
+        attn_all = attn_all.view(n_layers, n_kv_heads, q_per_kv, prompt_len).mean(dim=2)
 
     # ------------------------------------------------------------------ #
     # Pass 2: greedy decode → accumulate future_attn per step             #
@@ -221,6 +225,11 @@ def capture(
 
     for h in handles:
         h.remove()
+
+    # Average Q-head groups into KV-head groups (same as done above for Q/attn)
+    if n_kv_heads != n_heads:
+        q_per_kv = n_heads // n_kv_heads
+        future_attn = future_attn.view(n_layers, n_kv_heads, q_per_kv, prompt_len).mean(dim=2)
 
     # Normalize future_attn: each head sums to 1 (makes AUC reward scale-invariant)
     row_sum = future_attn.sum(dim=-1, keepdim=True).clamp(min=1e-8)

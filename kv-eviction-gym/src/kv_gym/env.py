@@ -6,7 +6,7 @@ They all step in lockstep (same seq_len, same budget, same episode length).
 
 observation_space: Box([max_len, feature_dim])
 action_space:      Discrete(max_len)
-n_envs:            n_layers * n_heads  (56 for Qwen2-1.5B-Instruct)
+n_envs:            n_layers * n_kv_heads  (56 for Qwen2.5-1.5B: 28×2)
 
 SB3 VecEnv contract:
   - step_wait() auto-resets all envs on done and returns fresh obs.
@@ -69,7 +69,10 @@ class SharedKVVecEnv(VecEnv):
 
         cfg = model.config
         self.n_layers = cfg.num_hidden_layers
-        self.n_heads  = cfg.num_attention_heads
+        # Use KV-heads as the per-environment head count: one env per (layer, kv_head).
+        # For GQA models, multiple Q-heads share one KV cache — eviction decisions
+        # are made at the KV-head level, not the Q-head level.
+        self.n_heads  = getattr(cfg, "num_key_value_heads", cfg.num_attention_heads)
         self.head_dim = cfg.hidden_size // cfg.num_attention_heads
         n_envs = self.n_layers * self.n_heads
 
