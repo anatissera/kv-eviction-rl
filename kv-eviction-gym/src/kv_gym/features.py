@@ -1,17 +1,15 @@
 """
 Per-token observation builder.
 
-Feature set (3 scalars per token position):
-    ||K[t]||   L2 norm of the key vector — proxy for token importance
-    ||V[t]||   L2 norm of the value vector
-    position   t / max_len  (relative position in prompt)
+Feature set per token position t:
+    K[t]       (head_dim,)  full key vector with RoPE — encodes content + position
+    V[t]       (head_dim,)  full value vector
+    t/max_len  (1,)         explicit relative position (easy positional prior)
 
-feature_dim = 3
+feature_dim = 2 * head_dim + 1  (129 for Qwen2.5-1.5B with head_dim=64)
 
-No attention scores (avoids eager-only constraint, enabling flash_attn).
-No raw K/V vectors (262× smaller observation than the original design).
 No is_resident (MaskablePPO gets that from the action mask).
-No layer/head fracs (add back later if ablations show benefit).
+No layer/head fracs (add back if ablations show benefit).
 
 The observation is zero-padded beyond prompt_len. The action mask already
 prevents the policy from selecting those padded positions.
@@ -21,7 +19,9 @@ import numpy as np
 import torch
 from torch import Tensor
 
-FEATURE_DIM = 3
+
+def feature_dim(head_dim: int) -> int:
+    return 2 * head_dim + 1
 
 
 def build_obs(
@@ -29,22 +29,21 @@ def build_obs(
     V:          Tensor,   # [n_envs, max_len, head_dim]
     prompt_len: int,
     max_len:    int,
-) -> np.ndarray:          # [n_envs, max_len, 3]
+) -> np.ndarray:          # [n_envs, max_len, 2*head_dim+1]
     """Build the observation array for all environments at once."""
-    n_envs = K.shape[0]
-    obs = np.zeros((n_envs, max_len, FEATURE_DIM), dtype=np.float32)
+    n_envs, _, head_dim = K.shape
+    fdim = 2 * head_dim + 1
+    obs  = np.zeros((n_envs, max_len, fdim), dtype=np.float32)
 
-    # Key and value L2 norms per token  [n_envs, prompt_len]
-    k_norm = K[:, :prompt_len].norm(dim=-1).cpu().numpy()
-    v_norm = V[:, :prompt_len].norm(dim=-1).cpu().numpy()
+    K_np = K[:, :prompt_len].cpu().numpy()        # [n_envs, T, D]
+    V_np = V[:, :prompt_len].cpu().numpy()
 
-    # Relative position  [prompt_len]  (same for all envs)
     positions = (
         np.arange(prompt_len, dtype=np.float32) / max(max_len - 1, 1)
     )  # [T]
 
-    obs[:, :prompt_len, 0] = k_norm
-    obs[:, :prompt_len, 1] = v_norm
-    obs[:, :prompt_len, 2] = positions[None, :]   # broadcast across envs
+    obs[:, :prompt_len, :head_dim]            = K_np
+    obs[:, :prompt_len, head_dim:2*head_dim]  = V_np
+    obs[:, :prompt_len, 2*head_dim]           = positions[None, :]
 
     return obs

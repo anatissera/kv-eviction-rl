@@ -31,7 +31,7 @@ from gymnasium import spaces
 from stable_baselines3.common.vec_env import VecEnv
 
 from kv_gym.capture import capture, AllHeadCapture
-from kv_gym.features import build_obs, FEATURE_DIM
+from kv_gym.features import build_obs, feature_dim
 from kv_gym.vendor.answer_extraction_gsm8k import flexible_extract
 
 
@@ -70,9 +70,10 @@ class SharedKVVecEnv(VecEnv):
             (l, h) for l in range(self.n_layers) for h in range(self.n_heads)
         ]
 
+        fdim = feature_dim(self.head_dim)
         obs_space = spaces.Box(
             low=-np.inf, high=np.inf,
-            shape=(max_len, FEATURE_DIM), dtype=np.float32,
+            shape=(max_len, fdim), dtype=np.float32,
         )
         act_space = spaces.Discrete(max_len)
         super().__init__(n_envs, obs_space, act_space)

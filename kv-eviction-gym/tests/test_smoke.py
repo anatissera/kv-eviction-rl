@@ -13,7 +13,7 @@ import numpy as np
 import pytest
 import torch
 
-from kv_gym.features import FEATURE_DIM
+from kv_gym.features import feature_dim
 
 
 @pytest.fixture(scope="module")
@@ -69,7 +69,8 @@ def test_env_reset_shapes(tiny_model_and_tokenizer, tiny_examples):
     )
     obs = env.reset()
 
-    assert obs.shape == (env.num_envs, env.max_len, FEATURE_DIM), f"obs: {obs.shape}"
+    fdim = feature_dim(env.head_dim)
+    assert obs.shape == (env.num_envs, env.max_len, fdim), f"obs: {obs.shape}"
     assert np.isfinite(obs).all(), "obs contains NaN or Inf"
 
 
