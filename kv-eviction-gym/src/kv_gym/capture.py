@@ -62,10 +62,10 @@ def capture(
 
     def _get_kv(layer_idx: int):
         if hasattr(past_kv, "layers"):
-            # transformers >= 4.47 DynamicCache
+            # transformers >= 5.0 DynamicCache with DynamicLayer objects
             return past_kv.layers[layer_idx].keys, past_kv.layers[layer_idx].values
         elif hasattr(past_kv, "key_cache"):
-            # transformers 4.40-4.46
+            # transformers 4.40–4.x DynamicCache
             return past_kv.key_cache[layer_idx], past_kv.value_cache[layer_idx]
         else:
             # legacy tuple-of-tuples

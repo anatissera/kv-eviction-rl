@@ -21,7 +21,7 @@ def score_evicted(
     budget:       int,
     gold_answer:  str,
     device:       torch.device,
-    max_new_tokens: int = 64,
+    max_new_tokens: int = 512,
 ) -> float:
     """Aggregate per-head eviction decisions and score generation correctness.
 
@@ -39,11 +39,17 @@ def score_evicted(
     attn_mask = torch.zeros(1, T, dtype=torch.long, device=device)
     attn_mask[0, topk] = 1
 
+    # Explicit position_ids so surviving tokens keep their original RoPE rotations.
+    # Without this, HF derives positions via cumsum(attn_mask)-1, shifting all
+    # positions after each masked gap.
+    position_ids = torch.arange(T, device=device).unsqueeze(0)  # [1, T]
+
     model.eval()
     with torch.no_grad():
         out = model.generate(
             input_ids=input_ids.to(device),
             attention_mask=attn_mask,
+            position_ids=position_ids,
             max_new_tokens=max_new_tokens,
             do_sample=False,
         )

@@ -30,23 +30,24 @@ def load_gsm8k(
     n: int = 100,
     seed: int = 0,
     streaming: bool = False,
+    split: str = "test",
 ) -> list[dict]:
-    """Load ``n`` examples from the GSM8K test split.
+    """Load ``n`` examples from a GSM8K split.
 
     Args:
         n:         Number of examples to return.
-        seed:      Random seed for the shuffle (ignored when ``streaming=True``,
-                   see below).
-        streaming: If False (default), download the full test split, shuffle
-                   with ``seed``, then take the first ``n`` examples. Fully
+        seed:      Random seed for the shuffle (ignored when ``streaming=True``).
+        streaming: If False (default), download the full split, shuffle with
+                   ``seed``, then take the first ``n`` examples. Fully
                    reproducible — use this for experiments.
 
                    If True, stream examples from HuggingFace Hub and take the
-                   first ``n`` without downloading the full split. No shuffle
-                   (``IterableDataset`` shuffling needs a buffer the size of
-                   the dataset to match the non-streaming order, which defeats
-                   the purpose). Use this for local development when you just
-                   need a few examples to look at quickly.
+                   first ``n`` without downloading the full split. No shuffle.
+                   Use this for local development when you just need a few
+                   examples to look at quickly.
+        split:     Which split to load ("train" or "test"). Use "train" for
+                   training to avoid overlap with held-out evaluation data.
+                   GSM8K has 7,473 train and 1,319 test examples.
 
     Returns:
         List of example dicts following the project-wide schema (see the
@@ -55,10 +56,10 @@ def load_gsm8k(
     from datasets import load_dataset
 
     if streaming:
-        ds = load_dataset("gsm8k", "main", split="test", streaming=True)
+        ds = load_dataset("gsm8k", "main", split=split, streaming=True)
         return [_row_to_example(row) for row in ds.take(n)]
 
-    ds = load_dataset("gsm8k", "main", split="test")
+    ds = load_dataset("gsm8k", "main", split=split)
     ds = ds.shuffle(seed=seed)
 
     if n > len(ds):

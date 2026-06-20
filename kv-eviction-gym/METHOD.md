@@ -90,20 +90,141 @@ policy underperforms.
 
 ## Reward
 
-One LLM call per episode — at the terminal step only.
+### Motivation
 
-1. **Aggregate**: each token's keep-score = fraction of the 56 heads that
-   kept it. Take the top-`budget` tokens by this score.
-2. **Generate**: re-run `model.generate()` with an attention mask that
-   zeros out the evicted positions.
-3. **Score**: `flexible_extract` — extracts the last number from the
-   generated text and compares to the gold answer.
-   Returns `1.0` if correct, `0.0` otherwise.
+The correctness signal (0 or 1) is very sparse — most episodes end with
+score 0 until the policy is nearly optimal.  Reward shaping supplements it
+with a dense proxy: how much of the model's **future attention** falls on
+the tokens we kept?
 
-All 56 environments receive the same reward (cooperative multi-agent).
+### Two LLM calls per episode (shaping enabled, default)
 
-The reward is sparse (0 or 1) but episodes are short (~100–150 steps),
-so PPO with GAE handles credit assignment.
+| Call | When | Purpose | attn backend |
+|------|------|---------|-------------|
+| Clean reference run | episode `reset()` | Full-context generate → per-token importance | `eager` (needs attention weights) |
+| Eviction generate | episode terminal | Masked generate → correctness score | any |
+
+`train.py` automatically selects `attn_implementation="eager"` when
+`use_attention_shaping: true`, and the faster `sdpa` otherwise.
+
+### Clean reference run (at reset)
+
+`model.generate()` on the **full** prompt with `output_attentions=True`.
+Produces `importance[t]` = mean attention mass on prompt position `t` from
+all generated tokens, averaged over all layers and heads, normalised to
+sum to 1.
+
+**Fallback**: if the attention backend returns empty matrices (SDPA / flash),
+we use `importance[t] ∝ ||K[t]|| + ||V[t]||` (KV-norm heuristic, the same
+signal as the oracle baseline). Shaping always provides a signal.
+
+### Eviction generate (at terminal)
+
+`model.generate()` with the attention mask that zeros out evicted positions.
+Explicit `position_ids = [0, 1, ..., T-1]` ensure each surviving token
+retains its original RoPE rotation.
+
+### Combined terminal reward
+
+```
+alignment   = Σ importance[t]  for t in kept_tokens       ∈ [0, 1]
+correctness = flexible_extract(generated_text, gold)        ∈ {0, 1}
+
+reward = (1 − attention_weight) × correctness
+       + attention_weight       × alignment
+```
+
+Default `attention_weight = 0.3`.
+
+To disable shaping (e.g., GPU with flash_attention_2):
+```yaml
+use_attention_shaping: false
+```
+This reduces to pure correctness reward and uses the faster SDPA backend.
+
+All 56 environments receive the same scalar reward (cooperative setting).
+
+`gamma = 1.0` — no discounting. Since the observation is constant
+throughout the episode, every eviction step contributes equally to the
+outcome; discounting would introduce an arbitrary credit bias where later
+evictions appear to deserve more reward than earlier ones.
+
+---
+
+## Training loop
+
+Gradients **never flow through the LLM**. The LLM is frozen throughout;
+only the policy MLP (PerTokenMLP + PPO actor/critic heads) is trained.
+
+```
+# Frozen: Qwen2.5-1.5B weights
+# Trained: PerTokenMLP (≈ 2 × hidden × feature_dim params)
+
+──────────────────────────────────────────────────────────────────────
+OUTER LOOP  (repeat until total_timesteps reached)
+──────────────────────────────────────────────────────────────────────
+
+  ── ROLLOUT COLLECTION  (n_steps transitions, no gradients) ──────────
+
+  for each episode in rollout:
+
+    # ① Capture: one frozen LLM forward pass
+    K, V = LLM.prefill(prompt)            # torch.no_grad()
+    input_ids, gold = prompt, example.gold_answer
+
+    # ② Reference run: collect future attention for reward shaping
+    importance = LLM.generate(            # torch.no_grad(), eager attn
+        input_ids, output_attentions=True
+    )  →  importance[t] ∈ [0,1], sums to 1   (or KV-norm proxy)
+
+    obs = [K[t], V[t]]  for t in 0..T-1   # constant throughout episode
+
+    # ③ Sequential eviction (T − budget steps per env)
+    for step in range(T - budget):
+        action_mask = resident_tokens        # which positions still valid
+        action = policy.predict(obs, mask)   # no_grad: rollout collection
+        evict token[action] from resident
+
+        if not done:
+            reward = 0                       # intermediate steps: no reward
+
+        if done:                             # last eviction step
+            # ④ Eviction generate: score correctness of kept tokens
+            text = LLM.generate(            # torch.no_grad()
+                input_ids, attention_mask=kept_tokens
+            )
+            correctness = (text matches gold)   # ∈ {0, 1}
+            alignment   = sum(importance[kept])  # ∈ [0, 1]
+            reward = 0.7 × correctness + 0.3 × alignment
+
+        store (obs, action, reward, value, log_prob) in rollout_buffer
+
+  ── PPO UPDATE  (n_epochs passes over the rollout, WITH gradients) ───
+
+  compute GAE advantages from rollout_buffer  (γ=1.0, λ=0.95)
+
+  for epoch in range(n_epochs):
+    for minibatch in rollout_buffer:
+
+      # ⑤ Gradient flows HERE — through policy MLP only
+      logits, value = policy.forward(obs)         # ← gradients ON
+      ppo_loss = clip_loss(logits, actions, adv)
+               + value_coef × value_loss(value, returns)
+
+      ppo_loss.backward()    # updates PerTokenMLP weights
+      optimizer.step()
+
+──────────────────────────────────────────────────────────────────────
+```
+
+**Key points:**
+- Steps ①②③④ are all `torch.no_grad()` — the LLM is a black-box reward oracle.
+- Step ⑤ is the only place gradients flow, and only through the tiny policy MLP.
+- Every episode produces `(T − budget) × 56` transitions in the rollout buffer,
+  all with reward 0 except the terminal step which carries the shaped reward.
+- GAE with `gamma=1.0` propagates the terminal reward backwards with no
+  discounting, so all eviction steps get identical advantage estimates (up to
+  the baseline subtraction by the value function).
 
 ---
 
@@ -112,7 +233,7 @@ so PPO with GAE handles credit assignment.
 | What | Why |
 |------|-----|
 | One-shot ranking (Plackett-Luce) | Sequential gives more gradient signal per episode with sparse reward |
-| Eager attention / hooks during training | Not needed; K/V come free from `use_cache=True` |
+| Eager attention for the training forward passes | Only used once per episode (clean reference run); main prefill uses `sdpa` or `flash` |
 | AUC proxy reward | Correctness is the real signal |
 | Online attention recompute after each eviction | Features are fixed; recompute would add cost with no benefit |
 | Per-head generate at terminal | Requires custom attention or 56 separate decodes; global top-k consensus used instead |

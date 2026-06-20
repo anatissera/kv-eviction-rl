@@ -65,7 +65,8 @@ def test_env_reset_shapes(tiny_model_and_tokenizer, tiny_examples):
 
     env = SharedKVVecEnv(
         model=model, tokenizer=tokenizer, examples=tiny_examples,
-        budget=4, max_len=64, device=device,
+        budget_min=2, budget_max=4, max_len=64, device=device,
+        use_attention_shaping=False,  # disable for fast unit tests
     )
     obs = env.reset()
 
@@ -80,7 +81,8 @@ def test_env_action_masks(tiny_model_and_tokenizer, tiny_examples):
 
     env = SharedKVVecEnv(
         model=model, tokenizer=tokenizer, examples=tiny_examples,
-        budget=4, max_len=64, device=device,
+        budget_min=2, budget_max=4, max_len=64, device=device,
+        use_attention_shaping=False,
     )
     env.reset()
     masks = env.action_masks()
@@ -98,10 +100,12 @@ def test_env_full_episode(tiny_model_and_tokenizer, tiny_examples):
     budget = 4
     env = SharedKVVecEnv(
         model=model, tokenizer=tokenizer, examples=tiny_examples,
-        budget=budget, max_len=64, device=device,
+        budget_min=2, budget_max=budget, max_len=64, device=device,
+        use_attention_shaping=False,  # correctness-only so reward is exactly {0, 1}
     )
     obs   = env.reset()
     T     = env.capture.prompt_len
+    episode_budget = env.budget  # save before step_wait calls reset() on terminal
     done  = False
     steps = 0
 
@@ -113,7 +117,8 @@ def test_env_full_episode(tiny_model_and_tokenizer, tiny_examples):
         steps += 1
 
     assert done, f"episode did not terminate in {T + 10} steps"
-    assert steps == T - budget, f"expected {T - budget} steps, got {steps}"
+    expected = T - episode_budget
+    assert steps == expected, f"expected {expected} steps (T={T}, budget={episode_budget}), got {steps}"
 
     # terminal reward from correctness: in {0.0, 1.0}
     assert ((rewards == 0.0) | (rewards == 1.0)).all(), (

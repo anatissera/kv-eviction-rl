@@ -11,13 +11,24 @@ device:       auto         # auto = MPS on Apple Silicon, else CPU
 # attn_implementation: sdpa   # or flash_attention_2 on CUDA; omit for default
 
 # Single example — policy must learn the optimal eviction for this one prompt
-n_examples: 1
+n_examples: 3
 seed: 0
 
-# Keep 8 tokens out of ~100-150 prompt tokens  (episode length ≈ 90-140 steps)
-budget:         8
+# Budget sampled uniformly each episode from [budget_min, budget_max].
+# Trains a ranking function rather than a budget-specific selector.
+# Defaults (budget_min, budget_max, max_new_tokens) come from
+# configs/model_defaults.json for the chosen model_name.
+budget_min:     8
+budget_max:     64    # keep small for fast local iteration
 max_len:        256
-max_new_tokens: 64    # tokens to generate at terminal reward
+# max_new_tokens: loaded from model_defaults.json (512 for qwen-1.5b)
+
+# Reward shaping: blend sparse correctness with dense attention alignment.
+# At episode reset a clean full-context generate (output_attentions=True) gives
+# per-token importance; at terminal: reward = (1-w)*correctness + w*alignment.
+# Disable with use_attention_shaping: false if using flash_attention_2.
+use_attention_shaping: true
+attention_weight: 0.3   # 0 = pure correctness, 1 = pure attention alignment
 
 # Tiny MLP to keep it fast (feature_dim=3, so hidden=32 is plenty)
 hidden: 32
@@ -26,8 +37,8 @@ hidden: 32
 n_steps:         256
 batch_size:      256
 n_epochs:        4
-gamma:           0.99
-gae_lambda:      0.95
+gamma:           1.0    # no discount — every eviction shares the same terminal reward
+gae_lambda:      1.0   # lambda=1 gives identical advantages for all steps (Monte Carlo)
 clip_range:      0.2
 ent_coef:        0.0
 total_timesteps: 300000   # ~21 rollouts
