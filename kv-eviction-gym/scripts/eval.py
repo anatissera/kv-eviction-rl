@@ -1,125 +1,146 @@
 """
-Evaluate a trained MaskablePPO policy against two baselines on GSM8K.
+Evaluate a trained eviction policy against random and oracle baselines.
 
-Baselines:
-  oracle  — keep the top-k tokens by future_attn (best achievable AUC)
-  random  — keep a uniformly random subset of k tokens
+Three strategies compared on a held-out set of GSM8K examples:
+
+  learned  — the trained MaskablePPO policy
+  oracle   — keep the top-budget tokens by ||K|| + ||V|| norm (greedy heuristic)
+  random   — keep a random subset of budget tokens
+
+All strategies scored by GSM8K answer correctness (flexible_extract).
 
 Usage:
-    python scripts/eval.py --checkpoint checkpoints/phase1 --n_eval 50
-    python scripts/eval.py --checkpoint checkpoints/phase1 --n_eval 50 --device cuda
+    python scripts/eval.py --model checkpoints/quickstart --config configs/quickstart.yaml
 """
 
 import argparse
-import math
 import numpy as np
 import torch
+import yaml
 
 from sb3_contrib import MaskablePPO
 
-from kv_gym.env import SharedKVVecEnv
-from kv_gym.policy import PerTokenMLP
-from kv_gym.rewards.auc import future_attention_auc
+from kv_gym.capture import capture
+from kv_gym.features import build_obs, feature_dim
 from kv_gym.vendor.loader import load_model_and_tokenizer
 from kv_gym.vendor.gsm8k import load_gsm8k
+from kv_gym.vendor.answer_extraction_gsm8k import flexible_extract
 
 
 def parse_args():
     p = argparse.ArgumentParser()
-    p.add_argument("--checkpoint", required=True, help="Path to saved MaskablePPO (.zip)")
-    p.add_argument("--model_name",  default="qwen-1.5b")
-    p.add_argument("--n_eval",      type=int, default=50)
-    p.add_argument("--budget",      type=int, default=32)
-    p.add_argument("--max_len",     type=int, default=256)
-    p.add_argument("--device",      default=None)
-    p.add_argument("--seed",        type=int, default=42)
+    p.add_argument("--model",  required=True, help="Path to saved MaskablePPO checkpoint")
+    p.add_argument("--config", default="configs/quickstart.yaml")
+    p.add_argument("--n",      type=int, default=50, help="Number of eval examples")
+    p.add_argument("--seed",   type=int, default=42)
     return p.parse_args()
 
 
-def run_episode_learned(env, policy) -> np.ndarray:
-    """Run one full episode with the learned policy. Returns per-env AUC rewards."""
-    obs = env.reset()
-    done = False
-    while not done:
-        masks = env.action_masks()
-        actions, _ = policy.predict(obs, action_masks=masks, deterministic=True)
-        obs, rewards, dones, _ = env.step(actions)
-        done = bool(dones[0])
-    return rewards  # [n_envs]
+def score_with_mask(model, tokenizer, input_ids, attn_mask, gold, device, max_new_tokens):
+    """Generate with an eviction mask and return correctness score."""
+    with torch.no_grad():
+        out = model.generate(
+            input_ids=input_ids.to(device),
+            attention_mask=attn_mask.to(device),
+            max_new_tokens=max_new_tokens,
+            do_sample=False,
+        )
+    T    = input_ids.shape[1]
+    text = tokenizer.decode(out[0, T:], skip_special_tokens=True)
+    return flexible_extract(text, [gold])
 
 
-def oracle_auc(future_attn: torch.Tensor, budget: int) -> torch.Tensor:
-    """AUC when keeping the top-k tokens by future_attn (reward = 1.0 by definition)."""
-    topk_vals, topk_idx = future_attn.topk(k=min(budget, future_attn.shape[-1]), dim=-1)
-    n_envs, T = future_attn.shape
-    resident = torch.zeros(n_envs, T, dtype=torch.bool)
-    for i in range(n_envs):
-        resident[i, topk_idx[i]] = True
-    return future_attention_auc(future_attn, resident, budget)
+def oracle_mask(K, V, budget, T):
+    """Keep top-budget tokens by combined ||K||+||V|| norm averaged across heads."""
+    score = (K.norm(dim=-1) + V.norm(dim=-1)).mean(dim=(0, 1))  # [T]
+    _, topk = score.topk(min(budget, T))
+    mask = torch.zeros(1, T, dtype=torch.long)
+    mask[0, topk] = 1
+    return mask
 
 
-def random_auc(future_attn: torch.Tensor, budget: int, rng: np.random.Generator) -> torch.Tensor:
-    """AUC when keeping a uniformly random subset of k tokens."""
-    n_envs, T = future_attn.shape
-    k = min(budget, T)
-    resident = torch.zeros(n_envs, T, dtype=torch.bool)
-    for i in range(n_envs):
-        chosen = rng.choice(T, size=k, replace=False)
-        resident[i, chosen] = True
-    return future_attention_auc(future_attn, resident, budget)
+def random_mask(budget, T, rng):
+    kept = rng.choice(T, size=min(budget, T), replace=False)
+    mask = torch.zeros(1, T, dtype=torch.long)
+    mask[0, kept] = 1
+    return mask
 
 
 def main():
-    args = parse_args()
-    rng = np.random.default_rng(args.seed)
+    args   = parse_args()
+    cfg    = yaml.safe_load(open(args.config))
+    rng    = np.random.default_rng(args.seed)
 
-    device = torch.device(args.device) if args.device else None
-    model, tokenizer, device = load_model_and_tokenizer(
-        name=args.model_name,
+    device_cfg = cfg.get("device", "auto")
+    device = None if device_cfg == "auto" else torch.device(device_cfg)
+    llm, tokenizer, device = load_model_and_tokenizer(
+        name=cfg.get("model_name", "qwen-1.5b"),
         device=device,
-        attn_implementation="eager",
+        attn_implementation=cfg.get("attn_implementation", None),
     )
 
-    examples = load_gsm8k(n=args.n_eval, seed=args.seed)
+    budget         = cfg.get("budget", 32)
+    max_new_tokens = cfg.get("max_new_tokens", 64)
+    max_len        = cfg.get("max_len", 256)
+    examples       = load_gsm8k(n=args.n, seed=args.seed)
 
-    env = SharedKVVecEnv(
-        model=model,
-        tokenizer=tokenizer,
-        examples=examples,
-        budget=args.budget,
-        max_len=args.max_len,
-        reward_mode="auc",
-        device=device,
-    )
+    L      = llm.config.num_hidden_layers
+    H      = getattr(llm.config, "num_key_value_heads", llm.config.num_attention_heads)
+    D      = llm.config.hidden_size // llm.config.num_attention_heads
+    n_envs = L * H
+    fdim   = feature_dim(D)
+    head_indices = [(l, h) for l in range(L) for h in range(H)]
 
-    policy = MaskablePPO.load(args.checkpoint, env=env, device=device)
+    policy = MaskablePPO.load(args.model, device=device)
 
-    learned_aucs, oracle_aucs, random_aucs = [], [], []
+    learned_scores, oracle_scores, random_scores = [], [], []
 
-    for ep_idx, example in enumerate(examples):
-        print(f"\rEpisode {ep_idx+1}/{args.n_eval}", end="", flush=True)
+    for ex in examples:
+        cap = capture(llm, tokenizer, ex, device)
+        T   = cap.prompt_len
 
-        # Run the learned policy episode
-        env._example_iter = iter([example] * 1 + list(examples))  # force this example next
-        learned_rew = run_episode_learned(env, policy)
-        learned_aucs.append(float(learned_rew.mean()))
+        K_flat = cap.K.view(n_envs, T, D)
+        V_flat = cap.V.view(n_envs, T, D)
 
-        # Oracle and random don't need a full episode — compute directly from capture
-        cap = env.capture
-        L, H = env.n_layers, env.n_heads
-        fa_flat = cap.future_attn.view(L * H, cap.prompt_len)
+        # ---------- learned ----------
+        resident = torch.ones(L, H, T, dtype=torch.bool)
+        for _ in range(T - budget):
+            obs   = build_obs(K_flat, V_flat, T, max_len)
+            masks = np.zeros((n_envs, max_len), dtype=bool)
+            masks[:, :T] = resident.view(n_envs, T).numpy()
+            actions, _ = policy.predict(obs, action_masks=masks, deterministic=True)
+            for env_idx, (l, h) in enumerate(head_indices):
+                tok = int(actions[env_idx])
+                if tok < T and resident[l, h, tok]:
+                    resident[l, h, tok] = False
 
-        oracle_aucs.append(float(oracle_auc(fa_flat, args.budget).mean()))
-        random_aucs.append(float(random_auc(fa_flat, args.budget, rng).mean()))
+        token_scores = resident.float().mean(dim=(0, 1))
+        _, topk = token_scores.topk(min(budget, T))
+        learned_mask = torch.zeros(1, T, dtype=torch.long)
+        learned_mask[0, topk] = 1
 
-    print()
-    print(f"\n{'Policy':<12} {'Mean AUC':>10}  {'Std':>8}")
-    print("-" * 34)
-    for name, vals in [("learned", learned_aucs), ("oracle", oracle_aucs), ("random", random_aucs)]:
-        print(f"{name:<12} {np.mean(vals):>10.4f}  {np.std(vals):>8.4f}")
+        learned_scores.append(score_with_mask(
+            llm, tokenizer, cap.input_ids, learned_mask,
+            cap.gold_answer, device, max_new_tokens,
+        ))
+        oracle_scores.append(score_with_mask(
+            llm, tokenizer, cap.input_ids,
+            oracle_mask(cap.K, cap.V, budget, T),
+            cap.gold_answer, device, max_new_tokens,
+        ))
+        random_scores.append(score_with_mask(
+            llm, tokenizer, cap.input_ids,
+            random_mask(budget, T, rng),
+            cap.gold_answer, device, max_new_tokens,
+        ))
 
-    print(f"\nLearned / Oracle ratio: {np.mean(learned_aucs)/np.mean(oracle_aucs):.4f}")
-    print(f"Learned / Random ratio: {np.mean(learned_aucs)/np.mean(random_aucs):.4f}")
+    print(f"\nResults over {len(examples)} examples  (budget={budget}):")
+    print(f"{'strategy':<10} {'mean':>6}  {'std':>6}")
+    print("-" * 26)
+    for name, vals in [("learned", learned_scores), ("oracle", oracle_scores), ("random", random_scores)]:
+        print(f"{name:<10} {np.mean(vals):>6.3f}  {np.std(vals):>6.3f}")
+    print(f"\nLearned / Oracle: {np.mean(learned_scores) / max(np.mean(oracle_scores), 1e-8):.3f}")
+    print(f"Learned / Random: {np.mean(learned_scores) / max(np.mean(random_scores), 1e-8):.3f}")
 
 
 if __name__ == "__main__":
