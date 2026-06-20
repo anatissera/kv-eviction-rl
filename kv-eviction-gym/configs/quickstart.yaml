@@ -7,24 +7,22 @@
 #   python scripts/train.py --config configs/quickstart.yaml
 
 model_name:   qwen-1.5b
-device:       auto          # auto = MPS on Apple Silicon, else CPU
-reward_mode:  auc
+device:       auto         # auto = MPS on Apple Silicon, else CPU
+# attn_implementation: sdpa   # or flash_attention_2 on CUDA; omit for default
 
-# Single example — policy must memorise the optimal eviction for this one prompt
+# Single example — policy must learn the optimal eviction for this one prompt
 n_examples: 1
 seed: 0
 
 # Keep 8 tokens out of ~100-150 prompt tokens  (episode length ≈ 90-140 steps)
-budget:  8
-max_len: 256
+budget:         8
+max_len:        256
+max_new_tokens: 64    # tokens to generate at terminal reward
 
-# Tiny MLP to keep it fast
+# Tiny MLP to keep it fast (feature_dim=3, so hidden=32 is plenty)
 hidden: 32
 
-# PPO — n_steps is per-env per rollout update.
-# With 56 envs (28 layers × 2 KV-heads) and n_steps=256:
-#   one rollout = 256 × 56 = 14336 transitions
-#   total_timesteps=300000 → ~21 gradient updates → enough to see loss curves
+# PPO — 56 envs (28 layers × 2 KV-heads) × 256 steps = 14336 per rollout
 n_steps:         256
 batch_size:      256
 n_epochs:        4
@@ -32,6 +30,6 @@ gamma:           0.99
 gae_lambda:      0.95
 clip_range:      0.2
 ent_coef:        0.0
-total_timesteps: 300000   # ~21 rollouts × 14336 steps each
+total_timesteps: 300000   # ~21 rollouts
 
 save_path: checkpoints/quickstart

@@ -41,7 +41,7 @@ def main():
     model, tokenizer, device = load_model_and_tokenizer(
         name=cfg.get("model_name", "qwen-1.5b"),
         device=device,
-        attn_implementation="eager",
+        attn_implementation=cfg.get("attn_implementation", None),
     )
     print(f"Using device: {device}")
 
@@ -53,7 +53,7 @@ def main():
         examples=examples,
         budget=cfg.get("budget", 32),
         max_len=cfg.get("max_len", 256),
-        reward_mode=cfg.get("reward_mode", "auc"),
+        max_new_tokens=cfg.get("max_new_tokens", 64),
         device=device,
     )
 

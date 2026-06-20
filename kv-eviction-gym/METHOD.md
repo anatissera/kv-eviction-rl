@@ -1,189 +1,99 @@
-# Method and Restrictions
+# Method
 
 This document defines what this project does, how it does it, and what it
-explicitly does NOT do. Read it before making changes to avoid scope creep.
+explicitly does NOT do.
 
 ---
 
 ## What we are building
 
-A reinforcement learning agent that learns to selectively evict tokens from
-the KV cache of a large language model while preserving generation quality.
+A reinforcement learning agent that learns to evict tokens from a
+transformer's KV cache while preserving answer correctness on GSM8K.
 
-**Task**: Given a prompt cached in a transformer's KV cache, evict tokens
-one at a time until a budget is reached. The agent must choose which tokens
-to remove so that the model's future generation is least affected.
-
-**Model**: Qwen2.5-1.5B-Instruct (28 layers, 16 Q-heads, 2 KV-heads → GQA).
-
-**Dataset**: GSM8K grade-school math problems (~100–200 token prompts after
-formatting with a zero-shot CoT template).
+**Model**: Qwen2.5-1.5B-Instruct (28 layers, 12 Q-heads, 2 KV-heads — GQA)
+**Dataset**: GSM8K grade-school math problems (~100–200 token prompts)
 
 ---
 
 ## Agent design
 
-### One shared policy across all heads
+### One policy, one environment per (layer, KV-head)
 
-There are 28 layers × 2 KV-heads = 56 (layer, kv_head) pairs, each with
-its own independent KV cache. Only one policy network is trained. The policy
-is conditioned on `(layer_frac, head_frac)` features so it can distinguish
-heads, but weights are shared.
+Qwen2.5-1.5B has 28 layers × 2 KV-heads = **56 independent KV caches**.
+Each has its own (K, V) tensors. We train one shared policy across all 56,
+with per-head environments that each make independent eviction decisions.
 
-**GQA**: Qwen2.5-1.5B has 12 Q-heads and 2 KV-heads per layer. Each KV-head
-is shared by 6 Q-heads. Eviction decisions are at the KV-head level (one
-decision affects all Q-heads in the group). Q vectors and attention scores are
-averaged over the Q-group before being used as features.
+### Sequential eviction — one token per step
 
-**Why share weights**: 56 environments all contribute gradients per update,
-giving the policy far more training signal per LLM call.
+At each step the policy picks exactly one token to evict from its head's
+cache (Discrete action, MaskablePPO masks already-evicted positions).
+This repeats until the per-head count reaches `budget`.
 
-### Sequential eviction: one token per step
+### Shared prefill, lockstep episodes
 
-At each step the policy picks exactly one token to evict (Discrete action
-space). This repeats until the per-head token count reaches `budget`.
-
-**Why not one-shot ranking (like the paper)**: one-shot Plackett-Luce
-scoring is a contextual bandit — there is no state evolution between
-decisions. Sequential eviction is a true MDP: after each eviction the
-attention pattern changes, giving the policy updated information for the
-next decision. This lets it learn adaptive strategies (e.g., "if the most
-attended token is gone, the next best changes").
-
-### Action masking
-
-Evicted tokens are masked out (logit → -∞) so the policy can only pick
-from currently resident tokens. MaskablePPO from sb3-contrib handles this.
-
-The observation always has shape `[max_len, feature_dim]` (fixed, padded).
-The mask communicates which positions are valid. No variable-size tensors.
-
----
-
-## Shared environment: one LLM call per episode
-
-All 56 (layer, kv_head) environments share a single LLM prefill+decode per
-episode reset. One GSM8K example → one forward pass → Q, K, V, and
-future attention weights for every KV-head simultaneously.
-
-All 56 sub-environments step in lockstep (same prompt, same budget, same
-episode length), so they always terminate together. One reset = one LLM call.
-
-**Efficiency**: 56 episodes worth of training signal from a single ~10s
-model call on MPS/CPU, or ~1s on GPU.
+All 56 environments share one LLM prefill per episode reset. One GSM8K
+example → one forward pass → K/V for all 56 heads simultaneously.
+All envs terminate together (same prompt length, same budget).
 
 ---
 
 ## Observations
 
-Per-token features (feature_dim = 2 × head_dim + 5 = 261 for Qwen2.5-1.5B):
+**3 features per token position** (feature_dim = 3):
 
-| Feature | Shape | Notes |
-|---------|-------|-------|
-| K vector | (head_dim,) | Key for this token; RMS-normalized per episode |
-| V vector | (head_dim,) | Value for this token; RMS-normalized per episode |
-| attn_score | (1,) | How much attention this token receives from all queries |
-| position | (1,) | Token index / max_len |
-| is_resident | (1,) | 1 if still in cache, 0 if evicted (mirrors action mask) |
-| layer_frac | (1,) | layer_idx / n_layers, broadcast to all tokens |
-| head_frac | (1,) | head_idx / n_heads, broadcast to all tokens |
+| Feature | Notes |
+|---------|-------|
+| `‖K[t]‖` | L2 norm of the key vector — proxy for attention importance |
+| `‖V[t]‖` | L2 norm of the value vector |
+| `t / max_len` | Relative position in the prompt |
 
-**Attention scores** are captured from the actual softmax weights during
-prefill (via hook), then recomputed after each eviction step using exact
-online attention (`Q @ K_resident.T / sqrt(D)` → softmax → column sum).
+No raw K/V vectors, no attention scores, no `is_resident` (mask handles
+that), no layer/head fracs (add back if ablations show benefit).
 
----
+**Why no attention scores**: computing softmax attention weights requires
+`output_attentions=True` which forces `attn_implementation="eager"` and
+disables FlashAttention. Key/value norms are cheaper, sufficient, and
+compatible with any attention backend.
 
-## Rewards
-
-### Phase 1 — Future-attention AUC (current)
-
-No LLM call during RL steps. The reward at episode end is:
-
-```
-AUC_policy = Σ future_attn[i]  for i in resident tokens
-AUC_oracle = Σ top-k future_attn values  (best possible)
-reward = AUC_policy / AUC_oracle  ∈ (0, 1]
-```
-
-`future_attn[i]` = how much attention the generated tokens paid to prompt
-token `i` during a reference decode. Captured at reset via hooks (one hook
-per layer per decode step, immediately reduced and freed — only one layer's
-`[H, 1, T]` attention matrix lives in memory at a time).
-
-AUC_oracle = 1.0 only when the policy keeps exactly the tokens that received
-the most future attention. Random eviction typically gives ~0.3–0.6.
-
-### Phase 2 — GSM8K correctness (future)
-
-Run generation from the evicted cache and score against the gold answer.
-Requires a second LLM call per episode. Use only after Phase 1 converges.
+The observation is constant throughout the episode (features don't change
+as tokens are evicted). Only the action mask shrinks.
 
 ---
 
-## Policy architecture
+## Reward
 
-`PerTokenMLP`: the same small MLP is applied independently to each token
-position (shared weights across positions). This is the right inductive bias
-— importance of a token doesn't depend on which slot it occupies.
+One LLM call per episode — at the terminal step only.
 
-```
-Input per token: [feature_dim]
-Linear(feature_dim → hidden) → LayerNorm → SiLU →
-Linear(hidden → hidden) → LayerNorm → SiLU
-Output: flatten [max_len × hidden] → SB3 actor adds Categorical head
-```
+1. **Aggregate**: each token's keep-score = fraction of the 56 heads that
+   kept it. Take the top-`budget` tokens by this score.
+2. **Generate**: re-run `model.generate()` with an attention mask that
+   zeros out the evicted positions. No KV cache manipulation needed.
+3. **Score**: `flexible_extract` from `lm-evaluation-harness` — extracts
+   the last number from the generated text and compares to the gold answer.
+   Returns `1.0` if correct, `0.0` otherwise.
 
-Hidden size: 64 (increase to 128 if underfitting).
+All 56 environments receive the same reward (cooperative multi-agent).
 
----
-
-## Training algorithm
-
-**MaskablePPO** (sb3-contrib) with standard hyperparameters:
-
-| Param | Value | Reason |
-|-------|-------|--------|
-| n_steps | 256 per env | ~1–2 episodes per rollout |
-| n_epochs | 4 | standard |
-| gamma | 0.99 | standard |
-| gae_lambda | 0.95 | standard |
-| clip_range | 0.2 | standard |
-| ent_coef | **0.0** | matches the paper — Gumbel-sort exploration not needed here |
-| batch_size | 256 | |
+The reward is sparse (0 or 1) but episodes are short (~100–150 steps),
+so PPO with GAE handles the credit assignment.
 
 ---
 
-## What we explicitly do NOT do
+## What we do NOT do
 
 | What | Why |
 |------|-----|
-| Block eviction (evict >1 per step) | Complicates the action space; start simple |
-| Separate policy per head | Reduces sample efficiency; shared policy with (layer, head) features is enough |
-| RULER long-context data | Too long for CPU/MPS local runs; episodes of 3000+ steps make GAE unstable |
-| Distributed training | Out of scope for now; one GPU is the target |
-| Masking trick for attention recompute | We use exact online recompute (`Q @ K_res.T → softmax`), which is correct |
-| output_attentions=True globally | Materialises all-layer attention simultaneously — O(L × H × T²) memory. We inject it per-layer via pre-hooks and free immediately |
-| PPO value critic | MaskablePPO uses a learned critic; that's fine. We do NOT add the extra RLOO leave-one-out baseline from ml-learning-to-evict |
-| Phase 2 before Phase 1 converges | Correctness reward is sparse and expensive; AUC reward must train first |
+| Eager attention during training | No hooks needed; FlashAttention ok |
+| AUC proxy reward | Correctness is the real signal; no need for a proxy |
+| Separate Phase 1 / Phase 2 | One unified loop from the start |
+| Online attention recompute after each eviction | Features are fixed; too slow on CPU |
+| Per-head generate at terminal | Requires custom attention or 56 separate decodes; global consensus used instead |
+| layer_frac / head_frac features | Start without; add if ablations show benefit |
 
 ---
 
-## What "done" looks like
+## Success criteria
 
-**Phase 1 success**: on a held-out set of GSM8K examples, the learned
-policy achieves AUC ratio > 0.8 (i.e., keeps ≥80% of the attention mass
-that the oracle would keep). Random baseline is ~0.4–0.6.
-
-**Phase 2 success**: generation accuracy on GSM8K with the evicted cache
-is within 5 percentage points of the full-cache baseline at the same budget.
-
----
-
-## Compute targets
-
-| Setting | Hardware | Expected speed |
-|---------|----------|----------------|
-| Quickstart (1 example, budget=8) | Mac MPS | ~1100 steps/s, ~77s/rollout |
-| Phase 1 full (200 examples, budget=32) | A100/A6000 GPU | ~5000 steps/s |
-| Phase 2 correctness | A100/A6000 GPU | ~200 episodes/h |
+On a held-out set of GSM8K examples, the policy achieves correctness
+within 5 percentage points of the full-cache baseline at `budget` tokens.
+Random eviction baseline serves as the lower bound.
