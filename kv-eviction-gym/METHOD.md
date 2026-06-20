@@ -59,13 +59,15 @@ All envs terminate together (same prompt length, same budget).
 
 ## Observations
 
-**Features per token position t** (`feature_dim = 2 × head_dim + 1 = 129`):
+**Features per token position t** (`feature_dim = 2 × head_dim = 128`):
 
 | Feature | Shape | Notes |
 |---------|-------|-------|
-| `K[t]` | (head_dim,) | Full key vector with RoPE — encodes content + position |
+| `K[t]` | (head_dim,) | Full key vector — RoPE already applied, encodes content + position |
 | `V[t]` | (head_dim,) | Full value vector |
-| `t / max_len` | (1,) | Explicit relative position (easy positional prior) |
+
+Position is already embedded in `K[t]` via the RoPE rotation, so an
+explicit `t/max_len` scalar is redundant.
 
 The observation is **constant throughout the episode** — features do not
 change as tokens are evicted. Only the action mask shrinks.
