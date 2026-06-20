@@ -37,10 +37,19 @@ from torch import Tensor
 
 
 def _importance_from_attentions(
-    attentions,     # tuple[n_steps] of tuple[n_layers] of Tensor[1,H,1,seq]
+    attentions,         # tuple[n_steps] of tuple[n_layers] of Tensor[1,H_q,1,seq]
     T: int,
+    n_kv_heads: int,    # number of KV-heads (GQA groups)
 ) -> Optional[Tensor]:
-    """Extract per-prompt-token importance from generate() attention output."""
+    """Extract per-prompt-token importance from generate() attention output.
+
+    GQA handling (SnapKV / Learning-to-Evict convention):
+    Attention is shaped [1, H_q, 1, seq] with H_q query heads grouped into
+    n_kv_heads KV groups of size H_q/n_kv_heads.  Within each group we take
+    MAX before averaging over KV-heads: "keep a token if ANY query head in
+    the group attends to it."  Plain mean would dilute tokens that are
+    critical to just one head.
+    """
     importance = torch.zeros(T, dtype=torch.float32)
     n_terms = 0
 
@@ -48,9 +57,22 @@ def _importance_from_attentions(
         for layer_attn in step_attns:
             if layer_attn is None:
                 continue
-            seq_len = layer_attn.shape[-1]
+            # layer_attn: [1, H_q, 1, seq_len]
+            seq_len  = layer_attn.shape[-1]
             n_prompt = min(T, seq_len)
-            attn_to_prompt = layer_attn[0, :, 0, :n_prompt].mean(dim=0).cpu()
+            n_q      = layer_attn.shape[1]
+
+            per_q = layer_attn[0, :, 0, :n_prompt]  # [H_q, T_prompt]
+
+            if n_q % n_kv_heads == 0:
+                group_size = n_q // n_kv_heads
+                # [H_kv, group_size, T_prompt] → max within group → [H_kv, T_prompt]
+                per_kv = per_q.view(n_kv_heads, group_size, n_prompt).amax(dim=1)
+                attn_to_prompt = per_kv.mean(dim=0).cpu()  # mean over KV-heads
+            else:
+                # Fallback if model layout differs from expected GQA structure
+                attn_to_prompt = per_q.mean(dim=0).cpu()
+
             importance[:n_prompt] += attn_to_prompt
             n_terms += 1
 
@@ -65,13 +87,17 @@ def _importance_from_attentions(
 
 
 def _importance_from_kv(K: Tensor, V: Tensor) -> Tensor:
-    """KV-norm fallback: importance[t] ∝ mean over layers/heads of ||K[t]|| + ||V[t]||.
+    """KV-norm fallback: importance[t] ∝ max over layers/heads of ||K[t]|| + ||V[t]||.
 
     K: [n_layers, n_kv_heads, T, head_dim]
     V: [n_layers, n_kv_heads, T, head_dim]
     Returns [T] normalised importance.
+
+    Max (not mean) follows the SnapKV convention: a token's importance is
+    determined by whichever (layer, head) finds it most salient, not the
+    average.  Mean would dilute tokens critical to specific heads.
     """
-    score = (K.norm(dim=-1) + V.norm(dim=-1)).mean(dim=(0, 1))  # [T]
+    score = (K.norm(dim=-1) + V.norm(dim=-1)).amax(dim=(0, 1))  # [T]
     total = score.sum()
     if total > 1e-8:
         score = score / total
@@ -107,6 +133,12 @@ def compute_token_importance(
         device = next(model.parameters()).device
 
     T = input_ids.shape[1]
+    # Infer n_kv_heads from K shape if available, else fall back to model config
+    if K is not None:
+        n_kv_heads = K.shape[1]
+    else:
+        n_kv_heads = getattr(model.config, "num_key_value_heads",
+                             model.config.num_attention_heads)
 
     # ---- Attempt 1: generate with output_attentions ----
     try:
@@ -120,7 +152,7 @@ def compute_token_importance(
             )
 
         if hasattr(out, "attentions") and out.attentions:
-            imp = _importance_from_attentions(out.attentions, T)
+            imp = _importance_from_attentions(out.attentions, T, n_kv_heads)
             if imp is not None:
                 return imp
 

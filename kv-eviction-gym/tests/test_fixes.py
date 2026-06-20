@@ -11,6 +11,7 @@ Run with:
     cd kv-eviction-gym && pytest tests/test_fixes.py -v
 """
 
+from pathlib import Path
 import numpy as np
 import pytest
 import torch
@@ -243,14 +244,14 @@ class TestKVNormHeterogeneity:
 class TestGammaConfig:
 
     def test_quickstart_gamma_is_one(self):
-        with open("configs/quickstart.yaml") as f:
+        with open(Path(__file__).parents[1] / "configs/quickstart.yaml") as f:
             cfg = yaml.safe_load(f)
         assert cfg["gamma"] == 1.0, (
             f"quickstart.yaml gamma={cfg['gamma']}; expected 1.0 (no discount bias)"
         )
 
     def test_phase1_gamma_is_one(self):
-        with open("configs/phase1.yaml") as f:
+        with open(Path(__file__).parents[1] / "configs/phase1.yaml") as f:
             cfg = yaml.safe_load(f)
         assert cfg["gamma"] == 1.0, (
             f"phase1.yaml gamma={cfg['gamma']}; expected 1.0"
@@ -258,7 +259,7 @@ class TestGammaConfig:
 
     def test_phase1_no_reward_mode(self):
         """reward_mode: auc is dead code — must not appear in configs."""
-        with open("configs/phase1.yaml") as f:
+        with open(Path(__file__).parents[1] / "configs/phase1.yaml") as f:
             cfg = yaml.safe_load(f)
         assert "reward_mode" not in cfg, (
             "phase1.yaml still has reward_mode key — this is dead code that was never read"
