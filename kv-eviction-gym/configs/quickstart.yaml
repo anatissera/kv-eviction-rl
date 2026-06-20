@@ -21,7 +21,7 @@ seed: 0
 budget_min:     8
 budget_max:     64    # keep small for fast local iteration
 max_len:        256
-# max_new_tokens: loaded from model_defaults.json (512 for qwen-1.5b)
+# max_new_tokens: loaded from model_defaults.json (524 for qwen-1.5b)
 
 # Reward shaping: blend sparse correctness with dense attention alignment.
 # At episode reset a clean full-context generate (output_attentions=True) gives
@@ -30,10 +30,10 @@ max_len:        256
 use_attention_shaping: true
 attention_weight: 0.3   # 0 = pure correctness, 1 = pure attention alignment
 
-# Tiny MLP to keep it fast (feature_dim=3, so hidden=32 is plenty)
+# Tiny MLP to keep it fast (feature_dim=128 = 2 * head_dim=64)
 hidden: 32
 
-# PPO — 56 envs (28 layers × 2 KV-heads) × 256 steps = 14336 per rollout
+# PPO — 28 envs (one per layer) × 256 steps = 7168 per rollout
 n_steps:         256
 batch_size:      256
 n_epochs:        4

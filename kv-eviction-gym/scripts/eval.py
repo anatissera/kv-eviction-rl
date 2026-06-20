@@ -4,13 +4,13 @@ Evaluate a trained eviction policy against baselines.
 Four strategies compared on a held-out set of GSM8K examples:
 
   full     — no eviction (upper bound)
-  learned  — the trained MaskablePPO policy
-  oracle   — keep the top-budget tokens by ||K|| + ||V|| norm (greedy heuristic)
-  random   — keep a random subset of budget tokens
+  learned  — the trained MaskablePPO policy with per-layer independent eviction
+  oracle   — keep top-budget tokens by ||K|| + ||V|| norm (same set per layer)
+  random   — keep a random subset of budget tokens (same set per layer)
 
-All strategies scored by GSM8K answer correctness (flexible_extract).
-Eviction is simulated via attention_mask with explicit position_ids so
-surviving tokens retain their original RoPE rotations.
+All eviction strategies use per-layer cache slicing: each layer l keeps only
+the positions where resident_mask[l, :] is True.  This matches exactly what
+happens during training (no global consensus mask).
 
 Usage:
     python scripts/eval.py --model checkpoints/quickstart --config configs/quickstart.yaml
@@ -27,6 +27,7 @@ from sb3_contrib import MaskablePPO
 
 from kv_gym.capture import capture
 from kv_gym.features import build_obs, feature_dim
+from kv_gym.rewards.per_layer_generate import generate_with_per_layer_eviction
 from kv_gym.vendor.loader import load_model_and_tokenizer
 from kv_gym.vendor.gsm8k import load_gsm8k
 from kv_gym.vendor.answer_extraction_gsm8k import flexible_extract
@@ -36,6 +37,8 @@ def parse_args():
     p = argparse.ArgumentParser()
     p.add_argument("--model",  required=True, help="Path to saved MaskablePPO checkpoint")
     p.add_argument("--config", default="configs/quickstart.yaml")
+    p.add_argument("--budget", type=int, default=None,
+                   help="Tokens to keep per layer. Defaults to budget_min from config.")
     p.add_argument("--n",      type=int, default=50, help="Number of eval examples")
     p.add_argument("--seed",   type=int, default=42)
     return p.parse_args()
@@ -55,22 +58,6 @@ def load_config(path: str) -> dict:
     return cfg
 
 
-def score_with_mask(model, tokenizer, input_ids, attn_mask, gold, device, max_new_tokens):
-    """Generate with an eviction mask and return correctness score."""
-    T = input_ids.shape[1]
-    position_ids = torch.arange(T, device=device).unsqueeze(0)
-    with torch.no_grad():
-        out = model.generate(
-            input_ids=input_ids.to(device),
-            attention_mask=attn_mask.to(device),
-            position_ids=position_ids,
-            max_new_tokens=max_new_tokens,
-            do_sample=False,
-        )
-    text = tokenizer.decode(out[0, T:], skip_special_tokens=True)
-    return flexible_extract(text, [gold])
-
-
 def score_full_cache(model, tokenizer, input_ids, gold, device, max_new_tokens):
     """Generate with the full unevicted cache (upper bound)."""
     T = input_ids.shape[1]
@@ -84,20 +71,37 @@ def score_full_cache(model, tokenizer, input_ids, gold, device, max_new_tokens):
     return flexible_extract(text, [gold])
 
 
-def oracle_mask(K, V, budget, T):
-    """Keep top-budget tokens by combined ||K||+||V|| norm averaged across layers and heads."""
-    score = (K.norm(dim=-1) + V.norm(dim=-1)).mean(dim=(0, 1))  # [T]
+def score_with_resident(model, tokenizer, input_ids, resident, gold, device, max_new_tokens):
+    """Per-layer cache-slicing eviction → score correctness.
+
+    resident: [L, T] bool — True = keep.  Each layer uses its OWN mask.
+    """
+    text = generate_with_per_layer_eviction(
+        model=model,
+        tokenizer=tokenizer,
+        input_ids=input_ids,
+        resident_mask=resident,
+        max_new_tokens=max_new_tokens,
+        device=device,
+    )
+    return flexible_extract(text, [gold])
+
+
+def oracle_resident(K, V, budget, T, L):
+    """Top-budget tokens by combined ||K||+||V|| norm, same set in all layers."""
+    score = (K.norm(dim=-1) + V.norm(dim=-1)).amax(dim=(0, 1))  # [T], SnapKV max
     _, topk = score.topk(min(budget, T))
-    mask = torch.zeros(1, T, dtype=torch.long)
-    mask[0, topk] = 1
-    return mask
+    resident = torch.zeros(L, T, dtype=torch.bool)
+    resident[:, topk] = True
+    return resident
 
 
-def random_mask(budget, T, rng):
+def random_resident(budget, T, L, rng):
+    """Random subset of budget tokens, same set in all layers."""
     kept = rng.choice(T, size=min(budget, T), replace=False)
-    mask = torch.zeros(1, T, dtype=torch.long)
-    mask[0, kept] = 1
-    return mask
+    resident = torch.zeros(L, T, dtype=torch.bool)
+    resident[:, kept] = True
+    return resident
 
 
 def wilson_ci(successes, n, z=1.96):
@@ -123,7 +127,7 @@ def main():
         attn_implementation=cfg.get("attn_implementation", None),
     )
 
-    budget         = cfg.get("budget", 32)
+    budget         = args.budget if args.budget is not None else cfg.get("budget_min", 32)
     max_new_tokens = cfg.get("max_new_tokens", 512)
     max_len        = cfg.get("max_len", 256)
     # Eval always uses the held-out test split, independent of training data
@@ -150,7 +154,7 @@ def main():
             print(f"  [skip] example {ex_idx}: T={T} <= budget={budget}, nothing to evict")
             continue
 
-        # K/V averaged over heads, shape [L, T, D]
+        # K/V averaged over KV-heads, shape [L, T, D] — matches training obs
         K_layer = cap.K.mean(dim=1)
         V_layer = cap.V.mean(dim=1)
 
@@ -159,7 +163,7 @@ def main():
             llm, tokenizer, cap.input_ids, cap.gold_answer, device, max_new_tokens,
         ))
 
-        # ---------- learned ----------
+        # ---------- learned — per-layer independent eviction ----------
         resident = torch.ones(L, T, dtype=torch.bool)
         for _ in range(T - budget):
             obs   = build_obs(K_layer, V_layer, T, max_len, resident_mask=resident)
@@ -170,28 +174,23 @@ def main():
                 if tok < T and resident[l, tok]:
                     resident[l, tok] = False
 
-        token_scores = resident.float().mean(dim=0)
-        _, topk = token_scores.topk(min(budget, T))
-        learned_mask = torch.zeros(1, T, dtype=torch.long)
-        learned_mask[0, topk] = 1
-
-        learned_scores.append(score_with_mask(
-            llm, tokenizer, cap.input_ids, learned_mask,
+        learned_scores.append(score_with_resident(
+            llm, tokenizer, cap.input_ids, resident,
             cap.gold_answer, device, max_new_tokens,
         ))
 
-        # ---------- oracle ----------
-        oracle_scores.append(score_with_mask(
+        # ---------- oracle — global norm ranking, same mask all layers ----------
+        oracle_scores.append(score_with_resident(
             llm, tokenizer, cap.input_ids,
-            oracle_mask(cap.K, cap.V, budget, T),
+            oracle_resident(cap.K, cap.V, budget, T, L),
             cap.gold_answer, device, max_new_tokens,
         ))
 
         # ---------- random (seeded per example for reproducibility) ----------
         ex_rng = np.random.default_rng(args.seed + ex_idx)
-        random_scores.append(score_with_mask(
+        random_scores.append(score_with_resident(
             llm, tokenizer, cap.input_ids,
-            random_mask(budget, T, ex_rng),
+            random_resident(budget, T, L, ex_rng),
             cap.gold_answer, device, max_new_tokens,
         ))
 

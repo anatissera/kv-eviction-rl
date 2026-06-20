@@ -250,17 +250,17 @@ class TestGammaConfig:
             f"quickstart.yaml gamma={cfg['gamma']}; expected 1.0 (no discount bias)"
         )
 
-    def test_phase1_gamma_is_one(self):
-        with open(Path(__file__).parents[1] / "configs/phase1.yaml") as f:
+    def test_train_config_gamma_is_one(self):
+        with open(Path(__file__).parents[1] / "configs/train.yaml") as f:
             cfg = yaml.safe_load(f)
         assert cfg["gamma"] == 1.0, (
-            f"phase1.yaml gamma={cfg['gamma']}; expected 1.0"
+            f"train.yaml gamma={cfg['gamma']}; expected 1.0"
         )
 
-    def test_phase1_no_reward_mode(self):
+    def test_train_config_no_reward_mode(self):
         """reward_mode: auc is dead code — must not appear in configs."""
-        with open(Path(__file__).parents[1] / "configs/phase1.yaml") as f:
+        with open(Path(__file__).parents[1] / "configs/train.yaml") as f:
             cfg = yaml.safe_load(f)
         assert "reward_mode" not in cfg, (
-            "phase1.yaml still has reward_mode key — this is dead code that was never read"
+            "train.yaml still has reward_mode key — this is dead code that was never read"
         )

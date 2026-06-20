@@ -14,9 +14,10 @@ action_space:      Discrete(max_len)
 n_envs:            n_layers  (28 for Qwen2.5-1.5B)
 
 Terminal reward:
-    Aggregate per-layer resident masks (top-budget by mean keep-score across
-    layers), re-run generate with that attention mask, score vs gold answer.
-    All envs receive the same reward (cooperative setting).
+    Each layer applies its OWN resident mask independently via DynamicCache
+    slicing.  No global consensus mask — layer l's cache contains only the
+    tokens it chose to keep.  All envs receive the same scalar reward
+    (cooperative setting).
 
 SB3 VecEnv contract:
   - step_wait() auto-resets on done; terminal obs in infos["terminal_observation"].
@@ -36,12 +37,13 @@ from stable_baselines3.common.vec_env import VecEnv
 
 from kv_gym.capture import capture, AllHeadCapture
 from kv_gym.features import build_obs, feature_dim
-from kv_gym.rewards.attention_shaping import attention_alignment, compute_token_importance
+from kv_gym.rewards.attention_shaping import compute_token_importance
+from kv_gym.rewards.per_layer_generate import generate_with_per_layer_eviction
 from kv_gym.vendor.answer_extraction_gsm8k import flexible_extract
 
 
 class SharedKVVecEnv(VecEnv):
-    """Vectorized env — one sub-env per (layer, kv_head) pair."""
+    """Vectorized env — one sub-env per layer."""
 
     metadata   = {}
     render_mode = None
@@ -95,7 +97,7 @@ class SharedKVVecEnv(VecEnv):
 
         # Episode state (set in reset)
         self.capture:  AllHeadCapture | None = None
-        self.resident: torch.Tensor   | None = None  # [L, H, T] bool
+        self.resident: torch.Tensor   | None = None  # [L, T] bool
 
         # Per-layer K/V views for observation: average over KV-heads [n_layers, T, D]
         self._K_flat: torch.Tensor | None = None
@@ -119,6 +121,11 @@ class SharedKVVecEnv(VecEnv):
         assert T <= self.max_len, (
             f"Prompt length {T} exceeds max_len={self.max_len}. "
             f"Increase max_len or truncate prompts before training."
+        )
+        assert T > self.budget_min, (
+            f"Prompt length {T} <= budget_min={self.budget_min}. "
+            f"np.random.integers(low, high) requires low < high. "
+            f"Increase budget_min or filter out very short examples."
         )
 
         # Sample a fresh budget each episode so the policy learns a total
@@ -231,50 +238,42 @@ class SharedKVVecEnv(VecEnv):
         )
 
     def _terminal_reward(self) -> np.ndarray:
-        """Score the eviction decision and return reward to all envs.
+        """Score the per-layer eviction decisions and return reward to all envs.
 
-        Aggregation: each token's keep-score = fraction of heads that kept it.
-        We keep the top-budget tokens by this score.
+        Each layer applies its OWN resident mask independently:
+          - Fresh prefill → DynamicCache
+          - Per-layer cache slicing: layer l keeps only resident[l, t]==True positions
+          - Manual greedy decode with true position_ids so RoPE is correct
 
         Reward:
-            correctness  — re-run generate with eviction mask; 1 if answer
-                           matches gold, 0 otherwise.  (Sparse signal.)
-            alignment    — fraction of the clean-run attention mass that falls
-                           on the kept tokens.  Available whenever attention
-                           shaping is enabled.  (Dense proxy signal.)
+            correctness  — 1 if generated answer matches gold, 0 otherwise.
+            alignment    — soft attention alignment: Σ_t importance[t] * mean_l(resident[l,t]).
+                           Tokens kept by more layers contribute proportionally more.
 
             score = (1 - attention_weight) * correctness
                   + attention_weight * alignment   [if shaping enabled]
-            score = correctness                    [if shaping disabled or failed]
+            score = correctness                    [if shaping disabled]
 
-        All 56 envs receive the same scalar reward (cooperative setting).
+        All envs receive the same scalar reward (cooperative setting).
         """
         T = self.capture.prompt_len
 
-        # Aggregate per-layer decisions into one global token ranking
-        token_scores = self.resident.float().mean(dim=0)  # mean over layers → [T]
-        n_keep = min(self.budget, T)
-        _, topk = token_scores.topk(n_keep)
-
-        attn_mask    = torch.zeros(1, T, dtype=torch.long, device=self.device)
-        attn_mask[0, topk] = 1
-        position_ids = torch.arange(T, device=self.device).unsqueeze(0)
-
-        with torch.no_grad():
-            out = self.model.generate(
-                input_ids=self.capture.input_ids.to(self.device),
-                attention_mask=attn_mask,
-                position_ids=position_ids,
-                max_new_tokens=self.max_new_tokens,
-                do_sample=False,
-            )
-
-        text        = self.tokenizer.decode(out[0, T:], skip_special_tokens=True)
+        text = generate_with_per_layer_eviction(
+            model=self.model,
+            tokenizer=self.tokenizer,
+            input_ids=self.capture.input_ids,
+            resident_mask=self.resident,   # [L, T] bool
+            max_new_tokens=self.max_new_tokens,
+            device=self.device,
+        )
         correctness = flexible_extract(text, [self.capture.gold_answer])
 
         if self._token_importance is not None:
-            align = attention_alignment(self._token_importance, topk.cpu())
-            score = (1.0 - self.attention_weight) * correctness + self.attention_weight * align
+            # Soft alignment: token t's weight = fraction of layers that kept it.
+            # If a token is kept in all L layers → full weight; kept in L/2 → half weight.
+            soft_keep = self.resident.float().mean(dim=0).cpu()  # [T], in [0, 1]
+            align     = (self._token_importance * soft_keep).sum().item()
+            score     = (1.0 - self.attention_weight) * correctness + self.attention_weight * align
         else:
             score = float(correctness)
 

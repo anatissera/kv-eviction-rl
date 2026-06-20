@@ -1,8 +1,8 @@
-# Phase 1: correctness reward on 200 GSM8K examples.
+# Training config for the KV-eviction policy on 200 GSM8K examples.
 # Intended for GPU server (set device: cuda).
 
 model_name:   qwen-1.5b
-device:       cpu          # change to cuda on GPU server
+device:       auto         # auto = CUDA on server, MPS on Apple Silicon, CPU fallback
 
 # Data
 n_examples: 200
@@ -14,7 +14,7 @@ seed: 0
 # budget_min: 32
 # budget_max: 256
 max_len: 256             # pad observations to this width
-# max_new_tokens: loaded from model_defaults.json (512 for qwen-1.5b)
+# max_new_tokens: loaded from model_defaults.json (524 for qwen-1.5b)
 
 # Reward shaping: blend sparse correctness with dense attention alignment.
 # Disable with use_attention_shaping: false if using flash_attention_2 on GPU.
@@ -25,7 +25,8 @@ attention_weight: 0.3   # 0 = pure correctness, 1 = pure attention alignment
 hidden: 64
 
 # PPO hyperparameters
-n_steps:         560     # 10 episodes × 56 envs
+n_steps:         560     # steps per env per rollout; total transitions = 560×28=15680
+                         # typical episode ~50 steps (T≈100, budget≈50) → ~11 episodes per rollout
 batch_size:      560
 n_epochs:        4
 gamma:           1.0     # no discount — every eviction shares the same terminal reward
@@ -35,4 +36,4 @@ clip_range:      0.2
 ent_coef:        0.0     # no entropy regularisation (matches the paper)
 total_timesteps: 500000
 
-save_path: checkpoints/phase1
+save_path: checkpoints/run

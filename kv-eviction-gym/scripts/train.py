@@ -1,8 +1,8 @@
 """
-Train the KV-eviction policy using MaskablePPO (Phase 1: AUC reward).
+Train the KV-eviction policy using MaskablePPO.
 
 Usage:
-    python scripts/train.py --config configs/phase1.yaml
+    python scripts/train.py --config configs/train.yaml
 
 Requirements:
     pip install stable-baselines3 sb3-contrib gymnasium torch transformers datasets
@@ -15,7 +15,6 @@ import torch
 from pathlib import Path
 
 from sb3_contrib import MaskablePPO
-from sb3_contrib.common.wrappers import ActionMasker
 
 from kv_gym.env import SharedKVVecEnv
 from kv_gym.policy import PerTokenMLP
@@ -25,7 +24,7 @@ from kv_gym.vendor.gsm8k import load_gsm8k
 
 def parse_args():
     p = argparse.ArgumentParser()
-    p.add_argument("--config", default="configs/phase1.yaml")
+    p.add_argument("--config", default="configs/train.yaml")
     return p.parse_args()
 
 
@@ -89,15 +88,6 @@ def main():
         seed=cfg.get("seed", 0),
     )
 
-    # MaskablePPO needs the env wrapped so it can call action_masks()
-    # We subclass the env itself with the masks method, so we pass a lambda.
-    def mask_fn(e):
-        return e.action_masks()
-
-    # For VecEnv, MaskablePPO reads masks directly from the env via
-    # the action_masks() method — no extra wrapper needed when using
-    # the VecEnv interface directly.
-
     ppo = MaskablePPO(
         "MlpPolicy",
         env,
@@ -105,11 +95,11 @@ def main():
             "features_extractor_class": PerTokenMLP,
             "features_extractor_kwargs": {"hidden": cfg.get("hidden", 64)},
         },
-        n_steps=cfg.get("n_steps", 560),        # 10 full episodes × 56 envs
+        n_steps=cfg.get("n_steps", 560),        # steps per env; total = n_steps × n_envs
         batch_size=cfg.get("batch_size", 560),
         n_epochs=cfg.get("n_epochs", 4),
-        gamma=cfg.get("gamma", 0.99),
-        gae_lambda=cfg.get("gae_lambda", 0.95),
+        gamma=cfg.get("gamma", 1.0),
+        gae_lambda=cfg.get("gae_lambda", 1.0),
         clip_range=cfg.get("clip_range", 0.2),
         ent_coef=cfg.get("ent_coef", 0.0),
         verbose=1,

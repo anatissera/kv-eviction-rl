@@ -74,8 +74,8 @@ def capture(
     K_list, V_list = [], []
     for l in range(n_layers):
         k, v = _get_kv(l)
-        K_list.append(k.squeeze(0).cpu())  # [n_kv_heads, T, D]
-        V_list.append(v.squeeze(0).cpu())
+        K_list.append(k.squeeze(0).float().cpu())  # [n_kv_heads, T, D]; float32 for numpy compat
+        V_list.append(v.squeeze(0).float().cpu())
 
     return AllHeadCapture(
         K=torch.stack(K_list),            # [L, n_kv_heads, T, D]
