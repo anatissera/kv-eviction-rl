@@ -56,7 +56,12 @@ def load_config(path: str) -> dict:
 
 
 class TrainingLogger(BaseCallback):
-    """Writes one CSV row per rollout and saves the best model by mean episode reward."""
+    """Writes one CSV row per rollout; tracks correctness rate and saves the best model.
+
+    Correctness and alignment are read from the info dicts that step_wait() sets
+    on episode end: info["correct"] (bool) and info["alignment"] (float).
+    These are accumulated within each rollout and averaged before being written.
+    """
 
     def __init__(self, run_dir: Path, verbose: int = 0):
         super().__init__(verbose)
@@ -66,11 +71,27 @@ class TrainingLogger(BaseCallback):
         self.best_mean = float("-inf")
         self._writer   = None
         self._file     = None
+        self._correct_buf:   list[bool]  = []
+        self._align_buf:     list[float] = []
 
     def _on_training_start(self) -> None:
         self._file   = open(self.csv_path, "w", newline="")
         self._writer = csv.writer(self._file)
-        self._writer.writerow(["timestep", "ep_rew_mean", "ep_len_mean"])
+        self._writer.writerow([
+            "timestep", "ep_rew_mean", "ep_len_mean",
+            "correctness_rate", "alignment_mean",
+        ])
+
+    def _on_step(self) -> bool:
+        # SB3 passes locals["infos"] — a list of info dicts, one per env.
+        # Only env 0 carries "correct" / "alignment" (all envs share the same episode).
+        infos = self.locals.get("infos", [])
+        if infos and "correct" in infos[0]:
+            self._correct_buf.append(infos[0]["correct"])
+            align = infos[0].get("alignment", float("nan"))
+            if align == align:  # not NaN
+                self._align_buf.append(align)
+        return True
 
     def _on_rollout_end(self) -> None:
         buf = self.model.ep_info_buffer
@@ -78,17 +99,32 @@ class TrainingLogger(BaseCallback):
             return
         mean_rew = float(sum(ep["r"] for ep in buf) / len(buf))
         mean_len = float(sum(ep["l"] for ep in buf) / len(buf))
-        self._writer.writerow([self.num_timesteps, f"{mean_rew:.6f}", f"{mean_len:.1f}"])
+
+        corr_rate = (sum(self._correct_buf) / len(self._correct_buf)
+                     if self._correct_buf else float("nan"))
+        align_mean = (sum(self._align_buf) / len(self._align_buf)
+                      if self._align_buf else float("nan"))
+        self._correct_buf.clear()
+        self._align_buf.clear()
+
+        self._writer.writerow([
+            self.num_timesteps,
+            f"{mean_rew:.6f}", f"{mean_len:.1f}",
+            f"{corr_rate:.4f}", f"{align_mean:.4f}",
+        ])
         self._file.flush()
+
+        if self.verbose:
+            corr_str  = f"{corr_rate:.1%}" if corr_rate == corr_rate else "n/a"
+            align_str = f"{align_mean:.3f}" if align_mean == align_mean else "n/a"
+            print(f"  t={self.num_timesteps:>9,}  rew={mean_rew:.4f}"
+                  f"  correct={corr_str}  align={align_str}")
 
         if mean_rew > self.best_mean:
             self.best_mean = mean_rew
             self.model.save(str(self.best_path))
             if self.verbose:
-                print(f"  [best] t={self.num_timesteps}  ep_rew_mean={mean_rew:.4f}  → {self.best_path}")
-
-    def _on_step(self) -> bool:
-        return True
+                print(f"  [best] → {self.best_path}")
 
     def _on_training_end(self) -> None:
         if self._file:

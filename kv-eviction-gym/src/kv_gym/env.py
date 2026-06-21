@@ -376,10 +376,11 @@ class SharedKVVecEnv(VecEnv):
             # but never fed as input: include it so the decoded answer is complete.
             if new_next_token != self.eos_id:
                 self.generated.append(new_next_token)
-            rewards      = self._terminal_reward()
+            rewards, correct, align = self._terminal_reward()
             dones        = np.ones(self.num_envs, dtype=bool)
             terminal_obs = self._obs()
-            infos        = [{"terminal_observation": terminal_obs[i]}
+            infos        = [{"terminal_observation": terminal_obs[i],
+                             "correct": correct, "alignment": align}
                             for i in range(self.num_envs)]
             new_obs = self.reset()
         else:
@@ -455,38 +456,40 @@ class SharedKVVecEnv(VecEnv):
 
         return obs
 
-    def _terminal_reward(self) -> np.ndarray:
+    def _terminal_reward(self) -> tuple[np.ndarray, bool, float]:
         """Compute and broadcast the episode reward to all layer-envs.
 
         Reward:
             correctness  — 1.0 if generated answer matches gold, 0.0 otherwise.
-            alignment    — fraction of attention mass (by KV-norm importance)
-                           captured by prompt tokens still present in any layer's cache.
-                           Averaged over layers to account for per-layer decisions.
+            alignment    — fraction of attention mass captured by prompt tokens
+                           still present in any layer's cache, averaged over layers.
 
             score = (1 - attention_weight) * correctness + attention_weight * alignment
                     [when use_attention_shaping=True and importance is available]
             score = correctness   [otherwise]
 
         All layer-envs receive the same scalar reward (cooperative setting).
+
+        Returns:
+            (rewards [n_envs], correct bool, alignment float)
         """
         text        = self.tokenizer.decode(self.generated, skip_special_tokens=True)
         correctness = float(flexible_extract(text, [self.gold_answer]))
 
         if self._token_importance is not None:
             T = self.prompt_len
-            # soft_keep[t] = fraction of layers still holding prompt token t.
             soft_keep = torch.zeros(T, dtype=torch.float32)
             for l in range(self.n_layers):
                 for orig_pos in self.slot_to_pos[l]:
                     if orig_pos < T:
                         soft_keep[orig_pos] += 1.0
-            soft_keep /= self.n_layers  # normalise to [0, 1]
+            soft_keep /= self.n_layers
 
             align = (self._token_importance * soft_keep).sum().item()
             score = ((1.0 - self.attention_weight) * correctness
                      + self.attention_weight * align)
         else:
+            align = float("nan")
             score = correctness
 
-        return np.full(self.num_envs, score, dtype=np.float32)
+        return np.full(self.num_envs, score, dtype=np.float32), bool(correctness), align

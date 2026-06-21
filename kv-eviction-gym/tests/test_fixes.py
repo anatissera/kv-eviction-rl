@@ -138,13 +138,15 @@ class TestPositionIdsFix:
         env.reset()
 
         # generated is empty after reset; correctness will be 0.0.
-        reward = env._terminal_reward()
+        reward, correct, align = env._terminal_reward()
 
         assert reward.shape == (env.num_envs,), f"Wrong shape: {reward.shape}"
         assert ((reward >= 0.0) & (reward <= 1.0)).all(), (
             f"Reward should be in [0, 1], got {reward}"
         )
         assert np.all(reward == reward[0]), "all envs should share the reward"
+        assert isinstance(correct, bool)
+        assert isinstance(align, float)
 
 
 # ---------------------------------------------------------------------------

@@ -43,7 +43,7 @@ def main():
         print(f"No learning_curve.csv found in {run_dir}. Run training first.")
         return
 
-    timesteps, rew_means, len_means = [], [], []
+    timesteps, rew_means, len_means, corr_rates, align_means = [], [], [], [], []
     with open(csv_path) as f:
         reader = csv.DictReader(f)
         for row in reader:
@@ -51,6 +51,8 @@ def main():
                 timesteps.append(int(row["timestep"]))
                 rew_means.append(float(row["ep_rew_mean"]))
                 len_means.append(float(row["ep_len_mean"]))
+                corr_rates.append(float(row.get("correctness_rate", "nan")))
+                align_means.append(float(row.get("alignment_mean", "nan")))
             except (ValueError, KeyError):
                 continue
 
@@ -58,13 +60,19 @@ def main():
         print("CSV is empty — no data to plot yet.")
         return
 
-    ts  = np.array(timesteps)
-    rew = np.array(rew_means)
-    eln = np.array(len_means)
+    ts   = np.array(timesteps)
+    rew  = np.array(rew_means)
+    eln  = np.array(len_means)
+    corr = np.array(corr_rates)
+    aln  = np.array(align_means)
 
-    fig, (ax1, ax2) = plt.subplots(2, 1, figsize=(10, 7), sharex=True)
+    has_corr = not np.all(np.isnan(corr))
+    n_rows = 3 if has_corr else 2
+    fig, axes = plt.subplots(n_rows, 1, figsize=(10, 4 * n_rows), sharex=True)
+    ax1, ax2 = axes[0], axes[-1]
+    ax_corr  = axes[1] if has_corr else None
 
-    # Episode reward
+    # ── Episode reward ──
     ax1.plot(ts, rew, color="steelblue", alpha=0.35, linewidth=0.8, label="raw")
     smooth_rew = rolling_mean(rew, args.window)
     ax1.plot(ts, smooth_rew, color="steelblue", linewidth=2,
@@ -78,7 +86,24 @@ def main():
     ax1.legend(fontsize=9)
     ax1.grid(alpha=0.3)
 
-    # Episode length
+    # ── Correctness rate ──
+    if ax_corr is not None:
+        valid = ~np.isnan(corr)
+        ax_corr.plot(ts[valid], corr[valid], color="green", alpha=0.35, linewidth=0.8)
+        smooth_corr = rolling_mean(corr[valid], args.window)
+        ax_corr.plot(ts[valid], smooth_corr, color="green", linewidth=2,
+                     label=f"correctness rate (w={args.window})")
+        if not np.all(np.isnan(aln)):
+            valid_a = ~np.isnan(aln)
+            ax_corr.plot(ts[valid_a], rolling_mean(aln[valid_a], args.window),
+                         color="goldenrod", linewidth=1.5, linestyle="--",
+                         label="alignment mean")
+        ax_corr.set_ylim(-0.05, 1.05)
+        ax_corr.set_ylabel("Rate / score")
+        ax_corr.legend(fontsize=9)
+        ax_corr.grid(alpha=0.3)
+
+    # ── Episode length ──
     ax2.plot(ts, eln, color="darkorange", alpha=0.35, linewidth=0.8)
     ax2.plot(ts, rolling_mean(eln, args.window), color="darkorange", linewidth=2)
     ax2.set_ylabel("Mean episode length (steps)")
@@ -93,11 +118,14 @@ def main():
     fig.savefig(out_path, dpi=150)
     print(f"Saved {out_path}")
 
-    # Text summary
     print(f"\nSummary ({len(ts)} rollouts):")
-    print(f"  Final ep_rew_mean : {rew[-1]:.4f}")
-    print(f"  Best  ep_rew_mean : {smooth_rew.max():.4f}  @ timestep {best_t:,}")
-    print(f"  Final ep_len_mean : {eln[-1]:.1f}")
+    print(f"  Final ep_rew_mean    : {rew[-1]:.4f}")
+    print(f"  Best  ep_rew_mean    : {smooth_rew.max():.4f}  @ timestep {best_t:,}")
+    if has_corr:
+        valid_corr = corr[~np.isnan(corr)]
+        print(f"  Final correctness    : {valid_corr[-1]:.1%}")
+        print(f"  Best  correctness    : {valid_corr.max():.1%}")
+    print(f"  Final ep_len_mean    : {eln[-1]:.1f}")
 
 
 if __name__ == "__main__":
