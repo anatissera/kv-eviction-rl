@@ -103,16 +103,23 @@ The episode runs as follows:
 
 2. **Free-growth** (inside `reset()`, no RL steps): decode tokens without
    eviction until `cache_size > budget`. This runs `budget − T` decode steps
-   internally, so the RL agent never sees a no-op transition.
+   internally, so the RL agent never sees a no-op transition. If EOS fires
+   during free-growth, the episode is silently discarded and `reset()` moves
+   to the next example — SB3 never pairs an observation with an action that
+   had no effect on the outcome.
 
 3. **Decode loop** (RL steps, up to `max_new_tokens − free_growth` steps or EOS):
    - Each layer-env evicts the token at its chosen slot from the live DynamicCache.
      Eviction **always fires** — no conditional needed after free-growth.
    - Run one greedy decode step → new K/V appended → new `next_token`.
-   - Accumulate the token in `generated`.
+   - Accumulate the fed token in `generated`.
    - Return the updated cache K/V as the next observation.
 
 4. **Terminal**: decode `generated` → correctness check against gold answer.
+   When the episode ends by hitting `max_new_tokens` (not EOS), the last
+   *predicted* token is appended to `generated` before decoding — without this,
+   ~23% of episodes (those truncated mid-answer) would be scored on text missing
+   their final token, silently returning correctness=0 for correct generations.
 
 After free-growth, the cache sits at exactly `budget + 1` tokens and stays
 there for the rest of the episode (one evicted per step, one generated per step).

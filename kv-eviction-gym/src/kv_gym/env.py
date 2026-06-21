@@ -255,6 +255,13 @@ class SharedKVVecEnv(VecEnv):
         self._free_growth_done = False
         self._run_free_growth()
 
+        # If the episode ended during free-growth (EOS before any eviction was
+        # needed), skip it entirely and reset to the next example.  This prevents
+        # SB3 from ever pairing an observation with an action that had no effect
+        # on the outcome — the dead episode is simply discarded.
+        if self._free_growth_done:
+            return self.reset()
+
         self._episode_count += 1
         logger.info(
             "episode=%d  prompt_len=%d  budget=%d  ratio=%.2f  "
@@ -314,18 +321,6 @@ class SharedKVVecEnv(VecEnv):
         self._pending_actions = actions
 
     def step_wait(self):
-        # --- Episode ended during free-growth (EOS before any eviction fired) ---
-        # The pending actions are irrelevant; just report done and start fresh.
-        if self._free_growth_done:
-            rewards      = self._terminal_reward()
-            dones        = np.ones(self.num_envs, dtype=bool)
-            terminal_obs = self._obs()
-            infos        = [{"terminal_observation": terminal_obs[i]}
-                            for i in range(self.num_envs)]
-            self._free_growth_done = False   # clear before reset() which may set it again
-            new_obs = self.reset()
-            return new_obs, rewards, dones, infos
-
         actions = self._pending_actions
 
         # --- 1. Per-layer eviction — always fires (free-growth handled in reset) ---
