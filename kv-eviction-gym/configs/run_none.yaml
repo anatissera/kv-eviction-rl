@@ -12,18 +12,18 @@ seed: 0
 # The env clamps the lower bound to max(budget_min, prompt_len) so the full
 # prompt always fits without pre-eviction.  Eviction starts at decode step
 # budget − prompt_len + 1 (when the cache first exceeds budget).
-budget_min: 128          # ~max prompt length for GSM8K with qwen-1.5b (~60-100 tokens)
-budget_max: 400          # prompt (~100) + up to 300 generated tokens before first eviction
-max_len: 512             # must be >= budget_max + 1 (cache peaks at budget+1 before eviction)
-max_new_tokens: 524      # covers ~76% of GSM8K outputs without truncation
+budget_min: 128
+budget_max: 256
+max_len: 288
+max_new_tokens: 256
 
 # Reward shaping: blend sparse correctness with future-attention alignment.
 # Runs one extra model.generate() with output_attentions=True per episode reset
 # (~doubles episode wall-clock time but provides a dense signal during training).
 # Requires attn_implementation='eager' (set automatically when enabled).
 # Disable with use_attention_shaping: false to halve compute and use pure correctness.
-use_attention_shaping: true
-attention_weight: 0.1   # only used by terminal/per_step*/ shaping modes
+use_attention_shaping: false
+attention_weight: 0.1
 
 # How the attention-alignment shaping is paid out:
 #   per_step — pay it incrementally: at the step a layer-env evicts original prompt
@@ -37,7 +37,7 @@ attention_weight: 0.1   # only used by terminal/per_step*/ shaping modes
 #              Recommended.
 #   terminal — add attention_weight·alignment once at episode end (original behavior).
 #   none     — pure correctness, no shaping (same as use_attention_shaping: false).
-shaping_mode: none        # none|terminal|per_step|per_step_recency (per_step caused the recency collapse)
+shaping_mode: none
 
 # Policy MLP hidden size
 hidden: 64
@@ -49,26 +49,28 @@ hidden: 64
 # <run_dir>/probe_curve.csv. Headline metric is retention = correct_learned/correct_full over
 # the problems the full cache solves (intrinsically-failed problems excluded). full/random/
 # kv_norm correctness are fixed anchors computed once. Set probe_n: 0 to disable.
-probe_n: 32                 # fixed probe problems (held-out test split)
-probe_every_n_rollouts: 5  # cadence
+probe_n: 24
+probe_every_n_rollouts: 8
 probe_seed: 12345          # which test problems (fixed)
-probe_budget: 256          # cache budget at probe time — MUST be within [budget_min, budget_max]
+probe_budget: 200
 probe_n_sinks: 4           # sink positions for evict_sink_frac diagnostic
 
 # PPO hyperparameters
 # Episode = full generation (up to max_new_tokens=524 decode steps).
 # n_steps=524 guarantees at least one complete episode per env per rollout.
 # total transitions per rollout = 524 × 28 = 14672.
-n_steps:         524
+n_steps:         128
 batch_size:      1024    # ≈14 minibatches per epoch × 4 epochs = 56 grad steps
 n_epochs:        4
 gamma:           1.0     # no discount — every eviction shares the same terminal reward
 gae_lambda:      1.0     # lambda=1 gives identical advantages for all steps (Monte Carlo)
 clip_range:      0.2
 ent_coef:        0.01   # small entropy bonus prevents early collapse of Discrete(512) policy
-total_timesteps: 10000000  # ~1,000 episodes (n_envs=28 multiplies the SB3 counter)
+total_timesteps: 520000
 
 # Recency + sink protection (action-mask window; StreamingLLM\/H2O\/SnapKV standard).
 # Cannot evict the first n_sinks (sinks) or last n_recent (recency window) cache slots.
 n_sinks: 4
 n_recent: 8
+
+attn_implementation: sdpa

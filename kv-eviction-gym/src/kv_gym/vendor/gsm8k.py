@@ -56,10 +56,10 @@ def load_gsm8k(
     from datasets import load_dataset
 
     if streaming:
-        ds = load_dataset("gsm8k", "main", split=split, streaming=True)
+        ds = load_dataset("openai/gsm8k", "main", split=split, streaming=True)
         return [_row_to_example(row) for row in ds.take(n)]
 
-    ds = load_dataset("gsm8k", "main", split=split)
+    ds = load_dataset("openai/gsm8k", "main", split=split)
     ds = ds.shuffle(seed=seed)
 
     if n > len(ds):

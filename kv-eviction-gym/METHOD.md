@@ -467,3 +467,25 @@ percentage points of the full-cache baseline at the evaluation budget.
 Random eviction and KV-norm oracle serve as lower and upper bounds.
 Eval reports Wilson 95% confidence intervals; a 5pp difference requires
 ≥200 examples to be statistically distinguishable.
+
+---
+
+## Update (2026-06-21) — recency/sink window + shaping post-mortem
+
+The first real run with dense per-step attention shaping **collapsed**: the policy learned to
+evict its own most-recent generated tokens (`evict_mean_pos_frac`→0.91). Root cause: attention
+importance is prompt-only, so generated tokens score 0 → `−w·importance[evicted]` makes evicting
+them the zero-cost (max-reward) move every step, overwhelming the sparse correctness signal. Also,
+the attention proxy turned out uninformative for GSM8K (attn-oracle == random in eval).
+
+Changes:
+- **Recency + sink window** (`n_sinks`, `n_recent`) enforced in `action_masks()` /
+  `eval_core.valid_action_mask` — the policy cannot evict the first `n_sinks` or last `n_recent`
+  slots (StreamingLLM/H2O/SnapKV). Applied to baselines too for fair comparison.
+- **`shaping_mode`** now: `none` (default; pure correctness, fastest via `sdpa`),
+  `per_step_recency` (fixed dense shaping, `keep_value = max(norm_attn, recency)`), `terminal`
+  (Alex's original, reference), `per_step` (the mode that collapsed; kept for reproduction).
+- **`probe/evict_generated_frac`** metric makes the collapse visible.
+
+See `HANDOFF.md` for the full post-mortem, the A/B configs (`run_none`/`run_recency`/`run_terminal`),
+and how to run. **Always eval `best_probe_model`, not `final_model`.**

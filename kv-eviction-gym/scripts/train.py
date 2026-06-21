@@ -178,7 +178,9 @@ def main():
         device=device,
         use_attention_shaping=cfg.get("use_attention_shaping", True),
         attention_weight=cfg.get("attention_weight", 0.3),
-        shaping_mode=cfg.get("shaping_mode", "terminal"),
+        shaping_mode=cfg.get("shaping_mode", "none"),
+        n_sinks=cfg.get("n_sinks", 4),
+        n_recent=cfg.get("n_recent", 8),
         seed=cfg.get("seed", 0),
     )
 
@@ -211,7 +213,8 @@ def main():
             max_new_tokens=cfg.get("max_new_tokens", 524),
             max_len=cfg.get("max_len", 512),
             every_n_rollouts=cfg.get("probe_every_n_rollouts", 5),
-            n_sinks=cfg.get("probe_n_sinks", 4),
+            n_sinks=cfg.get("n_sinks", 4),      # match the env window so the probe
+            n_recent=cfg.get("n_recent", 8),    # measures the same action space
             run_dir=run_dir,
             device=device,
             verbose=1,

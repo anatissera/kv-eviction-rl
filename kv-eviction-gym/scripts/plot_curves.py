@@ -56,6 +56,7 @@ def plot_probe(run_dir: Path) -> None:
         "timestep", "correct_full", "correct_random", "correct_kv_norm",
         "correct_learned", "retention",
         "evict_attn_percentile", "evict_mean_pos_frac", "evict_sink_frac",
+        "evict_generated_frac",
     ])
     ts = d["timestep"]
     if ts.size == 0:
@@ -90,6 +91,9 @@ def plot_probe(run_dir: Path) -> None:
              label="evict mean pos frac (0=old, 1=recent)")
     ax2.plot(ts, d["evict_sink_frac"], color="darkorange", linewidth=1.5, marker=".",
              label="evict sink frac")
+    if not np.all(np.isnan(d["evict_generated_frac"])):
+        ax2.plot(ts, d["evict_generated_frac"], color="firebrick", linewidth=1.5, marker=".",
+                 label="evict generated frac (collapse marker)")
     ax2.set_ylim(-0.05, 1.05)
     ax2.set_ylabel("behavior")
     ax2.set_xlabel("timestep")

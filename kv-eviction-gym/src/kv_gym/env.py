@@ -46,6 +46,7 @@ from gymnasium import spaces
 from stable_baselines3.common.vec_env import VecEnv
 
 from kv_gym.features import feature_dim
+from kv_gym.eval_core import valid_action_mask
 from kv_gym.rewards.attention_shaping import compute_token_importance
 from kv_gym.vendor.answer_extraction_gsm8k import flexible_extract
 from kv_gym.vendor.prompts import format_gsm8k
@@ -127,7 +128,9 @@ class SharedKVVecEnv(VecEnv):
         device:                torch.device | None = None,
         use_attention_shaping: bool  = True,
         attention_weight:      float = 0.3,
-        shaping_mode:          str   = "terminal",
+        shaping_mode:          str   = "none",
+        n_sinks:               int   = 4,    # protected attention-sink slots (cannot evict)
+        n_recent:              int   = 8,    # protected recency-window slots (cannot evict)
         seed:                  int   = 0,
     ):
         self.model                 = model
@@ -141,15 +144,19 @@ class SharedKVVecEnv(VecEnv):
         self.use_attention_shaping = use_attention_shaping
         self.attention_weight      = attention_weight
         self.shaping_mode          = shaping_mode
+        self.n_sinks               = n_sinks
+        self.n_recent              = n_recent
         self._rng                  = np.random.default_rng(seed)
 
-        if shaping_mode not in {"terminal", "per_step", "none"}:
+        _shaping_needs_imp = {"terminal", "per_step", "per_step_recency"}
+        if shaping_mode not in (_shaping_needs_imp | {"none"}):
             raise ValueError(
-                f"shaping_mode must be 'terminal', 'per_step', or 'none'; got {shaping_mode!r}"
+                f"shaping_mode must be one of {sorted(_shaping_needs_imp | {'none'})}; "
+                f"got {shaping_mode!r}"
             )
-        if shaping_mode == "per_step" and not use_attention_shaping:
+        if shaping_mode in {"per_step", "per_step_recency"} and not use_attention_shaping:
             raise ValueError(
-                "shaping_mode='per_step' needs per-token importance — set "
+                f"shaping_mode='{shaping_mode}' needs per-token importance — set "
                 "use_attention_shaping=True (it provides the reference-attention signal)."
             )
 
@@ -353,17 +360,32 @@ class SharedKVVecEnv(VecEnv):
         # richer gradient for the shared policy).  Evicting a generated token
         # (orig_pos ≥ prompt_len) costs 0: importance is defined over prompt positions.
         step_shaping = np.zeros(self.num_envs, dtype=np.float32)
-        do_per_step  = (self.shaping_mode == "per_step"
-                        and self._token_importance is not None)
+        mode       = self.shaping_mode
+        have_imp   = self._token_importance is not None
+        do_attn    = (mode == "per_step"         and have_imp)   # original (biased) form
+        do_recency = (mode == "per_step_recency" and have_imp)   # fixed form
         T = self.prompt_len
+        imp_max = float(self._token_importance.max()) if do_recency else 1.0
+        if imp_max <= 0:
+            imp_max = 1.0
         for l, slot in enumerate(int(a) for a in actions):
             slot = max(0, min(slot, self.cache_size - 1))
-            if do_per_step:
-                evicted_pos = self.slot_to_pos[l][slot]
+            evicted_pos = self.slot_to_pos[l][slot]
+            if do_attn:
+                # −w·importance[p], prompt-only (generated → 0 → free; this is the mode
+                # that caused the recency collapse — kept selectable for comparison).
                 if evicted_pos < T:
                     step_shaping[l] = -self.attention_weight * float(
                         self._token_importance[evicted_pos]
                     )
+            elif do_recency:
+                # −w·keep_value, keep_value = max(normalized attention, recency) ∈ [0,1].
+                # Recent tokens (prompt OR generated) become costly to evict → removes the
+                # "generated = free" bug. No new hyperparameter (both terms normalized).
+                attn_v    = (float(self._token_importance[evicted_pos]) / imp_max
+                             if evicted_pos < T else 0.0)
+                recency_v = (evicted_pos + 1) / (self.true_position + 1)
+                step_shaping[l] = -self.attention_weight * max(attn_v, recency_v)
             _evict_slot(self.past_kv, l, slot)
             self.slot_to_pos[l].pop(slot)
         self.cache_size -= 1
@@ -430,16 +452,17 @@ class SharedKVVecEnv(VecEnv):
         return new_obs, rewards, dones, infos
 
     def action_masks(self) -> np.ndarray:
-        """[n_envs, max_len] bool — True for each currently valid cache slot.
+        """[n_envs, max_len] bool — evictable cache slots, with the first `n_sinks`
+        (attention sinks) and last `n_recent` (recency window) protected.
 
-        All cache positions 0..cache_size-1 are valid action targets.  The
-        action is a no-op when cache_size ≤ budget (nothing gets evicted), but
-        MaskablePPO still requires at least one valid action per env.
+        The recency window is the key fix for the collapse where the policy learned
+        to evict its own most-recent generated tokens. All layer-envs share the same
+        cache_size (lockstep), so one row is broadcast to all envs.
         """
-        masks = np.zeros((self.num_envs, self.max_len), dtype=bool)
-        if self.past_kv is not None:
-            masks[:, :self.cache_size] = True
-        return masks
+        if self.past_kv is None:
+            return np.zeros((self.num_envs, self.max_len), dtype=bool)
+        row = valid_action_mask(self.cache_size, self.max_len, self.n_sinks, self.n_recent)
+        return np.broadcast_to(row, (self.num_envs, self.max_len)).copy()
 
     # ------------------------------------------------------------------
     # VecEnv stubs
@@ -536,7 +559,9 @@ class SharedKVVecEnv(VecEnv):
         if self.shaping_mode == "terminal" and self._token_importance is not None:
             score = ((1.0 - self.attention_weight) * correctness
                      + self.attention_weight * align)
-        elif self.shaping_mode == "per_step":
+        elif self.shaping_mode in {"per_step", "per_step_recency"}:
+            # alignment already paid out incrementally in step_wait → terminal is
+            # correctness only (scaled so the magnitudes stay comparable to terminal mode).
             score = (1.0 - self.attention_weight) * correctness
         else:  # "none"
             score = correctness

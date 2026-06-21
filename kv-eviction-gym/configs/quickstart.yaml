@@ -29,7 +29,7 @@ max_len:        256
 # Disable with use_attention_shaping: false if using flash_attention_2.
 use_attention_shaping: true
 attention_weight: 0.3   # 0 = pure correctness, 1 = pure attention alignment
-shaping_mode: per_step  # per_step | terminal | none  (see configs/train.yaml for details)
+shaping_mode: none  # none | terminal | per_step | per_step_recency (see configs/train.yaml)
 
 # Tiny MLP to keep it fast (feature_dim=256 = 2 heads × 64 dim × K+V)
 hidden: 32
@@ -52,3 +52,6 @@ ent_coef:        0.01   # small entropy bonus prevents early collapse of Discret
 total_timesteps: 300000   # ~21 rollouts
 
 save_path: checkpoints/quickstart
+
+n_sinks: 4
+n_recent: 8

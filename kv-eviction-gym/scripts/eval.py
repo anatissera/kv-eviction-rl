@@ -103,7 +103,11 @@ def main():
     budget         = args.budget
     max_new_tokens = cfg.get("max_new_tokens", 524)
     max_len        = cfg.get("max_len", 512)
+    # Recency+sink window — must match the trained policy's action space (from config).
+    n_sinks        = cfg.get("n_sinks", args.n_sinks)
+    n_recent       = cfg.get("n_recent", 8)
     examples       = load_gsm8k(n=args.n, seed=args.seed, split="test")
+    print(f"window: n_sinks={n_sinks} n_recent={n_recent} (applied to all strategies)")
 
     L = llm.config.num_hidden_layers
 
@@ -163,24 +167,25 @@ def main():
 
         # ---- learned ----
         s, corr = _score(
-            make_learned_evict_fn(policy, L, max_len),
+            make_learned_evict_fn(policy, L, max_len, n_sinks, n_recent),
             ref_imp=per_layer_imp,
         )
         scores["learned"].append(s)
         all_correlation.extend(corr)
 
         # ---- streaming ----
-        scores["streaming"].append(_score(make_streaming_evict_fn(args.n_sinks, L))[0])
+        scores["streaming"].append(_score(make_streaming_evict_fn(n_sinks, L))[0])
 
         # ---- per-layer attention oracle ----
         if per_layer_imp is not None:
-            scores["attn_layer"].append(_score(make_attention_evict_fn(per_layer_imp, L))[0])
+            scores["attn_layer"].append(
+                _score(make_attention_evict_fn(per_layer_imp, L, n_sinks, n_recent))[0])
 
         # ---- kv norm (per-layer, online) ----
-        scores["kv_norm"].append(_score(make_kv_norm_evict_fn(L))[0])
+        scores["kv_norm"].append(_score(make_kv_norm_evict_fn(L, n_sinks, n_recent))[0])
 
         # ---- random ----
-        scores["random"].append(_score(make_random_evict_fn(L, ex_rng))[0])
+        scores["random"].append(_score(make_random_evict_fn(L, ex_rng, n_sinks, n_recent))[0])
 
         row = {
             "example": ex_idx, "prompt_len": T,
