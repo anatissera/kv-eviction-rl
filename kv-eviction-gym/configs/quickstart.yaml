@@ -29,6 +29,7 @@ max_len:        256
 # Disable with use_attention_shaping: false if using flash_attention_2.
 use_attention_shaping: true
 attention_weight: 0.3   # 0 = pure correctness, 1 = pure attention alignment
+shaping_mode: per_step  # per_step | terminal | none  (see configs/train.yaml for details)
 
 # Tiny MLP to keep it fast (feature_dim=256 = 2 heads × 64 dim × K+V)
 hidden: 32

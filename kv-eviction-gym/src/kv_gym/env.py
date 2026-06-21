@@ -127,6 +127,7 @@ class SharedKVVecEnv(VecEnv):
         device:                torch.device | None = None,
         use_attention_shaping: bool  = True,
         attention_weight:      float = 0.3,
+        shaping_mode:          str   = "terminal",
         seed:                  int   = 0,
     ):
         self.model                 = model
@@ -139,7 +140,18 @@ class SharedKVVecEnv(VecEnv):
         self.device                = device or next(model.parameters()).device
         self.use_attention_shaping = use_attention_shaping
         self.attention_weight      = attention_weight
+        self.shaping_mode          = shaping_mode
         self._rng                  = np.random.default_rng(seed)
+
+        if shaping_mode not in {"terminal", "per_step", "none"}:
+            raise ValueError(
+                f"shaping_mode must be 'terminal', 'per_step', or 'none'; got {shaping_mode!r}"
+            )
+        if shaping_mode == "per_step" and not use_attention_shaping:
+            raise ValueError(
+                "shaping_mode='per_step' needs per-token importance — set "
+                "use_attention_shaping=True (it provides the reference-attention signal)."
+            )
 
         cfg            = model.config
         self.n_layers  = cfg.num_hidden_layers
@@ -329,8 +341,29 @@ class SharedKVVecEnv(VecEnv):
         #   reset() runs _run_free_growth() which decodes until cache_size > budget.
         #   Each step_wait evicts 1 token then decodes 1 token: net change = 0,
         #   so cache_size stays at budget+1 for the lifetime of the episode.
+        # Per-step shaping (only in "per_step" mode): the terminal alignment reward
+        # is additive over the prompt tokens still cached, so its *loss* is additive
+        # over the tokens evicted.  We therefore pay that loss exactly where and when
+        # it happens — layer-env l receives −attention_weight·importance[p] at the step
+        # it evicts original prompt position p.  Summed over an episode this equals the
+        # terminal alignment (up to a per-episode constant that the PPO advantage
+        # baseline absorbs), but it is localized in time (real per-eviction credit
+        # instead of one terminal scalar shared by every step) and per layer (env l's
+        # reward reflects layer l's own decision, not the mean over all layers — far
+        # richer gradient for the shared policy).  Evicting a generated token
+        # (orig_pos ≥ prompt_len) costs 0: importance is defined over prompt positions.
+        step_shaping = np.zeros(self.num_envs, dtype=np.float32)
+        do_per_step  = (self.shaping_mode == "per_step"
+                        and self._token_importance is not None)
+        T = self.prompt_len
         for l, slot in enumerate(int(a) for a in actions):
             slot = max(0, min(slot, self.cache_size - 1))
+            if do_per_step:
+                evicted_pos = self.slot_to_pos[l][slot]
+                if evicted_pos < T:
+                    step_shaping[l] = -self.attention_weight * float(
+                        self._token_importance[evicted_pos]
+                    )
             _evict_slot(self.past_kv, l, slot)
             self.slot_to_pos[l].pop(slot)
         self.cache_size -= 1
@@ -376,7 +409,10 @@ class SharedKVVecEnv(VecEnv):
             # but never fed as input: include it so the decoded answer is complete.
             if new_next_token != self.eos_id:
                 self.generated.append(new_next_token)
-            rewards, correct, align = self._terminal_reward()
+            term_rewards, correct, align = self._terminal_reward()
+            # Terminal step also evicted: add this step's shaping on top of the
+            # terminal (correctness) reward.
+            rewards      = step_shaping + term_rewards
             dones        = np.ones(self.num_envs, dtype=bool)
             terminal_obs = self._obs()
             infos        = [{"terminal_observation": terminal_obs[i],
@@ -384,7 +420,9 @@ class SharedKVVecEnv(VecEnv):
                             for i in range(self.num_envs)]
             new_obs = self.reset()
         else:
-            rewards = np.zeros(self.num_envs, dtype=np.float32)
+            # Non-terminal steps carry only the per-step shaping (zeros unless
+            # shaping_mode == "per_step").
+            rewards = step_shaping
             dones   = np.zeros(self.num_envs, dtype=bool)
             infos   = [{} for _ in range(self.num_envs)]
             new_obs = self._obs()
@@ -476,6 +514,9 @@ class SharedKVVecEnv(VecEnv):
         text        = self.tokenizer.decode(self.generated, skip_special_tokens=True)
         correctness = float(flexible_extract(text, [self.gold_answer]))
 
+        # Alignment is always computed when importance is available — used as the
+        # terminal reward term in "terminal" mode, and as a diagnostic (info dict)
+        # in every mode.
         if self._token_importance is not None:
             T = self.prompt_len
             soft_keep = torch.zeros(T, dtype=torch.float32)
@@ -484,12 +525,20 @@ class SharedKVVecEnv(VecEnv):
                     if orig_pos < T:
                         soft_keep[orig_pos] += 1.0
             soft_keep /= self.n_layers
-
             align = (self._token_importance * soft_keep).sum().item()
-            score = ((1.0 - self.attention_weight) * correctness
-                     + self.attention_weight * align)
         else:
             align = float("nan")
+
+        # Terminal reward = the sparse global objective (correctness), shared by all
+        # layer-envs.  Alignment is added here ONLY in "terminal" mode; in "per_step"
+        # mode it was already paid out incrementally during step_wait (one
+        # −w·importance[evicted] per eviction), so adding it again would double-count.
+        if self.shaping_mode == "terminal" and self._token_importance is not None:
+            score = ((1.0 - self.attention_weight) * correctness
+                     + self.attention_weight * align)
+        elif self.shaping_mode == "per_step":
+            score = (1.0 - self.attention_weight) * correctness
+        else:  # "none"
             score = correctness
 
         return np.full(self.num_envs, score, dtype=np.float32), bool(correctness), align

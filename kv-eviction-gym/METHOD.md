@@ -251,37 +251,68 @@ To disable shaping entirely and skip the reference run (e.g., on GPU with
 use_attention_shaping: false
 ```
 
-### Combined terminal reward
+### Shaping mode: `per_step` (default) vs `terminal`
+
+The alignment shaping can be paid out two ways, selected by `shaping_mode`.
+
+**`terminal`** (original) — add the whole alignment term once, at the episode end:
 
 ```
 soft_keep[t]  = mean_l( t still cached in layer l at terminal )   ∈ [0, 1]
 alignment     = Σ_t importance[t] × soft_keep[t]                  ∈ [0, 1]
 correctness   = flexible_extract(decoded_generated, gold_answer)   ∈ {0, 1}
 
-reward = (1 − attention_weight) × correctness
-       + attention_weight       × alignment
+reward_terminal = (1 − attention_weight) × correctness
+                + attention_weight       × alignment       # all envs, terminal step only
+reward_t<T      = 0
 ```
 
-Default `attention_weight = 0.3`.
+Every step in the episode then shares one scalar return. With `gamma=1, gae_lambda=1`
+the return is *identical for all steps*, so the only thing distinguishing a good
+eviction at step 5 from a bad one at step 50 is the critic baseline — weak temporal
+credit assignment across the ~`budget−T` eviction decisions.
 
-`soft_keep[t]` uses the per-layer `slot_to_pos` map maintained during the
-episode: for each layer, which original sequence positions are still present in
-the live cache. Tokens kept by all 28 layers contribute full alignment weight;
-tokens evicted from every layer contribute zero.
+**`per_step`** (default, recommended) — pay the alignment loss incrementally, at the
+exact step and layer that caused it. `alignment` is additive over the prompt tokens
+still cached, so its loss is additive over the tokens evicted:
 
-`alignment` covers prompt tokens only (importance is defined over positions
-0..T-1 from the prefill). Generated tokens contribute 0 to alignment but can
-still be evicted — the policy must balance keeping useful prompt context vs.
-keeping recent generated context.
+```
+# At the step layer-env l evicts original prompt position p (p < T):
+reward[l, t] = − attention_weight × importance[p]      # 0 if p ≥ T (generated token)
 
-All 28 environments receive the same scalar reward (cooperative setting).
+# Terminal step additionally (shared by all envs):
+reward[*, T] += (1 − attention_weight) × correctness
+```
+
+Telescoping over an episode, `Σ_t reward[l,t] = attention_weight × alignment_l − attention_weight`,
+i.e. the *same* alignment signal as `terminal` mode (the constant `−attention_weight`
+is absorbed by the PPO advantage baseline), but:
+
+- **Localized in time** — each eviction is credited at its own step. Under
+  `gamma=1, gae_lambda=1` the per-step return now *varies* with `t` (it measures the
+  alignment lost from `t` onward), giving real per-decision credit instead of one
+  constant terminal scalar.
+- **Localized per layer** — env `l` is rewarded for *its own* eviction
+  (`alignment_l`, layer `l`'s kept set) rather than the 28-layer mean `soft_keep`.
+  Because the policy is **shared**, the same weights now receive 28 distinct
+  `(obs, action, reward)` signals per step instead of one shared scalar — far richer
+  gradient.
+- **Objective-preserving** — this is the potential-based decomposition of the same
+  alignment reward (potential `Φ_l = attention_weight × Σ_{t∈kept_l} importance[t]`),
+  so it does not bias the converged policy relative to terminal-mode shaping; it only
+  changes *when* the signal is delivered. Correctness remains the sparse global
+  objective.
+
+`soft_keep[t]` / `alignment` are still computed at terminal in both modes and reported
+in the `info` dict (`alignment`) for logging.
 
 `gamma = 1.0` — no discounting. Every decode step contributes equally to
 the outcome; discounting would introduce an arbitrary credit bias.
 
-`gae_lambda = 1.0` — Monte Carlo returns: identical advantage estimates for
-all steps in an episode. With `gamma=1.0` and `lambda<1`, later steps get
-higher advantage weight which has no principled justification here.
+`gae_lambda = 1.0` — Monte Carlo returns. In `terminal` mode this gives identical
+advantage estimates for all steps; in `per_step` mode the per-step rewards make the
+returns vary across steps (the intended effect). `lambda < 1` would add TD
+bootstrapping for even more local credit — a separate tuning knob, left at 1.0.
 
 ---
 
@@ -354,19 +385,26 @@ OUTER LOOP  (repeat until total_timesteps reached)
 
         done = (next_token == EOS or step == max_new_tokens - 1)
 
-        reward = 0.0 if not done else terminal_reward()
+        # per_step mode (default): each layer-env is credited at THIS step for the
+        # alignment it just lost — reward[l] = −0.3 × importance[evicted_pos_l]
+        # (0 if it evicted a generated token).  terminal mode: reward[l] = 0 here.
+        reward[l] = -0.3 × importance[evicted_pos_l]   if per_step else 0.0
+        if done:
+            reward[*] += 0.7 × correctness             # sparse global objective
 
         store (obs, action, reward, value, log_prob) in rollout_buffer
         if done: break
 
         obs = _obs(past_kv)               # [L, max_len, 2D] from live cache
 
-    # ④ Terminal reward (only computed once, at episode end)
+    # ④ Terminal: correctness (always) + alignment (terminal mode only; per_step
+    #    already paid it out incrementally above).
     text         = tokenizer.decode(generated)
     correctness  = flexible_extract(text, gold)         ∈ {0, 1}
     soft_keep[t] = mean_l( t in slot_to_pos[l] )       ∈ [0, 1]^T
-    alignment    = (importance × soft_keep).sum()       ∈ [0, 1]
-    reward       = 0.7 × correctness + 0.3 × alignment
+    alignment    = (importance × soft_keep).sum()       ∈ [0, 1]   # logged in both modes
+    reward       = 0.7 × correctness                              # per_step mode
+                 # = 0.7 × correctness + 0.3 × alignment          # terminal mode
 
   ── PPO UPDATE  (n_epochs passes over the rollout, WITH gradients) ───
 

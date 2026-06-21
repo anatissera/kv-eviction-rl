@@ -177,6 +177,7 @@ def main():
         device=device,
         use_attention_shaping=cfg.get("use_attention_shaping", True),
         attention_weight=cfg.get("attention_weight", 0.3),
+        shaping_mode=cfg.get("shaping_mode", "terminal"),
         seed=cfg.get("seed", 0),
     )
 

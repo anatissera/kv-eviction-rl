@@ -25,6 +25,20 @@ max_new_tokens: 524      # covers ~76% of GSM8K outputs without truncation
 use_attention_shaping: true
 attention_weight: 0.3   # 0 = pure correctness, 1 = pure attention alignment
 
+# How the attention-alignment shaping is paid out:
+#   per_step — pay it incrementally: at the step a layer-env evicts original prompt
+#              position p, that env receives reward −attention_weight·importance[p].
+#              Summed over the episode this equals the terminal alignment (up to a
+#              per-episode constant the PPO baseline absorbs), but it is localized in
+#              TIME (each eviction is credited at its own step instead of all decisions
+#              sharing one terminal scalar) and PER LAYER (env l's reward reflects
+#              layer l's own decision, not the 28-layer mean). Fixes the weak temporal
+#              credit assignment of terminal-only shaping under gamma=1, gae_lambda=1.
+#              Recommended.
+#   terminal — add attention_weight·alignment once at episode end (original behavior).
+#   none     — pure correctness, no shaping (same as use_attention_shaping: false).
+shaping_mode: per_step
+
 # Policy MLP hidden size
 hidden: 64
 
