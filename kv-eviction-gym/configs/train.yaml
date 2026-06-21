@@ -12,17 +12,18 @@ seed: 0
 # The env clamps the lower bound to max(budget_min, prompt_len) so the full
 # prompt always fits without pre-eviction.  Eviction starts at decode step
 # budget − prompt_len + 1 (when the cache first exceeds budget).
-# Defaults come from configs/model_defaults.json for the model_name.
-# budget_min: 128   # ~max prompt length for GSM8K with qwen-1.5b
-# budget_max: 400   # prompt (~100) + up to 300 generated tokens before first eviction
+budget_min: 128          # ~max prompt length for GSM8K with qwen-1.5b (~60-100 tokens)
+budget_max: 400          # prompt (~100) + up to 300 generated tokens before first eviction
 max_len: 512             # must be >= budget_max + 1 (cache peaks at budget+1 before eviction)
-# max_new_tokens: loaded from model_defaults.json (524 for qwen-1.5b)
+max_new_tokens: 524      # covers ~76% of GSM8K outputs without truncation
 
-# Reward shaping: blend sparse correctness with KV-norm attention alignment.
-# No extra generate() call — importance is derived from the prefill cache.
-# Disable with use_attention_shaping: false if you want pure correctness signal.
+# Reward shaping: blend sparse correctness with future-attention alignment.
+# Runs one extra model.generate() with output_attentions=True per episode reset
+# (~doubles episode wall-clock time but provides a dense signal during training).
+# Requires attn_implementation='eager' (set automatically when enabled).
+# Disable with use_attention_shaping: false to halve compute and use pure correctness.
 use_attention_shaping: true
-attention_weight: 0.3   # 0 = pure correctness, 1 = pure KV-norm alignment
+attention_weight: 0.3   # 0 = pure correctness, 1 = pure attention alignment
 
 # Policy MLP hidden size
 hidden: 64
@@ -38,6 +39,4 @@ gamma:           1.0     # no discount — every eviction shares the same termin
 gae_lambda:      1.0     # lambda=1 gives identical advantages for all steps (Monte Carlo)
 clip_range:      0.2
 ent_coef:        0.01   # small entropy bonus prevents early collapse of Discrete(512) policy
-total_timesteps: 500000
-
-save_path: checkpoints/run
+total_timesteps: 1500000  # ~4,400 episodes; increase to 3M+ for longer runs
