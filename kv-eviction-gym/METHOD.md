@@ -409,6 +409,7 @@ OUTER LOOP  (repeat until total_timesteps reached)
 |------|-----|
 | One-shot ranking (Plackett-Luce) | Sequential gives more gradient signal per episode with sparse reward |
 | Per-KV-head independent eviction | DynamicCache stores each layer as `[1, n_kv_heads, seq_len, head_dim]`; `index_select(dim=2)` evicts the same positions from all heads — truly independent per-head caches require a custom attention kernel (paged attention / block-sparse), which standard transformers does not provide |
+| Batched parallel episodes | DynamicCache supports batch dimension `[B, heads, seq, dim]` but `index_select` eviction breaks batching: after one step, each batch element has a different cache shape (evicted different tokens). Fix requires switching to attention-mask-based eviction (mark slots as masked rather than removing them), which keeps all batch elements at the same cache shape. Left as future work — would give ~B× speedup on the decode loop. |
 | Global consensus mask | Each layer applies its own independent eviction via DynamicCache slicing |
 | Pre-evict the prompt before generation | Eviction starts during decoding; the policy decides which tokens to drop as the answer unfolds |
 | Eager attention for cache eviction | Cache slicing works with any backend; eager is only needed for the optional reference run (`use_attention_shaping: true`) |
