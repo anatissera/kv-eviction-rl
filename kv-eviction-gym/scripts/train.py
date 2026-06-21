@@ -74,13 +74,15 @@ class TrainingLogger(BaseCallback):
         self._file     = None
         self._correct_buf:   list[bool]  = []
         self._align_buf:     list[float] = []
+        self._episode_seconds_buf: list[float] = []
 
     def _on_training_start(self) -> None:
         self._file   = open(self.csv_path, "w", newline="")
         self._writer = csv.writer(self._file)
         self._writer.writerow([
             "timestep", "ep_rew_mean", "ep_len_mean",
-            "correctness_rate", "alignment_mean",
+            "correctness_rate", "alignment_mean", "episode_seconds_mean",
+            "episodes",
         ])
 
     def _on_step(self) -> bool:
@@ -92,6 +94,9 @@ class TrainingLogger(BaseCallback):
             align = infos[0].get("alignment", float("nan"))
             if align == align:  # not NaN
                 self._align_buf.append(align)
+            episode_seconds = infos[0].get("episode_seconds", float("nan"))
+            if episode_seconds == episode_seconds:  # not NaN
+                self._episode_seconds_buf.append(episode_seconds)
         return True
 
     def _on_rollout_end(self) -> None:
@@ -105,21 +110,31 @@ class TrainingLogger(BaseCallback):
                      if self._correct_buf else float("nan"))
         align_mean = (sum(self._align_buf) / len(self._align_buf)
                       if self._align_buf else float("nan"))
+        episode_seconds_mean = (
+            sum(self._episode_seconds_buf) / len(self._episode_seconds_buf)
+            if self._episode_seconds_buf else float("nan")
+        )
+        episodes = len(self._episode_seconds_buf)
         self._correct_buf.clear()
         self._align_buf.clear()
+        self._episode_seconds_buf.clear()
 
         self._writer.writerow([
             self.num_timesteps,
             f"{mean_rew:.6f}", f"{mean_len:.1f}",
             f"{corr_rate:.4f}", f"{align_mean:.4f}",
+            f"{episode_seconds_mean:.3f}", episodes,
         ])
         self._file.flush()
 
         if self.verbose:
             corr_str  = f"{corr_rate:.1%}" if corr_rate == corr_rate else "n/a"
             align_str = f"{align_mean:.3f}" if align_mean == align_mean else "n/a"
+            sec_str   = (f"{episode_seconds_mean:.1f}s"
+                         if episode_seconds_mean == episode_seconds_mean else "n/a")
             print(f"  t={self.num_timesteps:>9,}  rew={mean_rew:.4f}"
-                  f"  correct={corr_str}  align={align_str}")
+                  f"  correct={corr_str}  align={align_str}"
+                  f"  ep_time={sec_str}  episodes={episodes}")
 
         if mean_rew > self.best_mean:
             self.best_mean = mean_rew

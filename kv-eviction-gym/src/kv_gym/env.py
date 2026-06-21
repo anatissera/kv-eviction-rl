@@ -38,6 +38,7 @@ from __future__ import annotations
 
 import itertools
 import logging
+import time
 from typing import Iterator
 
 import numpy as np
@@ -199,12 +200,14 @@ class SharedKVVecEnv(VecEnv):
         self._free_growth_done: bool = False
 
         self._episode_count: int = 0
+        self._episode_started_at: float = 0.0
 
     # ------------------------------------------------------------------
     # VecEnv interface
     # ------------------------------------------------------------------
 
     def reset(self):
+        self._episode_started_at = time.perf_counter()
         example    = next(self._example_iter)
         prompt_text, _ = format_gsm8k(example)
         self.gold_answer = example["gold_answers"][0]
@@ -432,13 +435,15 @@ class SharedKVVecEnv(VecEnv):
             if new_next_token != self.eos_id:
                 self.generated.append(new_next_token)
             term_rewards, correct, align = self._terminal_reward()
+            episode_seconds = time.perf_counter() - self._episode_started_at
             # Terminal step also evicted: add this step's shaping on top of the
             # terminal (correctness) reward.
             rewards      = step_shaping + term_rewards
             dones        = np.ones(self.num_envs, dtype=bool)
             terminal_obs = self._obs()
             infos        = [{"terminal_observation": terminal_obs[i],
-                             "correct": correct, "alignment": align}
+                             "correct": correct, "alignment": align,
+                             "episode_seconds": episode_seconds}
                             for i in range(self.num_envs)]
             new_obs = self.reset()
         else:
