@@ -71,17 +71,17 @@ def main():
 
     examples = load_gsm8k(n=cfg.get("n_examples", 200), seed=cfg.get("seed", 0), split="train")
 
-    print(f"budget_min={cfg.get('budget_min', 32)}  budget_max={cfg.get('budget_max', 256)}"
-          f"  max_new_tokens={cfg.get('max_new_tokens', 512)}")
+    print(f"budget_min={cfg.get('budget_min', 128)}  budget_max={cfg.get('budget_max', 256)}"
+          f"  max_new_tokens={cfg.get('max_new_tokens', 524)}")
 
     env = SharedKVVecEnv(
         model=model,
         tokenizer=tokenizer,
         examples=examples,
-        budget_min=cfg.get("budget_min", 32),
+        budget_min=cfg.get("budget_min", 128),
         budget_max=cfg.get("budget_max", 256),
-        max_len=cfg.get("max_len", 256),
-        max_new_tokens=cfg.get("max_new_tokens", 512),
+        max_len=cfg.get("max_len", 512),
+        max_new_tokens=cfg.get("max_new_tokens", 524),
         device=device,
         use_attention_shaping=cfg.get("use_attention_shaping", True),
         attention_weight=cfg.get("attention_weight", 0.3),
@@ -95,8 +95,8 @@ def main():
             "features_extractor_class": PerTokenMLP,
             "features_extractor_kwargs": {"hidden": cfg.get("hidden", 64)},
         },
-        n_steps=cfg.get("n_steps", 560),        # steps per env; total = n_steps × n_envs
-        batch_size=cfg.get("batch_size", 560),
+        n_steps=cfg.get("n_steps", 524),         # steps per env; total = n_steps × n_envs
+        batch_size=cfg.get("batch_size", 1024),
         n_epochs=cfg.get("n_epochs", 4),
         gamma=cfg.get("gamma", 1.0),
         gae_lambda=cfg.get("gae_lambda", 1.0),

@@ -117,6 +117,10 @@ class TestPositionIdsFix:
         a valid score in [0, 1].  With attention shaping enabled (default), the
         reward is a blend of correctness and alignment, so it can be any float
         in [0, 1] rather than exactly {0, 1}.
+
+        In the online env, generated tokens are accumulated during the episode;
+        we call _terminal_reward() directly after reset() with an empty generated
+        list, which gives correctness=0.0 (empty output ≠ "5").
         """
         from kv_gym.env import SharedKVVecEnv
         model, tokenizer, device = tiny_model_and_tokenizer
@@ -128,13 +132,12 @@ class TestPositionIdsFix:
         }]
         env = SharedKVVecEnv(
             model=model, tokenizer=tokenizer, examples=examples,
-            budget_min=2, budget_max=4, max_len=64, device=device,
-            use_attention_shaping=True,   # default — reward is blended float in [0,1]
+            budget_min=4, budget_max=64, max_len=64, device=device,
+            use_attention_shaping=False,
         )
         env.reset()
 
-        keep = 2
-        env.resident[:, keep:] = False   # resident is [L, T] after per-layer redesign
+        # generated is empty after reset; correctness will be 0.0.
         reward = env._terminal_reward()
 
         assert reward.shape == (env.num_envs,), f"Wrong shape: {reward.shape}"
@@ -197,20 +200,24 @@ class TestKVNormHeterogeneity:
         assert abs(v_var - 1.0) < tol, f"Expected V variance ≈ 1.0 (±{tol:.2f}), got {v_var:.4f}"
 
     def test_per_token_mlp_has_kv_layernorm(self):
-        """PerTokenMLP must have k_norm and v_norm attributes."""
+        """PerTokenMLP must have k_norm and v_norm that span the full K/V half."""
         import torch.nn as nn
         from gymnasium import spaces
         from kv_gym.policy import PerTokenMLP
 
-        obs_space = spaces.Box(low=-np.inf, high=np.inf, shape=(64, 128), dtype=np.float32)
+        # Simulate Qwen2.5-1.5B: n_kv_heads=2, head_dim=64 → feature_dim=256
+        feature_dim = 256   # 2 * n_kv_heads * head_dim
+        obs_space = spaces.Box(low=-np.inf, high=np.inf, shape=(64, feature_dim), dtype=np.float32)
         mlp = PerTokenMLP(obs_space, hidden=32)
 
         assert hasattr(mlp, "k_norm"), "PerTokenMLP missing k_norm LayerNorm"
         assert hasattr(mlp, "v_norm"), "PerTokenMLP missing v_norm LayerNorm"
         assert isinstance(mlp.k_norm, nn.LayerNorm), f"k_norm is {type(mlp.k_norm)}, expected LayerNorm"
         assert isinstance(mlp.v_norm, nn.LayerNorm), f"v_norm is {type(mlp.v_norm)}, expected LayerNorm"
-        assert mlp.k_norm.normalized_shape == (64,), f"k_norm shape: {mlp.k_norm.normalized_shape}"
-        assert mlp.v_norm.normalized_shape == (64,), f"v_norm shape: {mlp.v_norm.normalized_shape}"
+        # k_norm and v_norm each span the K half = n_kv_heads * head_dim = 128
+        kv_half = feature_dim // 2
+        assert mlp.k_norm.normalized_shape == (kv_half,), f"k_norm shape: {mlp.k_norm.normalized_shape}"
+        assert mlp.v_norm.normalized_shape == (kv_half,), f"v_norm shape: {mlp.v_norm.normalized_shape}"
 
     def test_per_token_mlp_normalizes_high_scale_input(self):
         """MLP output is similar even when K-scale is 10× higher (simulating cross-layer variation)."""
@@ -263,4 +270,245 @@ class TestGammaConfig:
             cfg = yaml.safe_load(f)
         assert "reward_mode" not in cfg, (
             "train.yaml still has reward_mode key — this is dead code that was never read"
+        )
+
+    def test_ent_coef_nonzero(self):
+        """ent_coef must be > 0 to prevent entropy collapse on Discrete(512)."""
+        for fname in ("train.yaml", "quickstart.yaml"):
+            with open(Path(__file__).parents[1] / "configs" / fname) as f:
+                cfg = yaml.safe_load(f)
+            assert cfg.get("ent_coef", 0.0) > 0.0, (
+                f"{fname}: ent_coef={cfg.get('ent_coef')}; must be > 0 to maintain "
+                "exploration entropy on the large discrete action space"
+            )
+
+
+# ---------------------------------------------------------------------------
+# Fix: credit assignment — no no-op steps in rollout
+# ---------------------------------------------------------------------------
+
+class TestNoNoOpSteps:
+    """After reset(), _run_free_growth() decodes internally until cache_size >
+    budget.  Every subsequent step_wait() call must perform a real eviction —
+    the rollout buffer should contain no no-op transitions where cache ≤ budget.
+    """
+
+    def test_every_step_evicts(self, tiny_model_and_tokenizer):
+        """cache_size stays at budget+1 after every step: evict-1 then decode+1."""
+        from kv_gym.env import SharedKVVecEnv
+        model, tokenizer, device = tiny_model_and_tokenizer
+
+        examples = [{
+            "prompt_text": "3 + 4 = ?",
+            "gold_answers": ["7"],
+            "task": "gsm8k",
+        }]
+        env = SharedKVVecEnv(
+            model=model, tokenizer=tokenizer, examples=examples,
+            budget_min=4, budget_max=64, max_len=64, device=device,
+            use_attention_shaping=False,
+        )
+        env.reset()
+
+        if env._free_growth_done:
+            pytest.skip("Episode ended during free-growth (budget >= max_new_tokens for this tiny prompt)")
+
+        expected_cache_size = env.cache_size   # budget + 1 after free-growth
+        assert expected_cache_size == env.budget + 1, (
+            f"After reset, cache_size={env.cache_size} should be budget+1={env.budget+1}"
+        )
+
+        for _ in range(5):
+            if env._free_growth_done:
+                break
+            actions = np.zeros(env.num_envs, dtype=int)   # always evict slot 0
+            env.step_async(actions)
+            obs, rewards, dones, infos = env.step_wait()
+            if np.any(dones):
+                break
+            # cache_size must stay at budget+1 (one evicted, one decoded)
+            assert env.cache_size == expected_cache_size, (
+                f"cache_size drifted: expected {expected_cache_size}, got {env.cache_size}"
+            )
+
+    def test_free_growth_steps_logged(self, tiny_model_and_tokenizer):
+        """After reset, cache_size == budget + 1 (free-growth ran budget - T steps)."""
+        from kv_gym.env import SharedKVVecEnv
+        model, tokenizer, device = tiny_model_and_tokenizer
+
+        examples = [{
+            "prompt_text": "5 + 6 = ?",
+            "gold_answers": ["11"],
+            "task": "gsm8k",
+        }]
+        env = SharedKVVecEnv(
+            model=model, tokenizer=tokenizer, examples=examples,
+            budget_min=4, budget_max=64, max_len=64, device=device,
+            use_attention_shaping=False,
+        )
+        env.reset()
+
+        if not env._free_growth_done:
+            # cache_size after free-growth should be exactly budget + 1
+            assert env.cache_size == env.budget + 1, (
+                f"cache_size={env.cache_size} should be budget+1={env.budget+1} "
+                "after free-growth loop"
+            )
+            # number of free-growth decode steps = budget - prompt_len
+            free_growth_steps = env.cache_size - env.prompt_len
+            assert free_growth_steps >= 0, "cache_size must be >= prompt_len after reset"
+
+
+# ---------------------------------------------------------------------------
+# Fix: cache_position correctness
+# ---------------------------------------------------------------------------
+
+class TestCachePositionCorrectness:
+    """Verify that decode steps after eviction produce valid logits.
+
+    We use position_ids = true_position (original sequence coordinate) for both
+    RoPE and the causal mask.  Passing cache_size instead would be wrong: the
+    causal mask at row R allows attending to positions 0..R-1.  After eviction,
+    some cached tokens may have original positions > cache_size, and those would
+    be incorrectly masked out.  true_position is always >= all cached token
+    positions, so the mask is always permissive for every cached entry.
+    """
+
+    def test_logits_finite_after_eviction(self, tiny_model_and_tokenizer):
+        """Logits must not contain NaN or inf after one eviction step."""
+        from kv_gym.env import SharedKVVecEnv
+        model, tokenizer, device = tiny_model_and_tokenizer
+
+        examples = [{
+            "prompt_text": "2 + 2 = ?",
+            "gold_answers": ["4"],
+            "task": "gsm8k",
+        }]
+        env = SharedKVVecEnv(
+            model=model, tokenizer=tokenizer, examples=examples,
+            budget_min=4, budget_max=64, max_len=64, device=device,
+            use_attention_shaping=False,
+        )
+        env.reset()
+
+        if env._free_growth_done:
+            pytest.skip("Episode ended during free-growth")
+
+        # Run one eviction step and check the raw model output
+        true_pos_before = env.true_position
+        actions = np.zeros(env.num_envs, dtype=int)
+        env.step_async(actions)
+
+        # Peek at the model output by re-running the decode step directly
+        pos = torch.tensor([[env.true_position]], device=device)
+        with torch.no_grad():
+            out = model(
+                input_ids=torch.tensor([[env.next_token]], device=device),
+                past_key_values=env.past_kv,
+                position_ids=pos,
+                cache_position=pos.squeeze(0),
+                use_cache=True,
+            )
+        logits = out.logits[0, -1]
+        assert torch.isfinite(logits).all(), (
+            f"Logits contain NaN/inf after eviction at true_position={true_pos_before}"
+        )
+        assert logits.shape[0] == model.config.vocab_size, (
+            f"Unexpected logits shape {logits.shape}"
+        )
+
+    def test_cache_position_vs_cache_size_argument(self):
+        """Document why true_position is correct for cache_position, not cache_size.
+
+        The causal mask at row R allows the query to attend to positions 0..R-1.
+        After N evictions from a T-token prompt with D decode steps:
+          - cache_size = T + D - N  (some tokens removed)
+          - true_position = T + D   (always increments)
+
+        If we used cache_position = cache_size, the mask row R = cache_size would
+        block attention to any cached token with original_position > cache_size.
+        Concretely: if we evicted early tokens (positions 0..N-1) and kept later
+        ones (positions N..T-1), those later tokens have positions > cache_size
+        and would be wrongly masked.  true_position avoids this entirely.
+        """
+        T, D, N = 50, 20, 10
+        cache_size   = T + D - N    # 60
+        true_position = T + D       # 70
+
+        # A cached token at original position 65 (> cache_size=60 but < true_position=70)
+        cached_token_pos = 65
+
+        # Using cache_size: mask row 60 → can attend to positions 0..59 → BLOCKS pos 65
+        visible_with_cache_size = cached_token_pos < cache_size   # False — BUG
+
+        # Using true_position: mask row 70 → can attend to positions 0..69 → allows pos 65
+        visible_with_true_pos   = cached_token_pos < true_position  # True — correct
+
+        assert not visible_with_cache_size, "cache_size mask incorrectly blocks cached token"
+        assert visible_with_true_pos,       "true_position mask correctly allows cached token"
+
+
+# ---------------------------------------------------------------------------
+# Fix: padded positions produce zero output from PerTokenMLP
+# ---------------------------------------------------------------------------
+
+class TestPaddingZeroing:
+    """PerTokenMLP must produce exactly zero output for zero-padded positions.
+
+    Without this fix, LayerNorm converts zero inputs to non-zero unit-variance
+    vectors, causing the MLP to assign non-zero keep-scores to empty cache slots.
+    The action mask blocks sampling those slots, but gradient still flows through
+    them, injecting noise into LayerNorm parameters from semantically empty inputs.
+    """
+
+    def test_padded_positions_produce_zero_score(self):
+        """Zero-padded token positions must produce 0 output, not a nonzero score."""
+        import torch.nn as nn
+        from gymnasium import spaces
+        from kv_gym.policy import PerTokenMLP
+
+        feature_dim = 256
+        max_len     = 32
+        cache_size  = 10   # only first 10 positions are real
+
+        obs_space = spaces.Box(low=-np.inf, high=np.inf, shape=(max_len, feature_dim), dtype=np.float32)
+        mlp = PerTokenMLP(obs_space, hidden=16)
+        mlp.eval()
+
+        # Real positions have random features; padded positions are exactly zero
+        obs = torch.zeros(1, max_len, feature_dim)
+        obs[0, :cache_size] = torch.randn(cache_size, feature_dim)
+
+        with torch.no_grad():
+            scores = mlp(obs)   # [1, max_len]
+
+        padded_scores = scores[0, cache_size:]
+        assert (padded_scores == 0.0).all(), (
+            f"Padded positions should produce 0 score; got max={padded_scores.abs().max():.6f}"
+        )
+
+    def test_real_positions_still_produce_nonzero_score(self):
+        """Real (non-padded) positions must still get meaningful scores after the fix."""
+        import torch.nn as nn
+        from gymnasium import spaces
+        from kv_gym.policy import PerTokenMLP
+
+        feature_dim = 256
+        max_len     = 32
+        cache_size  = 10
+
+        obs_space = spaces.Box(low=-np.inf, high=np.inf, shape=(max_len, feature_dim), dtype=np.float32)
+        mlp = PerTokenMLP(obs_space, hidden=16)
+        mlp.eval()
+
+        obs = torch.zeros(1, max_len, feature_dim)
+        obs[0, :cache_size] = torch.randn(cache_size, feature_dim)
+
+        with torch.no_grad():
+            scores = mlp(obs)
+
+        real_scores = scores[0, :cache_size]
+        # Real positions should not all be zero (would mean the mask kills everything)
+        assert not (real_scores == 0.0).all(), (
+            "Real positions also produce zero — padding mask is too aggressive"
         )

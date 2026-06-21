@@ -46,13 +46,13 @@ class PerTokenMLP(BaseFeaturesExtractor):
         self.max_len     = max_len
         self.feature_dim = feature_dim
         self.hidden      = hidden
-        self.head_dim    = feature_dim // 2  # K and V halves
+        self.kv_half     = feature_dim // 2  # size of K half = n_kv_heads * head_dim
 
         # Normalize K and V separately before the MLP.
-        # Without this, K-norms vary 5–50× across layers (attention sinks,
-        # massive-activation tokens), causing high-norm layers to dominate gradients.
-        self.k_norm = nn.LayerNorm(self.head_dim)
-        self.v_norm = nn.LayerNorm(self.head_dim)
+        # K-norms vary 5–50× across layers (attention sinks, massive-activation
+        # tokens), causing high-norm layers to dominate gradients.
+        self.k_norm = nn.LayerNorm(self.kv_half)
+        self.v_norm = nn.LayerNorm(self.kv_half)
 
         self.mlp = nn.Sequential(
             nn.Linear(feature_dim, hidden),
@@ -69,11 +69,21 @@ class PerTokenMLP(BaseFeaturesExtractor):
         batch = observations.shape[0]
         x = observations.view(batch * self.max_len, self.feature_dim)
 
+        # Padded positions (cache slots beyond current cache_size) are zero-filled.
+        # Detect them before LayerNorm — a real K/V vector is essentially never
+        # all-zero, so this is a reliable heuristic.
+        # We multiply the output by this mask rather than skipping the forward pass,
+        # because (a) indexing into a ragged batch is slower, and (b) the mask zeros
+        # the gradient for padded positions, preventing LayerNorm from updating its
+        # parameters based on semantically empty inputs.
+        is_real = (x.abs().sum(dim=-1, keepdim=True) > 0).float()  # [batch*max_len, 1]
+
         # Normalize K and V sub-vectors independently before projection
-        k = self.k_norm(x[:, :self.head_dim])
-        v = self.v_norm(x[:, self.head_dim:])
+        k = self.k_norm(x[:, :self.kv_half])
+        v = self.v_norm(x[:, self.kv_half:])
         x = torch.cat([k, v], dim=-1)
 
         x = self.mlp(x)                        # [batch*max_len, 1]
+        x = x * is_real                        # zero padded positions, block gradient
         x = x.view(batch, self.max_len)        # [batch, max_len] — one score per token
         return x

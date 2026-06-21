@@ -8,12 +8,21 @@ Four strategies compared on a held-out set of GSM8K examples:
   oracle   — keep top-budget tokens by ||K|| + ||V|| norm (same set per layer)
   random   — keep a random subset of budget tokens (same set per layer)
 
-All eviction strategies use per-layer cache slicing: each layer l keeps only
-the positions where resident_mask[l, :] is True.  This matches exactly what
-happens during training (no global consensus mask).
+Offline eval approach
+---------------------
+This script runs an OFFLINE evaluation: the policy sees the prefill K/V and
+makes T−budget sequential eviction decisions to compress the prompt down to
+`budget` tokens, then generates with the compressed cache.
+
+The policy was TRAINED online (one eviction per decode step) so the eval
+distribution differs from training.  This gives a lower bound on true
+performance.  A proper online eval would replicate full episodes.
+
+`budget` must be smaller than the prompt length T (otherwise nothing is
+evicted).  Pass `--budget` explicitly; a typical value for GSM8K is 64–100.
 
 Usage:
-    python scripts/eval.py --model checkpoints/quickstart --config configs/quickstart.yaml
+    python scripts/eval.py --model checkpoints/run --config configs/train.yaml --budget 80
 """
 
 import argparse
@@ -38,7 +47,8 @@ def parse_args():
     p.add_argument("--model",  required=True, help="Path to saved MaskablePPO checkpoint")
     p.add_argument("--config", default="configs/quickstart.yaml")
     p.add_argument("--budget", type=int, default=None,
-                   help="Tokens to keep per layer. Defaults to budget_min from config.")
+                   help="Tokens to keep per layer (must be < prompt length T). "
+                        "Required for meaningful eval; defaults to 64 if not set.")
     p.add_argument("--n",      type=int, default=50, help="Number of eval examples")
     p.add_argument("--seed",   type=int, default=42)
     return p.parse_args()
@@ -127,8 +137,10 @@ def main():
         attn_implementation=cfg.get("attn_implementation", None),
     )
 
-    budget         = args.budget if args.budget is not None else cfg.get("budget_min", 32)
-    max_new_tokens = cfg.get("max_new_tokens", 512)
+    # Offline eval: budget = number of prompt tokens to KEEP after compression.
+    # Must be < T (prompt length); default 64 works for most GSM8K examples.
+    budget         = args.budget if args.budget is not None else 64
+    max_new_tokens = cfg.get("max_new_tokens", 524)
     max_len        = cfg.get("max_len", 256)
     # Eval always uses the held-out test split, independent of training data
     examples       = load_gsm8k(n=args.n, seed=args.seed, split="test")
@@ -137,7 +149,7 @@ def main():
     H      = getattr(llm.config, "num_key_value_heads", llm.config.num_attention_heads)
     D      = llm.config.hidden_size // llm.config.num_attention_heads
     n_envs = L   # one env per layer (matching training setup)
-    fdim   = feature_dim(D)
+    fdim   = feature_dim(H, D)
 
     policy = MaskablePPO.load(args.model, device=device)
 
@@ -154,9 +166,9 @@ def main():
             print(f"  [skip] example {ex_idx}: T={T} <= budget={budget}, nothing to evict")
             continue
 
-        # K/V averaged over KV-heads, shape [L, T, D] — matches training obs
-        K_layer = cap.K.mean(dim=1)
-        V_layer = cap.V.mean(dim=1)
+        # K/V all heads, shape [L, H, T, D] — heads concatenated to match training obs
+        K_layer = cap.K
+        V_layer = cap.V
 
         # ---------- full cache (upper bound) ----------
         full_scores.append(score_full_cache(

@@ -14,12 +14,12 @@ device:       auto         # auto = MPS on Apple Silicon, else CPU
 n_examples: 3
 seed: 0
 
-# Budget sampled uniformly each episode from [budget_min, budget_max].
-# Trains a ranking function rather than a budget-specific selector.
-# Defaults (budget_min, budget_max, max_new_tokens) come from
-# configs/model_defaults.json for the chosen model_name.
-budget_min:     8
-budget_max:     64    # keep small for fast local iteration
+# Budget = total cache capacity (prompt + generated tokens).
+# Lower bound is clamped to max(budget_min, prompt_len) at runtime so no
+# pre-eviction of the prompt is needed; eviction starts during decode.
+# Defaults come from configs/model_defaults.json for the chosen model_name.
+budget_min:     128
+budget_max:     180   # small range → many eviction steps → fast learning signal
 max_len:        256
 # max_new_tokens: loaded from model_defaults.json (524 for qwen-1.5b)
 
@@ -30,17 +30,17 @@ max_len:        256
 use_attention_shaping: true
 attention_weight: 0.3   # 0 = pure correctness, 1 = pure attention alignment
 
-# Tiny MLP to keep it fast (feature_dim=128 = 2 * head_dim=64)
+# Tiny MLP to keep it fast (feature_dim=256 = 2 heads × 64 dim × K+V)
 hidden: 32
 
-# PPO — 28 envs (one per layer) × 256 steps = 7168 per rollout
-n_steps:         256
-batch_size:      256
+# PPO — 28 envs (one per layer) × 64 steps = 1792 per rollout (fast local run)
+n_steps:         64
+batch_size:      64
 n_epochs:        4
 gamma:           1.0    # no discount — every eviction shares the same terminal reward
 gae_lambda:      1.0   # lambda=1 gives identical advantages for all steps (Monte Carlo)
 clip_range:      0.2
-ent_coef:        0.0
+ent_coef:        0.01   # small entropy bonus prevents early collapse of Discrete(512) policy
 total_timesteps: 300000   # ~21 rollouts
 
 save_path: checkpoints/quickstart

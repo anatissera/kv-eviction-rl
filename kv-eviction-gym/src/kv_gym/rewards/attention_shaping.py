@@ -15,18 +15,13 @@ where alignment = sum(importance[t] for t in kept_tokens) ∈ [0, 1].
 
 Cost: one extra model.generate() call per episode reset.
 
-Attention backend compatibility
--------------------------------
-output_attentions=True requires eager attention to return non-empty matrices.
-SDPA (default on CPU/MPS) and flash_attention_2 (CUDA) both return empty
-attention tuples.  When that happens, we automatically fall back to a
-KV-norm-based importance proxy:
-
-    importance[t] ∝ mean_over_layers_heads( ||K[t]|| + ||V[t]|| )
-
-This proxy is the "heavy hitter" heuristic used by H2O / SnapKV and is a
-reasonable stand-in when true attention weights are unavailable.  It never
-returns None — shaping always provides a signal.
+Attention backend requirement
+-----------------------------
+output_attentions=True requires attn_implementation='eager' to return
+non-empty matrices.  SDPA (default on CPU/MPS) and flash_attention_2 (CUDA)
+return empty attention tuples; compute_token_importance will raise RuntimeError
+rather than silently fall back.  Use use_attention_shaping=False to skip the
+reference run and rely on pure correctness reward instead.
 """
 
 import warnings
@@ -114,18 +109,16 @@ def compute_token_importance(
 ) -> Tensor:
     """Return per-prompt-token importance as a [T] tensor summing to 1.
 
-    Strategy (in order of preference):
-      1. Full-context generate with output_attentions=True — true future attention.
-         Requires attn_implementation='eager'.
-      2. KV-norm proxy (||K[t]|| + ||V[t]||) — always available, same signal as
-         the oracle baseline in eval.py.  Used when option 1 returns empty attentions
-         (SDPA / flash_attention_2).
+    Runs model.generate() with output_attentions=True and aggregates attention
+    weights across steps and layers (GQA-aware: max within each KV group, then
+    mean over KV-heads).  Requires attn_implementation='eager'.
+
+    Raises RuntimeError if output_attentions returns empty tensors (SDPA / flash).
 
     Args:
         model:          The causal LM.
         input_ids:      Full prompt ids [1, T].
-        K, V:           Pre-computed KV tensors from capture(); used for fallback.
-                        Pass None to skip fallback and return uniform distribution.
+        K, V:           Unused — kept for call-site compatibility.
         max_new_tokens: Tokens to generate in the clean reference run.
         device:         Target device.
     """
@@ -156,25 +149,19 @@ def compute_token_importance(
             if imp is not None:
                 return imp
 
-        warnings.warn(
-            "[attention_shaping] output_attentions returned empty tensors "
-            f"(attn_implementation='{getattr(model.config, '_attn_implementation', '?')}')."
-            " Using KV-norm proxy instead. "
-            "Set attn_implementation='eager' for true future-attention shaping."
+        impl = getattr(model.config, "_attn_implementation", "?")
+        raise RuntimeError(
+            f"[attention_shaping] output_attentions=True returned empty tensors "
+            f"(attn_implementation='{impl}'). "
+            "Switch to attn_implementation='eager' to enable true future-attention shaping, "
+            "or set use_attention_shaping=False to disable it."
         )
 
     except (ValueError, NotImplementedError, RuntimeError) as exc:
-        warnings.warn(
-            f"[attention_shaping] output_attentions not supported ({type(exc).__name__}). "
-            "Using KV-norm proxy instead."
-        )
-
-    # ---- Fallback: KV-norm proxy ----
-    if K is not None and V is not None:
-        return _importance_from_kv(K, V)
-
-    # Last resort: uniform
-    return torch.full((T,), 1.0 / T)
+        raise RuntimeError(
+            f"[attention_shaping] output_attentions not supported: {exc}. "
+            "Switch to attn_implementation='eager' or set use_attention_shaping=False."
+        ) from exc
 
 
 def attention_alignment(

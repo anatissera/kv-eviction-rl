@@ -3,8 +3,8 @@
 
   "qwen-1.5b": {
     "max_new_tokens": 524,
-    "budget_min": 32,
-    "budget_max": 256,
+    "budget_min": 128,
+    "budget_max": 400,
 
     "_stats": {
       "output_length": {

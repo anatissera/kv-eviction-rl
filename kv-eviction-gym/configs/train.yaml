@@ -8,32 +8,36 @@ device:       auto         # auto = CUDA on server, MPS on Apple Silicon, CPU fa
 n_examples: 200
 seed: 0
 
-# Budget sampled uniformly from [budget_min, budget_max] each episode.
+# Budget = total cache capacity (prompt + generated tokens).
+# The env clamps the lower bound to max(budget_min, prompt_len) so the full
+# prompt always fits without pre-eviction.  Eviction starts at decode step
+# budget − prompt_len + 1 (when the cache first exceeds budget).
 # Defaults come from configs/model_defaults.json for the model_name.
-# Override here only if you want a non-default range.
-# budget_min: 32
-# budget_max: 256
-max_len: 256             # pad observations to this width
+# budget_min: 128   # ~max prompt length for GSM8K with qwen-1.5b
+# budget_max: 400   # prompt (~100) + up to 300 generated tokens before first eviction
+max_len: 512             # must be >= budget_max + 1 (cache peaks at budget+1 before eviction)
 # max_new_tokens: loaded from model_defaults.json (524 for qwen-1.5b)
 
-# Reward shaping: blend sparse correctness with dense attention alignment.
-# Disable with use_attention_shaping: false if using flash_attention_2 on GPU.
+# Reward shaping: blend sparse correctness with KV-norm attention alignment.
+# No extra generate() call — importance is derived from the prefill cache.
+# Disable with use_attention_shaping: false if you want pure correctness signal.
 use_attention_shaping: true
-attention_weight: 0.3   # 0 = pure correctness, 1 = pure attention alignment
+attention_weight: 0.3   # 0 = pure correctness, 1 = pure KV-norm alignment
 
 # Policy MLP hidden size
 hidden: 64
 
 # PPO hyperparameters
-n_steps:         560     # steps per env per rollout; total transitions = 560×28=15680
-                         # typical episode ~50 steps (T≈100, budget≈50) → ~11 episodes per rollout
-batch_size:      560
+# Episode = full generation (up to max_new_tokens=524 decode steps).
+# n_steps=524 guarantees at least one complete episode per env per rollout.
+# total transitions per rollout = 524 × 28 = 14672.
+n_steps:         524
+batch_size:      1024    # ≈14 minibatches per epoch × 4 epochs = 56 grad steps
 n_epochs:        4
 gamma:           1.0     # no discount — every eviction shares the same terminal reward
-gae_lambda:      1.0     # with gamma=1 and gae_lambda<1, later steps get higher advantage
-                         # weight (0.95^k decay). lambda=1 gives identical advantages.
+gae_lambda:      1.0     # lambda=1 gives identical advantages for all steps (Monte Carlo)
 clip_range:      0.2
-ent_coef:        0.0     # no entropy regularisation (matches the paper)
+ent_coef:        0.01   # small entropy bonus prevents early collapse of Discrete(512) policy
 total_timesteps: 500000
 
 save_path: checkpoints/run

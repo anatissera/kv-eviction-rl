@@ -2,20 +2,20 @@
 Per-token observation builder.
 
 Feature set per token position t:
-    K[t]  (head_dim,)  full key vector — RoPE already applied, encodes content + position
-    V[t]  (head_dim,)  full value vector
+    K_head0[t] || K_head1[t]  (n_kv_heads * head_dim,)  all key vectors concatenated
+    V_head0[t] || V_head1[t]  (n_kv_heads * head_dim,)  all value vectors concatenated
 
-feature_dim = 2 * head_dim  (128 for Qwen2.5-1.5B with head_dim=64)
+feature_dim = 2 * n_kv_heads * head_dim  (256 for Qwen2.5-1.5B: 2 heads × 64 dim × K+V)
 
-Position is already encoded in K via RoPE rotation, so an explicit
-t/max_len scalar is redundant. No layer/head fracs (add if ablations show benefit).
+Heads are concatenated, not averaged.  Averaging is lossy — heads that encode
+different token aspects can have K vectors pointing in different directions, and
+their mean can cancel or be geometrically meaningless.  Concatenation lets the
+downstream MLP learn per-head weights independently.
 
-Evicted token positions are zeroed out via `resident_mask` so the observation
-reflects the current cache state rather than the frozen prefill. This makes the
-observation non-constant across eviction steps, giving the value function a useful
-signal about how far into the episode we are.
+Position is already encoded in K via RoPE rotation, so an explicit t/max_len
+scalar is redundant.
 
-The observation is zero-padded beyond prompt_len. The action mask already
+The observation is zero-padded beyond the current cache size.  The action mask
 prevents the policy from selecting those padded positions.
 """
 
@@ -24,31 +24,35 @@ import torch
 from torch import Tensor
 
 
-def feature_dim(head_dim: int) -> int:
-    return 2 * head_dim
+def feature_dim(n_kv_heads: int, head_dim: int) -> int:
+    """Total features per token: K and V halves, all KV-heads concatenated."""
+    return 2 * n_kv_heads * head_dim
 
 
 def build_obs(
-    K:             Tensor,           # [n_envs, T, head_dim]
-    V:             Tensor,           # [n_envs, T, head_dim]
+    K:             Tensor,           # [n_envs, n_kv_heads, T, head_dim]
+    V:             Tensor,           # [n_envs, n_kv_heads, T, head_dim]
     prompt_len:    int,
     max_len:       int,
     resident_mask: Tensor | None = None,  # [n_envs, T] bool — False = already evicted
-) -> np.ndarray:                     # [n_envs, max_len, 2*head_dim]
+) -> np.ndarray:                     # [n_envs, max_len, 2*n_kv_heads*head_dim]
     """Build the observation array for all environments at once.
 
-    Evicted positions (resident_mask==False) are zeroed so the policy and value
-    function can observe which tokens have already been removed.
+    Heads are concatenated along the feature axis: [K_h0 | K_h1 | V_h0 | V_h1].
+    Evicted positions (resident_mask==False) are zeroed.
     """
-    n_envs, _, head_dim = K.shape
-    fdim = 2 * head_dim
-    obs  = np.zeros((n_envs, max_len, fdim), dtype=np.float32)
+    n_envs, H, _, head_dim = K.shape
+    fdim  = 2 * H * head_dim
+    obs   = np.zeros((n_envs, max_len, fdim), dtype=np.float32)
 
-    obs[:, :prompt_len, :head_dim]           = K[:, :prompt_len].cpu().numpy()
-    obs[:, :prompt_len, head_dim:2*head_dim] = V[:, :prompt_len].cpu().numpy()
+    # [n_envs, H, T, D] → [n_envs, T, H*D]
+    K_flat = K[:, :, :prompt_len, :].permute(0, 2, 1, 3).reshape(n_envs, prompt_len, H * head_dim)
+    V_flat = V[:, :, :prompt_len, :].permute(0, 2, 1, 3).reshape(n_envs, prompt_len, H * head_dim)
+
+    obs[:, :prompt_len, :H*head_dim]           = K_flat.cpu().numpy()
+    obs[:, :prompt_len, H*head_dim:2*H*head_dim] = V_flat.cpu().numpy()
 
     if resident_mask is not None:
-        # Zero out evicted positions: [n_envs, prompt_len] bool broadcast over fdim
         evicted = ~resident_mask[:, :prompt_len].cpu().numpy()  # [n_envs, T]
         obs[:, :prompt_len][evicted] = 0.0
 
