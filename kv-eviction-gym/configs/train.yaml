@@ -42,6 +42,19 @@ shaping_mode: per_step
 # Policy MLP hidden size
 hidden: 64
 
+# ── Training-time monitoring: fixed held-out eval probe ──
+# Every `probe_every_n_rollouts` rollouts, run the current policy (deterministic) over the
+# SAME `probe_n` held-out GSM8K test problems. Removes problem-difficulty noise so the
+# correctness/behavior trajectory reflects the policy only. Logs probe/* to TensorBoard and
+# <run_dir>/probe_curve.csv. Headline metric is retention = correct_learned/correct_full over
+# the problems the full cache solves (intrinsically-failed problems excluded). full/random/
+# kv_norm correctness are fixed anchors computed once. Set probe_n: 0 to disable.
+probe_n: 32                 # fixed probe problems (held-out test split)
+probe_every_n_rollouts: 5  # cadence
+probe_seed: 12345          # which test problems (fixed)
+probe_budget: 256          # cache budget at probe time — MUST be within [budget_min, budget_max]
+probe_n_sinks: 4           # sink positions for evict_sink_frac diagnostic
+
 # PPO hyperparameters
 # Episode = full generation (up to max_new_tokens=524 decode steps).
 # n_steps=524 guarantees at least one complete episode per env per rollout.

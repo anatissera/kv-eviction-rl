@@ -34,10 +34,84 @@ def rolling_mean(arr: np.ndarray, w: int) -> np.ndarray:
     return np.convolve(padded, kernel, mode="valid")
 
 
+def _read_csv_cols(csv_path: Path, cols: list[str]) -> dict[str, np.ndarray]:
+    out: dict[str, list] = {c: [] for c in cols}
+    with open(csv_path) as f:
+        for row in csv.DictReader(f):
+            for c in cols:
+                try:
+                    out[c].append(float(row.get(c, "nan")))
+                except (ValueError, TypeError):
+                    out[c].append(float("nan"))
+    return {c: np.array(v) for c, v in out.items()}
+
+
+def plot_probe(run_dir: Path) -> None:
+    """Plot the fixed-probe monitoring curve (probe_curve.csv) if present."""
+    csv_path = run_dir / "probe_curve.csv"
+    if not csv_path.exists():
+        return
+
+    d = _read_csv_cols(csv_path, [
+        "timestep", "correct_full", "correct_random", "correct_kv_norm",
+        "correct_learned", "retention",
+        "evict_attn_percentile", "evict_mean_pos_frac", "evict_sink_frac",
+    ])
+    ts = d["timestep"]
+    if ts.size == 0:
+        return
+
+    fig, (ax1, ax2) = plt.subplots(2, 1, figsize=(10, 8), sharex=True)
+
+    # ── Panel 1: correctness / retention vs fixed anchors ──
+    ax1.plot(ts, d["retention"], color="crimson", linewidth=2, marker="o", ms=3,
+             label="retention (learned/full on solvable)")
+    ax1.plot(ts, d["correct_learned"], color="steelblue", linewidth=1.8, marker=".",
+             label="correct: learned")
+    for col, c, ls, lab in [
+        ("correct_full",    "green",     "--", "full (ceiling)"),
+        ("correct_kv_norm", "goldenrod", ":",  "kv_norm"),
+        ("correct_random",  "gray",      ":",  "random (floor)"),
+    ]:
+        v = d[col]
+        anchor = np.nanmean(v) if v.size else float("nan")
+        ax1.axhline(anchor, color=c, linestyle=ls, linewidth=1.3, alpha=0.8, label=lab)
+    ax1.set_ylim(-0.05, 1.05)
+    ax1.set_ylabel("correctness / retention")
+    ax1.set_title("Fixed held-out probe — correctness")
+    ax1.legend(fontsize=8, ncol=2)
+    ax1.grid(alpha=0.3)
+
+    # ── Panel 2: eviction behavior (continuous, leads correctness) ──
+    ax2.plot(ts, d["evict_attn_percentile"], color="purple", linewidth=2, marker="o", ms=3,
+             label="evict attn percentile (0=oracle, .5=random)")
+    ax2.axhline(0.5, color="gray", linestyle=":", linewidth=1, alpha=0.7)
+    ax2.plot(ts, d["evict_mean_pos_frac"], color="teal", linewidth=1.5, marker=".",
+             label="evict mean pos frac (0=old, 1=recent)")
+    ax2.plot(ts, d["evict_sink_frac"], color="darkorange", linewidth=1.5, marker=".",
+             label="evict sink frac")
+    ax2.set_ylim(-0.05, 1.05)
+    ax2.set_ylabel("behavior")
+    ax2.set_xlabel("timestep")
+    ax2.set_title("Fixed held-out probe — eviction behavior")
+    ax2.legend(fontsize=8)
+    ax2.grid(alpha=0.3)
+
+    fig.suptitle(f"Probe curves — {run_dir.name}", fontsize=12)
+    plt.tight_layout()
+    out_path = run_dir / "probe_curve.png"
+    fig.savefig(out_path, dpi=150)
+    plt.close(fig)
+    print(f"Saved {out_path}")
+
+
 def main():
     args    = parse_args()
     run_dir = Path(args.run)
     csv_path = run_dir / "learning_curve.csv"
+
+    # Probe curve is independent of the learning curve — plot it whenever present.
+    plot_probe(run_dir)
 
     if not csv_path.exists():
         print(f"No learning_curve.csv found in {run_dir}. Run training first.")

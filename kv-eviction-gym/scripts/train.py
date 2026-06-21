@@ -27,6 +27,7 @@ from kv_gym.env import SharedKVVecEnv
 from kv_gym.policy import PerTokenMLP
 from kv_gym.vendor.loader import load_model_and_tokenizer
 from kv_gym.vendor.gsm8k import load_gsm8k
+from kv_gym.probe import EvalProbeCallback
 
 
 def parse_args():
@@ -182,7 +183,7 @@ def main():
     )
 
     checkpoint_freq = cfg.get("checkpoint_freq", 50_000)
-    callbacks = CallbackList([
+    callback_list = [
         TrainingLogger(run_dir, verbose=1),
         CheckpointCallback(
             save_freq=checkpoint_freq,
@@ -190,7 +191,33 @@ def main():
             name_prefix="ckpt",
             verbose=1,
         ),
-    ])
+    ]
+
+    # Fixed held-out probe: denoised periodic monitoring (retention + eviction behavior).
+    # Disable with probe_n: 0.
+    probe_n = cfg.get("probe_n", 32)
+    if probe_n and probe_n > 0:
+        probe_examples = load_gsm8k(
+            n=probe_n, seed=cfg.get("probe_seed", 12345), split="test",
+        )
+        probe_budget = cfg.get("probe_budget", cfg.get("budget_min", 128))
+        print(f"probe: n={probe_n} budget={probe_budget} "
+              f"every_n_rollouts={cfg.get('probe_every_n_rollouts', 5)} (held-out test split)")
+        callback_list.append(EvalProbeCallback(
+            llm=model,
+            tokenizer=tokenizer,
+            probe_examples=probe_examples,
+            budget=probe_budget,
+            max_new_tokens=cfg.get("max_new_tokens", 524),
+            max_len=cfg.get("max_len", 512),
+            every_n_rollouts=cfg.get("probe_every_n_rollouts", 5),
+            n_sinks=cfg.get("probe_n_sinks", 4),
+            run_dir=run_dir,
+            device=device,
+            verbose=1,
+        ))
+
+    callbacks = CallbackList(callback_list)
 
     ppo = MaskablePPO(
         "MlpPolicy",

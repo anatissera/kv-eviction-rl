@@ -34,6 +34,13 @@ shaping_mode: per_step  # per_step | terminal | none  (see configs/train.yaml fo
 # Tiny MLP to keep it fast (feature_dim=256 = 2 heads × 64 dim × K+V)
 hidden: 32
 
+# Monitoring probe — tiny + frequent for a fast end-to-end smoke (see configs/train.yaml).
+probe_n: 3
+probe_every_n_rollouts: 2
+probe_seed: 12345
+probe_budget: 160          # within [budget_min=128, budget_max=180]
+probe_n_sinks: 4
+
 # PPO — 28 envs (one per layer) × 64 steps = 1792 per rollout (fast local run)
 n_steps:         64
 batch_size:      64
