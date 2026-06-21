@@ -39,4 +39,4 @@ gamma:           1.0     # no discount — every eviction shares the same termin
 gae_lambda:      1.0     # lambda=1 gives identical advantages for all steps (Monte Carlo)
 clip_range:      0.2
 ent_coef:        0.01   # small entropy bonus prevents early collapse of Discrete(512) policy
-total_timesteps: 1500000  # ~4,400 episodes; increase to 3M+ for longer runs
+total_timesteps: 10000000  # ~1,000 episodes (n_envs=28 multiplies the SB3 counter)
