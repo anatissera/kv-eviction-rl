@@ -304,6 +304,10 @@ class SharedKVVecEnv(VecEnv):
             self.next_token    = new_next_token
             if new_next_token == self.eos_id or self.step_count >= self.max_new_tokens:
                 self._free_growth_done = True
+                # Same truncation fix as step_wait: include the last predicted token
+                # if episode ended by step limit rather than EOS.
+                if new_next_token != self.eos_id:
+                    self.generated.append(new_next_token)
                 break
 
     def step_async(self, actions: np.ndarray):
@@ -372,6 +376,11 @@ class SharedKVVecEnv(VecEnv):
         self.next_token = new_next_token
 
         if done:
+            # When done by EOS, new_next_token is a special token — don't include it.
+            # When done by truncation, new_next_token is real content that was predicted
+            # but never fed as input: include it so the decoded answer is complete.
+            if new_next_token != self.eos_id:
+                self.generated.append(new_next_token)
             rewards      = self._terminal_reward()
             dones        = np.ones(self.num_envs, dtype=bool)
             terminal_obs = self._obs()

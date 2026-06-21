@@ -101,7 +101,7 @@ def main():
         gamma=cfg.get("gamma", 1.0),
         gae_lambda=cfg.get("gae_lambda", 1.0),
         clip_range=cfg.get("clip_range", 0.2),
-        ent_coef=cfg.get("ent_coef", 0.0),
+        ent_coef=cfg.get("ent_coef", 0.01),
         verbose=1,
         device=device,
     )
