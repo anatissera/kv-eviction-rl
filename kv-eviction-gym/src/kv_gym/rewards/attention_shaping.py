@@ -81,24 +81,6 @@ def _importance_from_attentions(
     return importance
 
 
-def _importance_from_kv(K: Tensor, V: Tensor) -> Tensor:
-    """KV-norm fallback: importance[t] ∝ max over layers/heads of ||K[t]|| + ||V[t]||.
-
-    K: [n_layers, n_kv_heads, T, head_dim]
-    V: [n_layers, n_kv_heads, T, head_dim]
-    Returns [T] normalised importance.
-
-    Max (not mean) follows the SnapKV convention: a token's importance is
-    determined by whichever (layer, head) finds it most salient, not the
-    average.  Mean would dilute tokens critical to specific heads.
-    """
-    score = (K.norm(dim=-1) + V.norm(dim=-1)).amax(dim=(0, 1))  # [T]
-    total = score.sum()
-    if total > 1e-8:
-        score = score / total
-    return score.cpu()
-
-
 def compute_token_importance(
     model,
     input_ids:      Tensor,            # [1, prompt_len]
