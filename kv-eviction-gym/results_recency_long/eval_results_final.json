@@ -1,0 +1,348 @@
+{
+  "budget": 200,
+  "n_examples": 30,
+  "strategies": {
+    "full": {
+      "mean": 0.3,
+      "ci_lo": 0.16664562643958933,
+      "ci_hi": 0.4787612101166018,
+      "vs_full": 1.0
+    },
+    "learned": {
+      "mean": 0.1,
+      "ci_lo": 0.03459925995971615,
+      "ci_hi": 0.25621441315266624,
+      "vs_full": 0.33333333333333337
+    },
+    "streaming": {
+      "mean": 0.13333333333333333,
+      "ci_lo": 0.05309569424218104,
+      "ci_hi": 0.2968168394441695,
+      "vs_full": 0.4444444444444445
+    },
+    "attn_layer": {
+      "mean": 0.06666666666666667,
+      "ci_lo": 0.01847663532769335,
+      "ci_hi": 0.21323817721072091,
+      "vs_full": 0.22222222222222224
+    },
+    "kv_norm": {
+      "mean": 0.1,
+      "ci_lo": 0.03459925995971615,
+      "ci_hi": 0.25621441315266624,
+      "vs_full": 0.33333333333333337
+    },
+    "random": {
+      "mean": 0.1,
+      "ci_lo": 0.03459925995971615,
+      "ci_hi": 0.25621441315266624,
+      "vs_full": 0.33333333333333337
+    }
+  },
+  "correlation": {
+    "mean_attention_rank_percentile": 0.4995729918772563,
+    "n_decisions": 124096
+  },
+  "per_example": [
+    {
+      "example": 0,
+      "prompt_len": 70,
+      "full": 0.0,
+      "learned": 0.0,
+      "streaming": 0.0,
+      "kv_norm": 0.0,
+      "random": 0.0,
+      "attn_layer": 0.0
+    },
+    {
+      "example": 1,
+      "prompt_len": 136,
+      "full": 0.0,
+      "learned": 0.0,
+      "streaming": 0.0,
+      "kv_norm": 0.0,
+      "random": 0.0,
+      "attn_layer": 0.0
+    },
+    {
+      "example": 2,
+      "prompt_len": 74,
+      "full": 1.0,
+      "learned": 0.0,
+      "streaming": 0.0,
+      "kv_norm": 0.0,
+      "random": 1.0,
+      "attn_layer": 0.0
+    },
+    {
+      "example": 3,
+      "prompt_len": 95,
+      "full": 1.0,
+      "learned": 0.0,
+      "streaming": 0.0,
+      "kv_norm": 0.0,
+      "random": 0.0,
+      "attn_layer": 0.0
+    },
+    {
+      "example": 4,
+      "prompt_len": 127,
+      "full": 0.0,
+      "learned": 0.0,
+      "streaming": 1.0,
+      "kv_norm": 0.0,
+      "random": 0.0,
+      "attn_layer": 0.0
+    },
+    {
+      "example": 5,
+      "prompt_len": 143,
+      "full": 0.0,
+      "learned": 0.0,
+      "streaming": 0.0,
+      "kv_norm": 0.0,
+      "random": 0.0,
+      "attn_layer": 0.0
+    },
+    {
+      "example": 6,
+      "prompt_len": 138,
+      "full": 0.0,
+      "learned": 0.0,
+      "streaming": 0.0,
+      "kv_norm": 0.0,
+      "random": 0.0,
+      "attn_layer": 0.0
+    },
+    {
+      "example": 7,
+      "prompt_len": 75,
+      "full": 1.0,
+      "learned": 1.0,
+      "streaming": 1.0,
+      "kv_norm": 1.0,
+      "random": 1.0,
+      "attn_layer": 1.0
+    },
+    {
+      "example": 8,
+      "prompt_len": 68,
+      "full": 1.0,
+      "learned": 1.0,
+      "streaming": 1.0,
+      "kv_norm": 0.0,
+      "random": 0.0,
+      "attn_layer": 0.0
+    },
+    {
+      "example": 9,
+      "prompt_len": 121,
+      "full": 0.0,
+      "learned": 0.0,
+      "streaming": 0.0,
+      "kv_norm": 0.0,
+      "random": 0.0,
+      "attn_layer": 0.0
+    },
+    {
+      "example": 10,
+      "prompt_len": 155,
+      "full": 0.0,
+      "learned": 0.0,
+      "streaming": 0.0,
+      "kv_norm": 0.0,
+      "random": 0.0,
+      "attn_layer": 0.0
+    },
+    {
+      "example": 11,
+      "prompt_len": 65,
+      "full": 1.0,
+      "learned": 0.0,
+      "streaming": 0.0,
+      "kv_norm": 0.0,
+      "random": 0.0,
+      "attn_layer": 0.0
+    },
+    {
+      "example": 12,
+      "prompt_len": 94,
+      "full": 0.0,
+      "learned": 0.0,
+      "streaming": 0.0,
+      "kv_norm": 0.0,
+      "random": 0.0,
+      "attn_layer": 0.0
+    },
+    {
+      "example": 13,
+      "prompt_len": 71,
+      "full": 1.0,
+      "learned": 0.0,
+      "streaming": 0.0,
+      "kv_norm": 0.0,
+      "random": 0.0,
+      "attn_layer": 0.0
+    },
+    {
+      "example": 14,
+      "prompt_len": 104,
+      "full": 0.0,
+      "learned": 0.0,
+      "streaming": 0.0,
+      "kv_norm": 0.0,
+      "random": 0.0,
+      "attn_layer": 0.0
+    },
+    {
+      "example": 15,
+      "prompt_len": 66,
+      "full": 1.0,
+      "learned": 0.0,
+      "streaming": 0.0,
+      "kv_norm": 0.0,
+      "random": 0.0,
+      "attn_layer": 0.0
+    },
+    {
+      "example": 16,
+      "prompt_len": 69,
+      "full": 0.0,
+      "learned": 0.0,
+      "streaming": 0.0,
+      "kv_norm": 0.0,
+      "random": 0.0,
+      "attn_layer": 0.0
+    },
+    {
+      "example": 17,
+      "prompt_len": 57,
+      "full": 0.0,
+      "learned": 0.0,
+      "streaming": 0.0,
+      "kv_norm": 0.0,
+      "random": 0.0,
+      "attn_layer": 0.0
+    },
+    {
+      "example": 18,
+      "prompt_len": 66,
+      "full": 0.0,
+      "learned": 0.0,
+      "streaming": 0.0,
+      "kv_norm": 1.0,
+      "random": 0.0,
+      "attn_layer": 0.0
+    },
+    {
+      "example": 19,
+      "prompt_len": 102,
+      "full": 0.0,
+      "learned": 0.0,
+      "streaming": 0.0,
+      "kv_norm": 0.0,
+      "random": 0.0,
+      "attn_layer": 0.0
+    },
+    {
+      "example": 20,
+      "prompt_len": 108,
+      "full": 1.0,
+      "learned": 0.0,
+      "streaming": 0.0,
+      "kv_norm": 0.0,
+      "random": 0.0,
+      "attn_layer": 0.0
+    },
+    {
+      "example": 21,
+      "prompt_len": 67,
+      "full": 0.0,
+      "learned": 0.0,
+      "streaming": 0.0,
+      "kv_norm": 0.0,
+      "random": 0.0,
+      "attn_layer": 0.0
+    },
+    {
+      "example": 22,
+      "prompt_len": 95,
+      "full": 0.0,
+      "learned": 0.0,
+      "streaming": 0.0,
+      "kv_norm": 0.0,
+      "random": 0.0,
+      "attn_layer": 0.0
+    },
+    {
+      "example": 23,
+      "prompt_len": 88,
+      "full": 0.0,
+      "learned": 0.0,
+      "streaming": 0.0,
+      "kv_norm": 0.0,
+      "random": 0.0,
+      "attn_layer": 0.0
+    },
+    {
+      "example": 24,
+      "prompt_len": 61,
+      "full": 0.0,
+      "learned": 0.0,
+      "streaming": 0.0,
+      "kv_norm": 0.0,
+      "random": 0.0,
+      "attn_layer": 0.0
+    },
+    {
+      "example": 25,
+      "prompt_len": 116,
+      "full": 0.0,
+      "learned": 1.0,
+      "streaming": 0.0,
+      "kv_norm": 1.0,
+      "random": 1.0,
+      "attn_layer": 0.0
+    },
+    {
+      "example": 26,
+      "prompt_len": 104,
+      "full": 0.0,
+      "learned": 0.0,
+      "streaming": 0.0,
+      "kv_norm": 0.0,
+      "random": 0.0,
+      "attn_layer": 0.0
+    },
+    {
+      "example": 27,
+      "prompt_len": 72,
+      "full": 0.0,
+      "learned": 0.0,
+      "streaming": 0.0,
+      "kv_norm": 0.0,
+      "random": 0.0,
+      "attn_layer": 0.0
+    },
+    {
+      "example": 28,
+      "prompt_len": 99,
+      "full": 0.0,
+      "learned": 0.0,
+      "streaming": 0.0,
+      "kv_norm": 0.0,
+      "random": 0.0,
+      "attn_layer": 0.0
+    },
+    {
+      "example": 29,
+      "prompt_len": 76,
+      "full": 1.0,
+      "learned": 0.0,
+      "streaming": 1.0,
+      "kv_norm": 0.0,
+      "random": 0.0,
+      "attn_layer": 1.0
+    }
+  ]
+}
