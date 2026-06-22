@@ -21,6 +21,7 @@ from datetime import datetime
 from pathlib import Path
 
 from stable_baselines3.common.callbacks import BaseCallback, CheckpointCallback, CallbackList
+from stable_baselines3.common.vec_env import VecMonitor
 from sb3_contrib import MaskablePPO
 
 from kv_gym.env import SharedKVVecEnv
@@ -36,6 +37,8 @@ def parse_args():
     p.add_argument("--run-name", default=None,
                    help="Sub-directory under runs/ for all outputs. "
                         "Defaults to a timestamp.")
+    p.add_argument("--resume-from", default=None,
+                   help="Path to a saved MaskablePPO checkpoint to resume training from.")
     return p.parse_args()
 
 
@@ -75,6 +78,7 @@ class TrainingLogger(BaseCallback):
         self._correct_buf:   list[bool]  = []
         self._align_buf:     list[float] = []
         self._episode_seconds_buf: list[float] = []
+        self._truncated_buf: list[bool] = []
 
     def _on_training_start(self) -> None:
         self._file   = open(self.csv_path, "w", newline="")
@@ -82,7 +86,7 @@ class TrainingLogger(BaseCallback):
         self._writer.writerow([
             "timestep", "ep_rew_mean", "ep_len_mean",
             "correctness_rate", "alignment_mean", "episode_seconds_mean",
-            "episodes",
+            "episodes", "truncation_rate",
         ])
 
     def _on_step(self) -> bool:
@@ -97,6 +101,7 @@ class TrainingLogger(BaseCallback):
             episode_seconds = infos[0].get("episode_seconds", float("nan"))
             if episode_seconds == episode_seconds:  # not NaN
                 self._episode_seconds_buf.append(episode_seconds)
+            self._truncated_buf.append(infos[0].get("truncated", False))
         return True
 
     def _on_rollout_end(self) -> None:
@@ -115,15 +120,19 @@ class TrainingLogger(BaseCallback):
             if self._episode_seconds_buf else float("nan")
         )
         episodes = len(self._episode_seconds_buf)
+        trunc_rate = (sum(self._truncated_buf) / len(self._truncated_buf)
+                      if self._truncated_buf else float("nan"))
         self._correct_buf.clear()
         self._align_buf.clear()
         self._episode_seconds_buf.clear()
+        self._truncated_buf.clear()
 
         self._writer.writerow([
             self.num_timesteps,
             f"{mean_rew:.6f}", f"{mean_len:.1f}",
             f"{corr_rate:.4f}", f"{align_mean:.4f}",
             f"{episode_seconds_mean:.3f}", episodes,
+            f"{trunc_rate:.4f}",
         ])
         self._file.flush()
 
@@ -132,9 +141,11 @@ class TrainingLogger(BaseCallback):
             align_str = f"{align_mean:.3f}" if align_mean == align_mean else "n/a"
             sec_str   = (f"{episode_seconds_mean:.1f}s"
                          if episode_seconds_mean == episode_seconds_mean else "n/a")
+            trunc_str = f"{trunc_rate:.1%}" if trunc_rate == trunc_rate else "n/a"
             print(f"  t={self.num_timesteps:>9,}  rew={mean_rew:.4f}"
                   f"  correct={corr_str}  align={align_str}"
-                  f"  ep_time={sec_str}  episodes={episodes}")
+                  f"  ep_time={sec_str}  episodes={episodes}"
+                  f"  trunc={trunc_str}")
 
         if mean_rew > self.best_mean:
             self.best_mean = mean_rew
@@ -198,6 +209,7 @@ def main():
         n_recent=cfg.get("n_recent", 8),
         seed=cfg.get("seed", 0),
     )
+    env = VecMonitor(env)
 
     checkpoint_freq = cfg.get("checkpoint_freq", 50_000)
     callback_list = [
@@ -237,26 +249,36 @@ def main():
 
     callbacks = CallbackList(callback_list)
 
-    ppo = MaskablePPO(
-        "MlpPolicy",
-        env,
-        policy_kwargs={
-            "features_extractor_class": PerTokenMLP,
-            "features_extractor_kwargs": {"hidden": cfg.get("hidden", 64)},
-        },
-        n_steps=cfg.get("n_steps", 524),
-        batch_size=cfg.get("batch_size", 1024),
-        n_epochs=cfg.get("n_epochs", 4),
-        gamma=cfg.get("gamma", 1.0),
-        gae_lambda=cfg.get("gae_lambda", 1.0),
-        clip_range=cfg.get("clip_range", 0.2),
-        ent_coef=cfg.get("ent_coef", 0.01),
-        tensorboard_log=str(tb_dir),
-        verbose=1,
-        device=device,
-    )
+    if args.resume_from:
+        print(f"Resuming training from checkpoint: {args.resume_from}")
+        ppo = MaskablePPO.load(args.resume_from, env=env, device=device)
+        # Point to the correct tensorboard directory
+        ppo.tensorboard_log = str(tb_dir)
+    else:
+        ppo = MaskablePPO(
+            "MlpPolicy",
+            env,
+            policy_kwargs={
+                "features_extractor_class": PerTokenMLP,
+                "features_extractor_kwargs": {"hidden": cfg.get("hidden", 64)},
+            },
+            n_steps=cfg.get("n_steps", 524),
+            batch_size=cfg.get("batch_size", 1024),
+            n_epochs=cfg.get("n_epochs", 4),
+            gamma=cfg.get("gamma", 1.0),
+            gae_lambda=cfg.get("gae_lambda", 1.0),
+            clip_range=cfg.get("clip_range", 0.2),
+            ent_coef=cfg.get("ent_coef", 0.01),
+            tensorboard_log=str(tb_dir),
+            verbose=1,
+            device=device,
+        )
 
-    ppo.learn(total_timesteps=cfg.get("total_timesteps", 500_000), callback=callbacks)
+    ppo.learn(
+        total_timesteps=cfg.get("total_timesteps", 500_000),
+        callback=callbacks,
+        reset_num_timesteps=False if args.resume_from else True,
+    )
 
     final_path = run_dir / "final_model"
     ppo.save(str(final_path))

@@ -12,12 +12,129 @@ evicted per layer before the next token is generated.
 
 from __future__ import annotations
 
+from collections.abc import Sequence
+from typing import Literal
+
 import numpy as np
 import torch
 from torch import Tensor
 
 from kv_gym.features import build_obs
 from kv_gym.vendor.answer_extraction_gsm8k import flexible_extract
+
+
+Mode = Literal["mean", "sum", "instant"]
+
+
+class ScoreAccumulator:
+    """Pad-on-grow sum + count accumulator over the last (kv) dim.
+    Identical to the thesis repository implementation."""
+
+    def __init__(self) -> None:
+        self._sum: Tensor | None = None
+        self._counts: Tensor | None = None
+
+    def reset(self) -> None:
+        self._sum = None
+        self._counts = None
+
+    def evict(self, keep_indices: Tensor) -> None:
+        """Slice the internal buffers along the KV dim after cache eviction."""
+        if self._sum is None:
+            return
+
+        assert keep_indices.ndim == 2, (
+            f"keep_indices must be [L, K_kept], got shape {tuple(keep_indices.shape)}"
+        )
+        L = keep_indices.shape[0]
+        assert self._sum.shape[0] == L, (
+            f"first dim of accumulator ({self._sum.shape[0]}) must equal "
+            f"keep_indices' L ({L})"
+        )
+
+        idx = keep_indices.to(self._sum.device)
+        for _ in range(self._sum.ndim - 2):
+            idx = idx.unsqueeze(1)
+        idx = idx.expand(*self._sum.shape[:-1], keep_indices.shape[1])
+
+        self._sum = torch.gather(self._sum, dim=-1, index=idx)
+        self._counts = torch.gather(self._counts, dim=-1, index=idx)
+
+    def update(
+        self,
+        current: Tensor,
+        q_len: int,
+        mode: Literal["sum", "mean"],
+    ) -> Tensor:
+        """Fold current into the running totals and return the aggregate."""
+        K = current.shape[-1]
+
+        if self._sum is None:
+            self._sum = current.clone()
+            self._counts = torch.full_like(current, q_len)
+        else:
+            diff = K - self._sum.shape[-1]
+            if diff > 0:
+                sum_pad = current.new_zeros((*self._sum.shape[:-1], diff))
+                self._sum = torch.cat([self._sum, sum_pad], dim=-1)
+                count_pad = self._counts.new_zeros((*self._counts.shape[:-1], diff))
+                self._counts = torch.cat([self._counts, count_pad], dim=-1)
+
+            self._sum += current
+            self._counts += q_len
+
+        if mode == "sum":
+            return self._sum
+        return self._sum / self._counts
+
+
+class PerLayerAttentionScorer:
+    """Head-mean, query-sum attention received per (layer, token).
+    Identical to the thesis repository implementation."""
+
+    def __init__(self, mode: Mode = "mean") -> None:
+        self.mode: Mode = mode
+        self._acc: ScoreAccumulator | None = (
+            ScoreAccumulator() if mode != "instant" else None
+        )
+
+    def score(self, attentions: Sequence[Tensor]) -> Tensor:
+        """Importance scores under the configured mode."""
+        q_len = attentions[0].shape[2]
+        per_layer = []
+        for a in attentions:
+            assert a.shape[0] == 1, (
+                f"PerLayerAttentionScorer only supports batch size 1, got {a.shape[0]}"
+            )
+            # a: [1, H, Q, K] -> [H, Q, K] -> [Q, K] (head-mean) -> [K] (query-sum)
+            per_layer.append(a.squeeze(0).mean(dim=0).sum(dim=0))
+        current = torch.stack(per_layer, dim=0)
+
+        if self.mode == "instant":
+            return current / q_len
+        assert self._acc is not None
+        return self._acc.update(current, q_len, mode=self.mode)
+
+    def reset(self) -> None:
+        """Clear any accumulated state."""
+        if self._acc is not None:
+            self._acc.reset()
+
+    def evict(self, keep_indices: Tensor) -> None:
+        """Slice internal state to match a trimmed KV cache."""
+        if self._acc is not None:
+            self._acc.evict(keep_indices)
+
+    @property
+    def current_scores(self) -> Tensor:
+        """Expose current accumulated attention scores."""
+        if self._acc is not None:
+            if self._acc._sum is None:
+                return torch.empty(0)
+            if self.mode == "sum":
+                return self._acc._sum
+            return self._acc._sum / self._acc._counts
+        raise NotImplementedError("Dynamic scores not available in instant mode")
 
 
 # ── Cache utilities ───────────────────────────────────────────────────────────
@@ -45,18 +162,26 @@ def _evict_per_layer(past_kv, evict_slots: list[int]) -> None:
     """Remove one slot per layer from the live DynamicCache."""
     if hasattr(past_kv, "layers"):
         for l, s in enumerate(evict_slots):
-            seq = past_kv.layers[l].keys.shape[2]
-            keep = torch.tensor([i for i in range(seq) if i != s],
-                                device=past_kv.layers[l].keys.device)
-            past_kv.layers[l].keys   = past_kv.layers[l].keys.index_select(2, keep)
-            past_kv.layers[l].values = past_kv.layers[l].values.index_select(2, keep)
+            keys   = past_kv.layers[l].keys
+            values = past_kv.layers[l].values
+            S      = keys.shape[2]
+            idx    = torch.cat([
+                torch.arange(s,     device=keys.device),
+                torch.arange(s + 1, S, device=keys.device),
+            ])
+            past_kv.layers[l].keys   = keys.index_select(2, idx)
+            past_kv.layers[l].values = values.index_select(2, idx)
     else:
         for l, s in enumerate(evict_slots):
-            seq = past_kv.key_cache[l].shape[2]
-            keep = torch.tensor([i for i in range(seq) if i != s],
-                                device=past_kv.key_cache[l].device)
-            past_kv.key_cache[l]   = past_kv.key_cache[l].index_select(2, keep)
-            past_kv.value_cache[l] = past_kv.value_cache[l].index_select(2, keep)
+            keys   = past_kv.key_cache[l]
+            values = past_kv.value_cache[l]
+            S      = keys.shape[2]
+            idx    = torch.cat([
+                torch.arange(s,     device=keys.device),
+                torch.arange(s + 1, S, device=keys.device),
+            ])
+            past_kv.key_cache[l]   = keys.index_select(2, idx)
+            past_kv.value_cache[l] = values.index_select(2, idx)
 
 
 # ── Position tracker ──────────────────────────────────────────────────────────
@@ -127,7 +252,7 @@ def make_learned_evict_fn(policy, L: int, max_len: int, n_sinks: int = 0, n_rece
     The action mask protects the first `n_sinks` and last `n_recent` cache slots —
     must match the env's action_masks() used during training.
     """
-    def evict(K: Tensor, V: Tensor, tracker: PositionTracker) -> list[int]:
+    def evict(K: Tensor, V: Tensor, tracker: PositionTracker, scores=None) -> list[int]:
         cache_size = K.shape[2]
         obs   = build_obs(K, V, cache_size, max_len)          # [L, max_len, feat]
         row   = valid_action_mask(cache_size, max_len, n_sinks, n_recent)
@@ -139,35 +264,51 @@ def make_learned_evict_fn(policy, L: int, max_len: int, n_sinks: int = 0, n_rece
 
 def make_streaming_evict_fn(n_sinks: int, L: int):
     """StreamingLLM: evict the oldest non-sink slot (always slot n_sinks)."""
-    def evict(K: Tensor, V: Tensor, tracker: PositionTracker) -> list[int]:
+    def evict(K: Tensor, V: Tensor, tracker: PositionTracker, scores=None) -> list[int]:
         return [n_sinks] * L
+    evict.needs_kv = False
     return evict
 
 
-def make_attention_evict_fn(per_layer_imp: Tensor, L: int, n_sinks: int = 0, n_recent: int = 0):
-    """Attention oracle: evict the valid slot whose original position has least future
-    attention (restricted to the same recency+sink window as the learned policy)."""
-    T_imp = per_layer_imp.shape[1]
+def make_attention_evict_fn(*args, **kwargs):
+    """Attention oracle: evict the valid slot whose current dynamic attention score is lowest.
+    Supports both old and new signatures:
+      Old: make_attention_evict_fn(per_layer_imp, L, n_sinks=0, n_recent=0)
+      New: make_attention_evict_fn(L, n_sinks=0, n_recent=0)
+    """
+    if len(args) > 0 and isinstance(args[0], Tensor):
+        # Old signature
+        per_layer_imp = args[0]
+        L = args[1] if len(args) > 1 else per_layer_imp.shape[0]
+        n_sinks = args[2] if len(args) > 2 else kwargs.get("n_sinks", 0)
+        n_recent = args[3] if len(args) > 3 else kwargs.get("n_recent", 0)
+    else:
+        # New signature
+        L = args[0] if len(args) > 0 else kwargs.get("L")
+        n_sinks = args[1] if len(args) > 1 else kwargs.get("n_sinks", 0)
+        n_recent = args[2] if len(args) > 2 else kwargs.get("n_recent", 0)
 
-    def evict(K: Tensor, V: Tensor, tracker: PositionTracker) -> list[int]:
+    def evict(K: Tensor, V: Tensor, tracker: PositionTracker, scores=None) -> list[int]:
+        assert scores is not None, (
+            "Dynamic attention scores must be provided for attn_layer. "
+            "Ensure attn_implementation='eager' is used."
+        )
         slots = []
         for l in range(L):
             n = tracker.size(l)
             cand = _valid_slots(n, n_sinks, n_recent)
-            imps = [
-                per_layer_imp[l, tracker.original_pos(l, s)].item()
-                if tracker.original_pos(l, s) < T_imp else 0.0
-                for s in cand
-            ]
+            # Find the candidate slot with the lowest dynamic score in layer l
+            imps = [scores[l, s].item() for s in cand]
             slots.append(cand[int(np.argmin(imps))])
         return slots
 
+    evict.needs_kv = False
     return evict
 
 
 def make_kv_norm_evict_fn(L: int, n_sinks: int = 0, n_recent: int = 0):
     """KV-norm: per layer, evict the valid slot with the lowest current ||K||+||V|| norm."""
-    def evict(K: Tensor, V: Tensor, tracker: PositionTracker) -> list[int]:
+    def evict(K: Tensor, V: Tensor, tracker: PositionTracker, scores=None) -> list[int]:
         # K, V: [L, H, seq, D] — mean over heads
         norms = (K.norm(dim=-1) + V.norm(dim=-1)).mean(dim=1)  # [L, seq]
         cand = _valid_slots(K.shape[2], n_sinks, n_recent)
@@ -178,9 +319,11 @@ def make_kv_norm_evict_fn(L: int, n_sinks: int = 0, n_recent: int = 0):
 
 def make_random_evict_fn(L: int, rng, n_sinks: int = 0, n_recent: int = 0):
     """Random: uniformly random valid slot per layer (respects the window)."""
-    def evict(K: Tensor, V: Tensor, tracker: PositionTracker) -> list[int]:
-        cand = _valid_slots(K.shape[2], n_sinks, n_recent)
+    def evict(K: Tensor, V: Tensor, tracker: PositionTracker, scores=None) -> list[int]:
+        cache_size = tracker.size(0)
+        cand = _valid_slots(cache_size, n_sinks, n_recent)
         return [cand[int(rng.integers(0, len(cand)))] for _ in range(L)]
+    evict.needs_kv = False
     return evict
 
 
@@ -195,28 +338,40 @@ def run_online_episode(
     max_new_tokens: int,
     device:         torch.device,
     evict_fn,
-    per_layer_imp:  Tensor | None = None,  # [L, T_prompt] for correlation tracking
-) -> tuple[str, list[float], list[tuple[int, int]]]:
+    per_layer_imp:  Tensor | None = None,  # Kept for backward compatibility but unused
+) -> tuple[str, list[float], list[tuple[int, int]], bool]:
     """Run one full online episode.
 
     At each decode step the cache grows by one token.  When cache_size > budget
     the evict_fn removes one token per layer before decoding continues.
-
-    Returns:
-        text         — the generated continuation.
-        correlation  — attention-rank percentile of each eviction decision (empty
-                       if per_layer_imp is None).
-        evicted      — list of (original_position, true_position_at_eviction) for every
-                       per-layer eviction decision. true_position is the absolute
-                       sequence position being generated at that step, so
-                       original_position / true_position ∈ [0, 1) is a recency score
-                       (0 = oldest token evicted, ~1 = most-recent evicted).
     """
     L   = model.config.num_hidden_layers
     T   = input_ids.shape[1]
     eos = tokenizer.eos_token_id
 
-    out      = model(input_ids=input_ids.to(device), use_cache=True)
+    # Check if we can capture attentions (requires attn_implementation="eager")
+    attn_implementation = getattr(model.config, "_attn_implementation", "")
+    attn_available = (attn_implementation == "eager")
+
+    scorer = None
+    scores = None
+
+    if attn_available:
+        try:
+            # Prefill forward pass with output_attentions=True to get initial attention
+            out = model(input_ids=input_ids.to(device), use_cache=True, output_attentions=True)
+            if hasattr(out, "attentions") and out.attentions is not None and len(out.attentions) > 0:
+                scorer = PerLayerAttentionScorer(mode="mean")
+                scores = scorer.score(out.attentions)
+            else:
+                attn_available = False
+                out = model(input_ids=input_ids.to(device), use_cache=True)
+        except Exception:
+            attn_available = False
+            out = model(input_ids=input_ids.to(device), use_cache=True)
+    else:
+        out = model(input_ids=input_ids.to(device), use_cache=True)
+
     past_kv  = out.past_key_values
     next_tok = int(out.logits[0, -1].argmax())
     true_pos = T
@@ -225,41 +380,53 @@ def run_online_episode(
     evicted:     list[tuple[int, int]] = []
     tracker = PositionTracker(L, T)
 
+    truncated = True
     for _ in range(max_new_tokens):
         if eos is not None and next_tok == eos:
+            truncated = False
             break
         generated.append(next_tok)
 
         cache_size = _get_cache_size(past_kv)
         if cache_size > budget:
-            K, V = _extract_all_kv(past_kv, L)
-            slots = evict_fn(K, V, tracker)
+            if getattr(evict_fn, "needs_kv", True):
+                K, V = _extract_all_kv(past_kv, L)
+            else:
+                K, V = None, None
+            
+            # Pass the dynamic scores to the evict_fn if available
+            slots = evict_fn(K, V, tracker, scores=scores)
 
-            # Correlation: importance rank percentile of chosen slot vs attention oracle
-            if per_layer_imp is not None:
-                T_imp = per_layer_imp.shape[1]
+            # Correlation: importance rank percentile of chosen slot vs dynamic oracle
+            if attn_available and scores is not None:
                 for l, slot in enumerate(slots):
                     n = tracker.size(l)
-                    imp_chosen = (
-                        per_layer_imp[l, tracker.original_pos(l, slot)].item()
-                        if tracker.original_pos(l, slot) < T_imp else 0.0
-                    )
-                    all_imps = [
-                        per_layer_imp[l, tracker.original_pos(l, s)].item()
-                        if tracker.original_pos(l, s) < T_imp else 0.0
-                        for s in range(n)
-                    ]
+                    imp_chosen = scores[l, slot].item()
+                    all_imps = [scores[l, s].item() for s in range(n)]
                     n_lower = sum(1 for imp in all_imps if imp < imp_chosen)
                     if n - 1 > 0:
                         correlation.append(n_lower / (n - 1))
 
             # Behavior: record the original position evicted and the absolute
-            # sequence position at the time, per layer — used for recency /
-            # sink-keeping diagnostics (orig_pos / true_pos ∈ [0,1) = recency).
+            # sequence position at the time, per layer
             for l, slot in enumerate(slots):
                 evicted.append((tracker.original_pos(l, slot), true_pos))
 
             _evict_per_layer(past_kv, slots)
+
+            # Update the dynamic scorer with the eviction
+            if attn_available and scorer is not None:
+                keep_list = []
+                for l, slot in enumerate(slots):
+                    indices = torch.cat([
+                        torch.arange(slot, device=device),
+                        torch.arange(slot + 1, cache_size, device=device)
+                    ])
+                    keep_list.append(indices)
+                keep_indices = torch.stack(keep_list, dim=0)
+                scorer.evict(keep_indices)
+                scores = scorer.current_scores
+
             for l, s in enumerate(slots):
                 tracker.evict(l, s)
 
@@ -270,13 +437,19 @@ def run_online_episode(
             position_ids=pos,
             cache_position=pos.squeeze(0),
             use_cache=True,
+            output_attentions=attn_available,
         )
         next_tok = int(step_out.logits[0, -1].argmax())
         past_kv  = step_out.past_key_values
+
+        # Update the dynamic scorer with decode step attentions
+        if attn_available and scorer is not None:
+            scores = scorer.score(step_out.attentions)
+
         tracker.append_all(true_pos)
         true_pos += 1
 
-    return tokenizer.decode(generated, skip_special_tokens=True), correlation, evicted
+    return tokenizer.decode(generated, skip_special_tokens=True), correlation, evicted, truncated
 
 
 # ── Misc helpers ──────────────────────────────────────────────────────────────

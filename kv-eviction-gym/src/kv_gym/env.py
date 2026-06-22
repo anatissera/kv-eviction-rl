@@ -425,6 +425,7 @@ class SharedKVVecEnv(VecEnv):
         self.cache_size    += 1   # net: -1 (evict) + 1 (decode) → stays at budget+1
 
         # --- 3. Termination check ---
+        truncated = (new_next_token != self.eos_id and self.step_count >= self.max_new_tokens)
         done = (new_next_token == self.eos_id or self.step_count >= self.max_new_tokens)
         self.next_token = new_next_token
 
@@ -443,7 +444,8 @@ class SharedKVVecEnv(VecEnv):
             terminal_obs = self._obs()
             infos        = [{"terminal_observation": terminal_obs[i],
                              "correct": correct, "alignment": align,
-                             "episode_seconds": episode_seconds}
+                             "episode_seconds": episode_seconds,
+                             "truncated": truncated}
                             for i in range(self.num_envs)]
             new_obs = self.reset()
         else:

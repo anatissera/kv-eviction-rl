@@ -70,6 +70,8 @@ def parse_args():
     p.add_argument("--seed",    type=int, default=42)
     p.add_argument("--n-sinks", type=int, default=4,
                    help="Attention sink count for StreamingLLM baseline")
+    p.add_argument("--attn-implementation", default="eager",
+                   help="Attention implementation to load the model with (eager, sdpa, flash_attention_2)")
     p.add_argument("--output",  default=None, help="Path to save JSON results (optional)")
     return p.parse_args()
 
@@ -97,7 +99,7 @@ def main():
     llm, tokenizer, device = load_model_and_tokenizer(
         name=cfg.get("model_name", "qwen-1.5b"),
         device=device,
-        attn_implementation=cfg.get("attn_implementation", None),
+        attn_implementation=args.attn_implementation,
     )
 
     budget         = args.budget
@@ -113,14 +115,10 @@ def main():
 
     policy = MaskablePPO.load(args.model, device=device)
 
-    # Probe whether attention oracle is available (requires eager attention)
-    print("Probing attention oracle (requires attn_implementation='eager')...")
-    _probe_cap = capture(llm, tokenizer, examples[0], device)
-    _probe_imp = capture_per_layer_attention(llm, _probe_cap.input_ids, device,
-                                             max_new_tokens=4)
-    attn_available = _probe_imp is not None
+    # Check whether attention oracle is available (requires eager attention)
     impl = getattr(llm.config, "_attn_implementation", "unknown")
-    print(f"  Attention oracle: {'AVAILABLE' if attn_available else f'UNAVAILABLE ({impl})'}")
+    attn_available = (impl == "eager")
+    print(f"Attention oracle: {'AVAILABLE' if attn_available else f'UNAVAILABLE ({impl})'}")
     if not attn_available:
         print("  → attn_layer baseline and correlation analysis will be skipped.")
     print()
@@ -143,11 +141,6 @@ def main():
             print(f"  [skip] ex {ex_idx}: T={T} >= budget={budget} (nothing to evict)")
             continue
 
-        per_layer_imp = (
-            capture_per_layer_attention(llm, cap.input_ids, device, max_new_tokens)
-            if attn_available else None
-        )
-
         gold = cap.gold_answer
         ids  = cap.input_ids
 
@@ -156,10 +149,10 @@ def main():
             llm, tokenizer, ids, gold, device, max_new_tokens,
         ))
 
-        def _score(evict_fn, ref_imp=None):
-            text, corr, _ = run_online_episode(
+        def _score(evict_fn):
+            text, corr, _, _ = run_online_episode(
                 llm, tokenizer, ids, budget, max_new_tokens, device,
-                evict_fn, per_layer_imp=ref_imp,
+                evict_fn,
             )
             return flexible_extract(text, [gold]), corr
 
@@ -168,7 +161,6 @@ def main():
         # ---- learned ----
         s, corr = _score(
             make_learned_evict_fn(policy, L, max_len, n_sinks, n_recent),
-            ref_imp=per_layer_imp,
         )
         scores["learned"].append(s)
         all_correlation.extend(corr)
@@ -177,9 +169,9 @@ def main():
         scores["streaming"].append(_score(make_streaming_evict_fn(n_sinks, L))[0])
 
         # ---- per-layer attention oracle ----
-        if per_layer_imp is not None:
+        if attn_available:
             scores["attn_layer"].append(
-                _score(make_attention_evict_fn(per_layer_imp, L, n_sinks, n_recent))[0])
+                _score(make_attention_evict_fn(L, n_sinks, n_recent))[0])
 
         # ---- kv norm (per-layer, online) ----
         scores["kv_norm"].append(_score(make_kv_norm_evict_fn(L, n_sinks, n_recent))[0])
@@ -195,7 +187,7 @@ def main():
             "kv_norm":   scores["kv_norm"][-1],
             "random":    scores["random"][-1],
         }
-        if per_layer_imp is not None:
+        if attn_available:
             row["attn_layer"] = scores["attn_layer"][-1]
         per_example_rows.append(row)
 

@@ -18,6 +18,7 @@ RUN_NAME="${1:-run_$(date +%Y%m%d_%H%M%S)}"
 CONFIG="${2:-configs/train.yaml}"
 BUDGET="${3:-180}"
 EVAL_N="${4:-100}"
+RESUME_FROM="${5:-}"
 
 RUN_DIR="runs/${RUN_NAME}"
 BEST_MODEL="${RUN_DIR}/best_model"
@@ -51,9 +52,15 @@ echo "[2/4] Training MaskablePPO..."
 echo "      Outputs → ${RUN_DIR}/"
 echo ""
 
+RESUME_ARG=""
+if [ -n "${RESUME_FROM}" ]; then
+    RESUME_ARG="--resume-from ${RESUME_FROM}"
+fi
+
 python scripts/train.py \
     --config   "${CONFIG}" \
-    --run-name "${RUN_NAME}"
+    --run-name "${RUN_NAME}" \
+    ${RESUME_ARG}
 
 echo ""
 echo "      Training complete."

@@ -5,7 +5,7 @@ model_name:   qwen-1.5b
 device:       auto         # auto = CUDA on server, MPS on Apple Silicon, CPU fallback
 
 # Data
-n_examples: 200
+n_examples: 250
 seed: 0
 
 # Budget = total cache capacity (prompt + generated tokens).
@@ -66,7 +66,7 @@ gamma:           1.0     # no discount — every eviction shares the same termin
 gae_lambda:      1.0     # lambda=1 gives identical advantages for all steps (Monte Carlo)
 clip_range:      0.2
 ent_coef:        0.01   # small entropy bonus prevents early collapse of Discrete(512) policy
-total_timesteps: 520000
+total_timesteps: 3000000
 
 # Recency + sink protection (action-mask window; StreamingLLM\/H2O\/SnapKV standard).
 # Cannot evict the first n_sinks (sinks) or last n_recent (recency window) cache slots.

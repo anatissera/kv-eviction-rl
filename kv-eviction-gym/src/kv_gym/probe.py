@@ -104,7 +104,7 @@ class EvalProbeCallback(BaseCallback):
             "correct_full", "correct_random", "correct_kv_norm",
             "correct_learned", "retention",
             "evict_attn_percentile", "evict_mean_pos_frac", "evict_sink_frac",
-            "evict_generated_frac",
+            "evict_generated_frac", "truncation_rate",
         ])
 
         rng = np.random.default_rng(0)   # fixed → random anchor is reproducible
@@ -127,14 +127,14 @@ class EvalProbeCallback(BaseCallback):
                 self.llm, self.tokenizer, cap.input_ids, cap.gold_answer,
                 self.device, self.max_new_tokens,
             ))
-            rand_text, _, _ = run_online_episode(
+            rand_text, _, _, _ = run_online_episode(
                 self.llm, self.tokenizer, cap.input_ids, self.budget,
                 self.max_new_tokens, self.device,
                 make_random_evict_fn(self.L, np.random.default_rng(rng.integers(1 << 30)),
                                      self.n_sinks, self.n_recent),
             )
             rand = float(flexible_extract(rand_text, [cap.gold_answer]))
-            kvn_text, _, _ = run_online_episode(
+            kvn_text, _, _, _ = run_online_episode(
                 self.llm, self.tokenizer, cap.input_ids, self.budget,
                 self.max_new_tokens, self.device,
                 make_kv_norm_evict_fn(self.L, self.n_sinks, self.n_recent),
@@ -176,9 +176,10 @@ class EvalProbeCallback(BaseCallback):
                                          self.n_sinks, self.n_recent)
         learned, corrs, evicted = [], [], []
         gen_flags: list[float] = []   # 1.0 if the evicted token was a generated token
+        truncs = []
 
         for p in self._probes:
-            text, corr, ev = run_online_episode(
+            text, corr, ev, trunc = run_online_episode(
                 self.llm, self.tokenizer, p["input_ids"], self.budget,
                 self.max_new_tokens, self.device, evict_fn,
                 per_layer_imp=p["per_layer_imp"],
@@ -186,10 +187,12 @@ class EvalProbeCallback(BaseCallback):
             learned.append(float(flexible_extract(text, [p["gold"]])))
             corrs.extend(corr)
             evicted.extend(ev)
+            truncs.append(float(trunc))
             # generated = original position >= this example's prompt length
             gen_flags.extend(1.0 if op >= p["T"] else 0.0 for op, _ in ev)
 
         correct_learned = float(np.mean(learned))
+        trunc_rate = float(np.mean(truncs))
 
         full_correct_idx = [i for i, p in enumerate(self._probes) if p["full"] > 0.5]
         retention = (float(np.mean([learned[i] for i in full_correct_idx]))
@@ -217,6 +220,7 @@ class EvalProbeCallback(BaseCallback):
         rec("probe/evict_mean_pos_frac", mean_pos_frac)
         rec("probe/evict_sink_frac", sink_frac)
         rec("probe/evict_generated_frac", gen_frac)
+        rec("probe/truncation_rate", trunc_rate)
 
         # CSV
         self._csv_writer.writerow([
@@ -225,7 +229,7 @@ class EvalProbeCallback(BaseCallback):
             f"{self._correct_kvnorm_mean:.4f}",
             f"{correct_learned:.4f}", f"{retention:.4f}",
             f"{attn_pct:.4f}", f"{mean_pos_frac:.4f}", f"{sink_frac:.4f}",
-            f"{gen_frac:.4f}",
+            f"{gen_frac:.4f}", f"{trunc_rate:.4f}",
         ])
         self._csv_file.flush()
 
@@ -235,7 +239,8 @@ class EvalProbeCallback(BaseCallback):
             print(f"[probe] t={self.num_timesteps:>9,}  retention={ret_str}  "
                   f"learned={correct_learned:.3f} (full={self._correct_full_mean:.3f}, "
                   f"rand={self._correct_random_mean:.3f})  evict_attn_pct={pct_str}  "
-                  f"gen_frac={gen_frac:.2f}  pos_frac={mean_pos_frac:.2f}")
+                  f"gen_frac={gen_frac:.2f}  pos_frac={mean_pos_frac:.2f}  "
+                  f"trunc={trunc_rate:.1%}")
 
         # Save best-by-retention (ignore NaN)
         if retention == retention and retention > self._best_retention:
