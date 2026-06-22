@@ -123,18 +123,19 @@ class EvalProbeCallback(BaseCallback):
             if per_layer_imp is not None:
                 self._attn_available = True
 
-            full = float(score_full_cache(
+            full_val, _, _ = score_full_cache(
                 self.llm, self.tokenizer, cap.input_ids, cap.gold_answer,
                 self.device, self.max_new_tokens,
-            ))
-            rand_text, _, _, _ = run_online_episode(
+            )
+            full = float(full_val)
+            rand_text, _, _, _, _, _ = run_online_episode(
                 self.llm, self.tokenizer, cap.input_ids, self.budget,
                 self.max_new_tokens, self.device,
                 make_random_evict_fn(self.L, np.random.default_rng(rng.integers(1 << 30)),
                                      self.n_sinks, self.n_recent),
             )
             rand = float(flexible_extract(rand_text, [cap.gold_answer]))
-            kvn_text, _, _, _ = run_online_episode(
+            kvn_text, _, _, _, _, _ = run_online_episode(
                 self.llm, self.tokenizer, cap.input_ids, self.budget,
                 self.max_new_tokens, self.device,
                 make_kv_norm_evict_fn(self.L, self.n_sinks, self.n_recent),
@@ -179,7 +180,7 @@ class EvalProbeCallback(BaseCallback):
         truncs = []
 
         for p in self._probes:
-            text, corr, ev, trunc = run_online_episode(
+            text, corr, ev, trunc, _, _ = run_online_episode(
                 self.llm, self.tokenizer, p["input_ids"], self.budget,
                 self.max_new_tokens, self.device, evict_fn,
                 per_layer_imp=p["per_layer_imp"],

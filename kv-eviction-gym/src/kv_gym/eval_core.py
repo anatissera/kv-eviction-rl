@@ -339,12 +339,17 @@ def run_online_episode(
     device:         torch.device,
     evict_fn,
     per_layer_imp:  Tensor | None = None,  # Kept for backward compatibility but unused
-) -> tuple[str, list[float], list[tuple[int, int]], bool]:
+) -> tuple[str, list[float], list[tuple[int, int]], bool, float, float]:
     """Run one full online episode.
 
     At each decode step the cache grows by one token.  When cache_size > budget
     the evict_fn removes one token per layer before decoding continues.
     """
+    import time
+    if device.type == "cuda":
+        torch.cuda.reset_peak_memory_stats(device)
+    t0 = time.perf_counter()
+
     L   = model.config.num_hidden_layers
     T   = input_ids.shape[1]
     eos = tokenizer.eos_token_id
@@ -449,12 +454,24 @@ def run_online_episode(
         tracker.append_all(true_pos)
         true_pos += 1
 
-    return tokenizer.decode(generated, skip_special_tokens=True), correlation, evicted, truncated
+    elapsed_time = time.perf_counter() - t0
+    speed = len(generated) / elapsed_time if elapsed_time > 0 else 0.0
+    if device.type == "cuda":
+        peak_gpu_bytes = torch.cuda.max_memory_allocated(device)
+        peak_gpu_mb = peak_gpu_bytes / (1024 * 1024)
+    else:
+        peak_gpu_mb = 0.0
+
+    return tokenizer.decode(generated, skip_special_tokens=True), correlation, evicted, truncated, speed, peak_gpu_mb
 
 
 # ── Misc helpers ──────────────────────────────────────────────────────────────
 
 def score_full_cache(model, tokenizer, input_ids, gold, device, max_new_tokens):
+    import time
+    if device.type == "cuda":
+        torch.cuda.reset_peak_memory_stats(device)
+    t0 = time.perf_counter()
     T = input_ids.shape[1]
     with torch.no_grad():
         out = model.generate(
@@ -462,8 +479,17 @@ def score_full_cache(model, tokenizer, input_ids, gold, device, max_new_tokens):
             max_new_tokens=max_new_tokens,
             do_sample=False,
         )
+    elapsed = time.perf_counter() - t0
+    gen_tokens = out.shape[1] - T
+    speed = gen_tokens / elapsed if elapsed > 0 else 0.0
+    if device.type == "cuda":
+        peak_gpu_bytes = torch.cuda.max_memory_allocated(device)
+        peak_gpu_mb = peak_gpu_bytes / (1024 * 1024)
+    else:
+        peak_gpu_mb = 0.0
+
     text = tokenizer.decode(out[0, T:], skip_special_tokens=True)
-    return flexible_extract(text, [gold])
+    return flexible_extract(text, [gold]), speed, peak_gpu_mb
 
 
 def capture_per_layer_attention(model, input_ids, device, max_new_tokens=64):

@@ -127,6 +127,14 @@ def main():
         "full": [], "learned": [], "streaming": [],
         "attn_layer": [], "kv_norm": [], "random": [],
     }
+    speeds: dict[str, list[float]] = {
+        "full": [], "learned": [], "streaming": [],
+        "attn_layer": [], "kv_norm": [], "random": [],
+    }
+    memories: dict[str, list[float]] = {
+        "full": [], "learned": [], "streaming": [],
+        "attn_layer": [], "kv_norm": [], "random": [],
+    }
     all_correlation: list[float] = []
     per_example_rows: list[dict] = []
 
@@ -145,50 +153,78 @@ def main():
         ids  = cap.input_ids
 
         # ---- full cache (upper bound, no eviction) ----
-        scores["full"].append(score_full_cache(
+        full_score, full_speed, full_mem = score_full_cache(
             llm, tokenizer, ids, gold, device, max_new_tokens,
-        ))
+        )
+        scores["full"].append(full_score)
+        speeds["full"].append(full_speed)
+        memories["full"].append(full_mem)
 
         def _score(evict_fn):
-            text, corr, _, _ = run_online_episode(
+            text, corr, _, _, speed, peak_mem = run_online_episode(
                 llm, tokenizer, ids, budget, max_new_tokens, device,
                 evict_fn,
             )
-            return flexible_extract(text, [gold]), corr
+            return flexible_extract(text, [gold]), corr, speed, peak_mem
 
         ex_rng = np.random.default_rng(args.seed + ex_idx)
 
         # ---- learned ----
-        s, corr = _score(
+        s, corr, spd, mem = _score(
             make_learned_evict_fn(policy, L, max_len, n_sinks, n_recent),
         )
         scores["learned"].append(s)
+        speeds["learned"].append(spd)
+        memories["learned"].append(mem)
         all_correlation.extend(corr)
 
         # ---- streaming ----
-        scores["streaming"].append(_score(make_streaming_evict_fn(n_sinks, L))[0])
+        s, _, spd, mem = _score(make_streaming_evict_fn(n_sinks, L))
+        scores["streaming"].append(s)
+        speeds["streaming"].append(spd)
+        memories["streaming"].append(mem)
 
         # ---- per-layer attention oracle ----
         if attn_available:
-            scores["attn_layer"].append(
-                _score(make_attention_evict_fn(L, n_sinks, n_recent))[0])
+            s, _, spd, mem = _score(make_attention_evict_fn(L, n_sinks, n_recent))
+            scores["attn_layer"].append(s)
+            speeds["attn_layer"].append(spd)
+            memories["attn_layer"].append(mem)
 
         # ---- kv norm (per-layer, online) ----
-        scores["kv_norm"].append(_score(make_kv_norm_evict_fn(L, n_sinks, n_recent))[0])
+        s, _, spd, mem = _score(make_kv_norm_evict_fn(L, n_sinks, n_recent))
+        scores["kv_norm"].append(s)
+        speeds["kv_norm"].append(spd)
+        memories["kv_norm"].append(mem)
 
         # ---- random ----
-        scores["random"].append(_score(make_random_evict_fn(L, ex_rng, n_sinks, n_recent))[0])
+        s, _, spd, mem = _score(make_random_evict_fn(L, ex_rng, n_sinks, n_recent))
+        scores["random"].append(s)
+        speeds["random"].append(spd)
+        memories["random"].append(mem)
 
         row = {
             "example": ex_idx, "prompt_len": T,
             "full":      scores["full"][-1],
+            "full_speed": speeds["full"][-1],
+            "full_memory": memories["full"][-1],
             "learned":   scores["learned"][-1],
+            "learned_speed": speeds["learned"][-1],
+            "learned_memory": memories["learned"][-1],
             "streaming": scores["streaming"][-1],
+            "streaming_speed": speeds["streaming"][-1],
+            "streaming_memory": memories["streaming"][-1],
             "kv_norm":   scores["kv_norm"][-1],
+            "kv_norm_speed": speeds["kv_norm"][-1],
+            "kv_norm_memory": memories["kv_norm"][-1],
             "random":    scores["random"][-1],
+            "random_speed": speeds["random"][-1],
+            "random_memory": memories["random"][-1],
         }
         if attn_available:
             row["attn_layer"] = scores["attn_layer"][-1]
+            row["attn_layer_speed"] = speeds["attn_layer"][-1]
+            row["attn_layer_memory"] = memories["attn_layer"][-1]
         per_example_rows.append(row)
 
         attn_str = f"attn={row['attn_layer']:.0f}  " if "attn_layer" in row else ""
@@ -201,12 +237,12 @@ def main():
     n         = len(scores["full"])
     full_mean = float(np.mean(scores["full"])) if n else 0.0
 
-    print(f"\n{'='*62}")
+    print(f"\n{'='*76}")
     print(f"Results: {n} examples  budget={budget}  "
           f"n_sinks={args.n_sinks}  max_new_tokens={max_new_tokens}")
-    print(f"{'='*62}")
-    print(f"{'strategy':<14} {'mean':>6}  {'95% CI':>15}  {'vs full':>8}")
-    print("-" * 50)
+    print(f"{'='*76}")
+    print(f"{'strategy':<12} {'accuracy':>8}  {'95% CI':>15}  {'vs full':>8}  {'speed (t/s)':>12}  {'mem (MB)':>10}")
+    print("-" * 76)
 
     summary = {"budget": budget, "n_examples": n, "strategies": {}}
     for name, vals in [
@@ -222,9 +258,17 @@ def main():
         mean   = float(np.mean(vals))
         lo, hi = wilson_ci(sum(vals), len(vals))
         ratio  = mean / max(full_mean, 1e-8)
-        print(f"{name:<14} {mean:>6.3f}  [{lo:.3f}, {hi:.3f}]  {ratio:>8.3f}")
-        summary["strategies"][name] = {"mean": mean, "ci_lo": lo, "ci_hi": hi,
-                                        "vs_full": ratio}
+        avg_speed = float(np.mean(speeds[name]))
+        avg_mem   = float(np.mean(memories[name]))
+        print(f"{name:<12} {mean:>8.3f}  [{lo:.3f}, {hi:.3f}]  {ratio:>8.3f}  {avg_speed:>12.1f}  {avg_mem:>10.1f}")
+        summary["strategies"][name] = {
+            "mean": mean,
+            "ci_lo": lo,
+            "ci_hi": hi,
+            "vs_full": ratio,
+            "speed_tokens_sec": avg_speed,
+            "peak_memory_mb": avg_mem,
+        }
 
     if all_correlation:
         mean_pct = float(np.mean(all_correlation))
