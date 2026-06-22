@@ -50,7 +50,7 @@ hidden: 64
 # the problems the full cache solves (intrinsically-failed problems excluded). full/random/
 # kv_norm correctness are fixed anchors computed once. Set probe_n: 0 to disable.
 probe_n: 32                # number of fixed held-out problems to evaluate
-probe_every_n_rollouts: 5  # frequency of probe evaluation
+probe_every_n_rollouts: 15 # frequency of probe evaluation
 probe_n_sinks: 4           # sink positions for evict_sink_frac diagnostic
 
 # PPO hyperparameters

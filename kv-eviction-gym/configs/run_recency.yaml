@@ -49,8 +49,8 @@ hidden: 64
 # <run_dir>/probe_curve.csv. Headline metric is retention = correct_learned/correct_full over
 # the problems the full cache solves (intrinsically-failed problems excluded). full/random/
 # kv_norm correctness are fixed anchors computed once. Set probe_n: 0 to disable.
-probe_n: 24
-probe_every_n_rollouts: 8
+probe_n: 32                # number of fixed held-out problems to evaluate
+probe_every_n_rollouts: 15 # frequency of probe evaluation
 probe_seed: 12345          # which test problems (fixed)
 probe_budget: 200
 probe_n_sinks: 4           # sink positions for evict_sink_frac diagnostic
