@@ -55,9 +55,9 @@ probe_n_sinks: 4           # sink positions for evict_sink_frac diagnostic
 
 # PPO hyperparameters
 # Episode = full generation (up to max_new_tokens=800 decode steps).
-# n_steps=256 keeps the PPO buffer size around 11 GiB in RAM.
-# total transitions per rollout = 256 × 28 = 7168.
-n_steps:         256
+# n_steps=512 keeps the PPO buffer size around 22 GiB in RAM.
+# total transitions per rollout = 512 × 28 = 14336.
+n_steps:         512
 batch_size:      1024    # ≈14 minibatches per epoch × 4 epochs = 56 grad steps
 n_epochs:        4
 gamma:           1.0     # no discount — every eviction shares the same terminal reward
