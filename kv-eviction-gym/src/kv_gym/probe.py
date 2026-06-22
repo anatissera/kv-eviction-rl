@@ -55,7 +55,8 @@ class EvalProbeCallback(BaseCallback):
         llm,
         tokenizer,
         probe_examples: list[dict],
-        budget:           int,
+        budget_min:       int,
+        budget_max:       int,
         max_new_tokens:   int,
         max_len:          int,
         every_n_rollouts: int = 5,
@@ -70,7 +71,8 @@ class EvalProbeCallback(BaseCallback):
         self.llm              = llm
         self.tokenizer        = tokenizer
         self.probe_examples   = probe_examples
-        self.budget           = budget
+        self.budget_min       = budget_min
+        self.budget_max       = budget_max
         self.max_new_tokens   = max_new_tokens
         self.max_len          = max_len
         self.every_n_rollouts = max(1, every_n_rollouts)
@@ -113,8 +115,11 @@ class EvalProbeCallback(BaseCallback):
         for ex in self.probe_examples:
             cap = capture(self.llm, self.tokenizer, ex, self.device)
             T = cap.prompt_len
+            
+            ex_budget = int(rng.integers(self.budget_min, self.budget_max + 1))
+            
             # Skip prompts that can't be evicted (too long, or already <= budget).
-            if T > self.max_len or T >= self.budget:
+            if T > self.max_len or T >= ex_budget:
                 continue
 
             per_layer_imp = capture_per_layer_attention(
@@ -129,14 +134,14 @@ class EvalProbeCallback(BaseCallback):
             )
             full = float(full_val)
             rand_text, _, _, _, _, _ = run_online_episode(
-                self.llm, self.tokenizer, cap.input_ids, self.budget,
+                self.llm, self.tokenizer, cap.input_ids, ex_budget,
                 self.max_new_tokens, self.device,
                 make_random_evict_fn(self.L, np.random.default_rng(rng.integers(1 << 30)),
                                      self.n_sinks, self.n_recent),
             )
             rand = float(flexible_extract(rand_text, [cap.gold_answer]))
             kvn_text, _, _, _, _, _ = run_online_episode(
-                self.llm, self.tokenizer, cap.input_ids, self.budget,
+                self.llm, self.tokenizer, cap.input_ids, ex_budget,
                 self.max_new_tokens, self.device,
                 make_kv_norm_evict_fn(self.L, self.n_sinks, self.n_recent),
             )
@@ -148,6 +153,7 @@ class EvalProbeCallback(BaseCallback):
                 "per_layer_imp": per_layer_imp,
                 "full":          full,
                 "T":             T,
+                "budget":        ex_budget,
             })
             full_vals.append(full); rand_vals.append(rand); kvn_vals.append(kvn)
 
@@ -181,7 +187,7 @@ class EvalProbeCallback(BaseCallback):
 
         for p in self._probes:
             text, corr, ev, trunc, _, _ = run_online_episode(
-                self.llm, self.tokenizer, p["input_ids"], self.budget,
+                self.llm, self.tokenizer, p["input_ids"], p["budget"],
                 self.max_new_tokens, self.device, evict_fn,
                 per_layer_imp=p["per_layer_imp"],
             )

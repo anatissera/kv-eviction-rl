@@ -2,9 +2,9 @@
   "_comment": "Per-model defaults derived from empirical output-length measurements on GSM8K.",
 
   "qwen-1.5b": {
-    "max_new_tokens": 524,
+    "max_new_tokens": 800,
     "budget_min": 128,
-    "budget_max": 400,
+    "budget_max": 512,
 
     "_stats": {
       "output_length": {

@@ -19,8 +19,8 @@ seed: 0
 # pre-eviction of the prompt is needed; eviction starts during decode.
 # Defaults come from configs/model_defaults.json for the chosen model_name.
 budget_min:     128
-budget_max:     180   # small range → many eviction steps → fast learning signal
-max_len:        256
+budget_max:     512   # small range → many eviction steps → fast learning signal
+max_len:        800
 # max_new_tokens: loaded from model_defaults.json (524 for qwen-1.5b)
 
 # Reward shaping: blend sparse correctness with dense attention alignment.
@@ -38,7 +38,6 @@ hidden: 32
 probe_n: 3
 probe_every_n_rollouts: 2
 probe_seed: 12345
-probe_budget: 160          # within [budget_min=128, budget_max=180]
 probe_n_sinks: 4
 
 # PPO — 28 envs (one per layer) × 64 steps = 1792 per rollout (fast local run)

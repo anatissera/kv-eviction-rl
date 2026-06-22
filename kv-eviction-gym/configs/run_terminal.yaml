@@ -13,9 +13,9 @@ seed: 0
 # prompt always fits without pre-eviction.  Eviction starts at decode step
 # budget − prompt_len + 1 (when the cache first exceeds budget).
 budget_min: 128
-budget_max: 256
-max_len: 288
-max_new_tokens: 256
+budget_max: 512
+max_len: 800
+max_new_tokens: 800
 
 # Reward shaping: blend sparse correctness with future-attention alignment.
 # Runs one extra model.generate() with output_attentions=True per episode reset
@@ -56,10 +56,10 @@ probe_budget: 200
 probe_n_sinks: 4           # sink positions for evict_sink_frac diagnostic
 
 # PPO hyperparameters
-# Episode = full generation (up to max_new_tokens=524 decode steps).
-# n_steps=524 guarantees at least one complete episode per env per rollout.
-# total transitions per rollout = 524 × 28 = 14672.
-n_steps:         128
+# Episode = full generation (up to max_new_tokens=800 decode steps).
+# n_steps=800 guarantees at least one complete episode per env per rollout.
+# total transitions per rollout = 800 × 28 = 22400.
+n_steps:         800
 batch_size:      1024    # ≈14 minibatches per epoch × 4 epochs = 56 grad steps
 n_epochs:        4
 gamma:           1.0     # no discount — every eviction shares the same terminal reward

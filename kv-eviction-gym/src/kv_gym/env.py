@@ -445,6 +445,7 @@ class SharedKVVecEnv(VecEnv):
             infos        = [{"terminal_observation": terminal_obs[i],
                              "correct": correct, "alignment": align,
                              "episode_seconds": episode_seconds,
+                             "context_size": self.prompt_len + self.step_count,
                              "truncated": truncated}
                             for i in range(self.num_envs)]
             new_obs = self.reset()

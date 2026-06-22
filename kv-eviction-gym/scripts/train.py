@@ -79,6 +79,7 @@ class TrainingLogger(BaseCallback):
         self._align_buf:     list[float] = []
         self._episode_seconds_buf: list[float] = []
         self._truncated_buf: list[bool] = []
+        self._context_size_buf: list[int] = []
 
     def _on_training_start(self) -> None:
         self._file   = open(self.csv_path, "w", newline="")
@@ -86,7 +87,7 @@ class TrainingLogger(BaseCallback):
         self._writer.writerow([
             "timestep", "ep_rew_mean", "ep_len_mean",
             "correctness_rate", "alignment_mean", "episode_seconds_mean",
-            "episodes", "truncation_rate",
+            "episodes", "truncation_rate", "context_size_mean",
         ])
 
     def _on_step(self) -> bool:
@@ -102,6 +103,7 @@ class TrainingLogger(BaseCallback):
             if episode_seconds == episode_seconds:  # not NaN
                 self._episode_seconds_buf.append(episode_seconds)
             self._truncated_buf.append(infos[0].get("truncated", False))
+            self._context_size_buf.append(infos[0].get("context_size", 0))
         return True
 
     def _on_rollout_end(self) -> None:
@@ -122,17 +124,20 @@ class TrainingLogger(BaseCallback):
         episodes = len(self._episode_seconds_buf)
         trunc_rate = (sum(self._truncated_buf) / len(self._truncated_buf)
                       if self._truncated_buf else float("nan"))
+        context_size_mean = (sum(self._context_size_buf) / len(self._context_size_buf)
+                             if self._context_size_buf else float("nan"))
         self._correct_buf.clear()
         self._align_buf.clear()
         self._episode_seconds_buf.clear()
         self._truncated_buf.clear()
+        self._context_size_buf.clear()
 
         self._writer.writerow([
             self.num_timesteps,
             f"{mean_rew:.6f}", f"{mean_len:.1f}",
             f"{corr_rate:.4f}", f"{align_mean:.4f}",
             f"{episode_seconds_mean:.3f}", episodes,
-            f"{trunc_rate:.4f}",
+            f"{trunc_rate:.4f}", f"{context_size_mean:.1f}",
         ])
         self._file.flush()
 
@@ -236,7 +241,8 @@ def main():
             llm=model,
             tokenizer=tokenizer,
             probe_examples=probe_examples,
-            budget=probe_budget,
+            budget_min=cfg.get("budget_min", 128),
+            budget_max=cfg.get("budget_max", 256),
             max_new_tokens=cfg.get("max_new_tokens", 524),
             max_len=cfg.get("max_len", 512),
             every_n_rollouts=cfg.get("probe_every_n_rollouts", 5),
