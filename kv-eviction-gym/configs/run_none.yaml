@@ -15,7 +15,7 @@ seed: 0
 budget_min: 128
 budget_max: 256
 max_len: 288
-max_new_tokens: 256
+max_new_tokens: 288
 
 # Reward shaping: blend sparse correctness with future-attention alignment.
 # Runs one extra model.generate() with output_attentions=True per episode reset
