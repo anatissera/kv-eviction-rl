@@ -1,106 +1,25 @@
-# Learning to Evict from Key-Value Cache
+# RL KV-Cache Eviction — Final Project
 
-[![OpenReview](https://img.shields.io/badge/OpenReview-Paper-1f6feb?logo=openreview)](https://openreview.net/forum?id=0OevIlRMYN)
-[![arXiv](https://img.shields.io/badge/arXiv-2602.10238-b31b1b.svg)](https://arxiv.org/abs/2602.10238)
+Reinforcement learning for adaptive KV-cache eviction in large language models.
 
-This software project accompanies the research paper:
-_Learning to Evict from Key-Value Cache_
-by _Luca Moschella, Laura Manduchi, Ozan Sener_.
+## Projects
 
-![](assets/teaser.png)
+### `kv-eviction-gym/` — Sequential Gym Environment (main)
 
+A new standalone project that wraps KV-cache eviction as a vectorized
+`gymnasium`-style environment and trains it with SB3 `MaskablePPO`.
 
-We introduce KV Policy (KVP), a framework of lightweight per-head RL agents that learn to rank KV cache entries by their predicted future utility, enabling adaptive eviction without modifying the underlying LLM or adding inference overhead.
+- **Dataset**: GSM8K math word problems (~100-200 token prompts)
+- **Action**: evict 1 token per step (`Discrete(max_len)` + action mask)
+- **Agents**: one shared policy across all 56 (layer, head) pairs of Qwen2-1.5B
+- **Key efficiency**: one LLM prefill per GSM8K example feeds all 56 environments simultaneously
 
-## Getting Started
+See `kv-eviction-gym/` for setup and training instructions.
 
-Requires Python >= 3.10 and [uv](https://docs.astral.sh/uv/).
+### `ml-learning-to-evict/` — RLOO / PPO Bandit Training (reference)
 
-```bash
-uv sync
-cp .env.template .env  # edit with your paths
-```
+Adaptation of the [Learning to Evict](https://arxiv.org/abs/...) paper's
+Plackett-Luce one-shot ranking approach, extended with a PPO variant with
+value critic. Uses RULER and GSM8K data.
 
-Download model weights:
-
-```bash
-uv run tune download Qwen/Qwen2.5-7B-Instruct \
-    --output-dir models/Qwen2.5-7B-Instruct
-```
-
-## Dataset Generation
-
-Extract Q, K, V activations from the RULER dataset:
-
-```bash
-uv run tune run src/kvcompression/entrypoints/datagen/unroll_and_store.py \
-    --config configs/preprocess_ruler.yaml \
-    device=cuda:0 total_num_chunks=1 current_chunk=0
-```
-
-For parallel processing across multiple GPUs, follow the commented-out chunking pattern in `configs/preprocess_ruler.yaml`.
-
-Copy the pre-generated train/val splits to the output directory:
-
-```bash
-cp assets/ruler_split/*.txt \
-    data/gqa_safetensors/simonjegou_ruler/Qwen2.5-7B-Instruct/temperature_0.00/
-```
-
-## Training
-
-Qwen2.5-7B-Instruct uses Grouped Query Attention with 28 layers and 4 KV heads, requiring 112 agents (one per layer-head pair).
-
-Train a single agent:
-
-```bash
-uv run tune run src/kvcompression/entrypoints/rl/train_agent_sampler_distributed.py \
-    --config configs/train_single_head.yaml distributed=False
-```
-
-Override layer and head:
-
-```bash
-uv run tune run src/kvcompression/entrypoints/rl/train_agent_sampler_distributed.py \
-    --config configs/train_single_head.yaml \
-    target_layer_idx=15 kv_head_idx=2 distributed=False
-```
-
-Each agent is trained with DDP across 8 GPUs. To train all 112 agents, follow the commented-out sweep pattern in `configs/train_single_head.yaml`.
-
-Trained agents are saved to `agents/grouped/<sweep_name>/layer_<NNNNNN>/kv_head_<NNN>/`.
-
-## Inference
-
-After training, generate a config composite for the trained agents:
-
-```bash
-uv run python scripts/orchestration/agent_registry.py list-sweeps
-uv run python scripts/orchestration/agent_registry.py discover <sweep_name>
-uv run python scripts/orchestration/assignment_generator.py write-composites <sweep_name>
-```
-
-See [`notebooks/inference_demo.ipynb`](notebooks/inference_demo.ipynb) for a demo of generation with learned KV cache compression.
-
-## Citation
-
-If you find our work useful, please cite the following paper:
-
-```bibtex
-@inproceedings{
-    moschella2026learningtoevict,
-    title={Learning to Evict from Key-Value Cache},
-    author={Luca Moschella and Laura Manduchi and Ozan Sener},
-    booktitle={Forty-third International Conference on Machine Learning},
-    year={2026},
-    url={https://openreview.net/forum?id=0OevIlRMYN}
-}
-```
-
-## Acknowledgements
-
-Our codebase is built using multiple open-source contributions, please see [ACKNOWLEDGEMENTS](ACKNOWLEDGEMENTS) for more details.
-
-## License
-
-Please check out the repository [LICENSE](LICENSE) before using the provided code.
+See `ml-learning-to-evict/README.md` for the original setup instructions.

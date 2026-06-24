@@ -1,0 +1,25 @@
+{
+  "_comment": "Per-model defaults derived from empirical output-length measurements on GSM8K.",
+
+  "qwen-1.5b": {
+    "max_new_tokens": 800,
+    "budget_min": 128,
+    "budget_max": 512,
+
+    "_stats": {
+      "output_length": {
+        "mean": 385.0,
+        "var":  25064,
+        "std":  158.3,
+        "truncation_rate_at_524": 0.236,
+        "p95_estimate": 701,
+        "_note": "max_new_tokens=512 covers ~76% without truncation. Raise to 700 to cover 95% at the cost of 37% slower terminal reward."
+      },
+      "output_by_budget": {
+        "80":  {"mean": 356.9, "std": 178.7, "_note": "tight budget → model rambles / loses track"},
+        "128": {"mean": 335.8, "std": 173.3},
+        "256": {"mean": 267.7, "std": 141.9, "_note": "enough context → model more direct"}
+      }
+    }
+  }
+}

@@ -1,0 +1,108 @@
+# RULER Data Preprocessing Configuration
+#
+# This configuration preprocesses the RULER benchmark dataset to extract
+# Q, K, V activations for offline training. This is the first step in the
+# training pipeline.
+#
+# Prerequisites:
+#   1. Download model weights to models/Qwen2.5-7B-Instruct/
+#   2. Ensure sufficient disk space for output
+#
+# Run locally (single GPU, single chunk for testing):
+#   uv run tune run src/kvcompression/entrypoints/datagen/unroll_and_store.py \
+#       --config configs/preprocess_ruler.yaml \
+#       device=cuda:0 total_num_chunks=1 current_chunk=0
+#
+# Run locally (8 GPUs, full dataset):
+#   for i in {0..7}; do
+#     uv run tune run src/kvcompression/entrypoints/datagen/unroll_and_store.py \
+#         --config configs/preprocess_ruler.yaml \
+#         device=cuda:$i total_num_chunks=8 current_chunk=$i &
+#   done
+#   wait
+#
+# The preprocessed data will be saved to: data/gqa_safetensors/simonjegou_ruler/...
+
+home_dir: ${oc.env:PROJECT_ROOT}
+remote_dir: s3://[your-bucket-here]
+output_dir: data/gqa_safetensors
+
+device: cuda
+dtype: bf16
+
+seed: 1234
+batch_size: 1
+executor_max_workers: 1
+max_new_tokens: 300
+temperature: 0  # Greedy decoding for reproducibility
+top_k: 300
+
+enable_kv_cache: True
+compile: False  # Compiling does not support attention wrapping
+
+# Model configuration
+model_name: Qwen2.5-7B-Instruct
+model_dir: ${oc.env:PROJECT_ROOT}/models/${model_name}
+
+model:
+  _component_: torchtune.models.qwen2_5.qwen2_5_7b_instruct
+
+checkpointer:
+  _component_: torchtune.training.FullModelHFCheckpointer
+  checkpoint_dir: ${model_dir}
+  checkpoint_files: [
+    model-00001-of-00004.safetensors,
+    model-00002-of-00004.safetensors,
+    model-00003-of-00004.safetensors,
+    model-00004-of-00004.safetensors,
+  ]
+  output_dir: ${output_dir}
+  model_type: QWEN2
+
+tokenizer:
+  _component_: torchtune.models.qwen2_5.qwen2_5_tokenizer
+  path: ${model_dir}/vocab.json
+  merges_file: ${model_dir}/merges.txt
+  max_seq_len: null
+
+max_context_length: null
+
+# RULER dataset from HuggingFace
+dataset_name: simonjegou/ruler
+data_dir: "4096"
+
+total_num_chunks: 1
+current_chunk: 0
+
+# # Distributed processing reference for multi-node setups.
+# # Adapt to your own cluster job scheduler as needed.
+# # For a single GPU, use: total_num_chunks=1 current_chunk=0
+# # For 8 GPUs on 1 node, use: total_num_chunks=8 current_chunk=0..7
+# ngpus: 8
+# nnodes: 5
+
+# total_num_chunks: "${mul: ${nnodes}, ${ngpus}}"
+# current_chunk: null
+
+# secrets:
+#   asset: ...
+
+# launcher:
+#   sweep_name: "RULER_preprocessing"
+
+#   submit:
+#     config:
+#       setup_command: "bash configs/setups/preprocessing_setup.sh"
+#       command: >
+#           uv run tune run src/kvcompression/entrypoints/datagen/unroll_and_store.py --config ${config_path} device=cuda:0 total_num_chunks=${total_num_chunks} current_chunk=${add: 0, ${current_chunk_start}} &
+#           uv run tune run src/kvcompression/entrypoints/datagen/unroll_and_store.py --config ${config_path} device=cuda:1 total_num_chunks=${total_num_chunks} current_chunk=${add: 1, ${current_chunk_start}} &
+#           uv run tune run src/kvcompression/entrypoints/datagen/unroll_and_store.py --config ${config_path} device=cuda:2 total_num_chunks=${total_num_chunks} current_chunk=${add: 2, ${current_chunk_start}} &
+#           uv run tune run src/kvcompression/entrypoints/datagen/unroll_and_store.py --config ${config_path} device=cuda:3 total_num_chunks=${total_num_chunks} current_chunk=${add: 3, ${current_chunk_start}} &
+#           uv run tune run src/kvcompression/entrypoints/datagen/unroll_and_store.py --config ${config_path} device=cuda:4 total_num_chunks=${total_num_chunks} current_chunk=${add: 4, ${current_chunk_start}} &
+#           uv run tune run src/kvcompression/entrypoints/datagen/unroll_and_store.py --config ${config_path} device=cuda:5 total_num_chunks=${total_num_chunks} current_chunk=${add: 5, ${current_chunk_start}} &
+#           uv run tune run src/kvcompression/entrypoints/datagen/unroll_and_store.py --config ${config_path} device=cuda:6 total_num_chunks=${total_num_chunks} current_chunk=${add: 6, ${current_chunk_start}} &
+#           uv run tune run src/kvcompression/entrypoints/datagen/unroll_and_store.py --config ${config_path} device=cuda:7 total_num_chunks=${total_num_chunks} current_chunk=${add: 7, ${current_chunk_start}} &
+#           wait
+
+# sweep_across_nodes:
+#   current_chunk_start:  "${range:0, ${total_num_chunks}, ${ngpus}}"

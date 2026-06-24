@@ -1,0 +1,79 @@
+[build-system]
+requires = ["setuptools", "wheel", "setuptools_scm[toml]"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools-git-versioning]
+enabled = true
+
+[project]
+name = "kvcompression"
+description = "Learn how to compress KV caches."
+dynamic = ["version"]
+readme = "README.md"
+requires-python = ">=3.10"
+maintainers = [{ name = "Luca Moschella" }]
+
+dependencies = [
+  "flash-attn~=2.8.3",
+  "rich~=14.3.2",
+  "python-dotenv~=1.2.1",
+  "GitPython~=3.1.46",
+  "typer~=0.24.0",
+  "kvcompression",
+  "torch~=2.10.0",
+  "torchao~=0.15.0",
+  "datasets~=4.5.0",
+  "matplotlib~=3.10.8",
+  "triton~=3.6.0 ; sys_platform == 'linux'",
+  "wandb~=0.25.0",
+  "torchtune~=0.6.1",
+  "fsspec~=2025.10.0",
+  "s3fs~=2025.10.0",
+  "boto3~=1.35.93",
+  "transformers==4.55.4",
+  "aiohttp>=3.13.5",
+]
+
+# https://github.com/astral-sh/uv/issues/6437#issuecomment-3167274955
+[tool.uv.extra-build-dependencies]
+flash-attn = [{ requirement = "torch", match-runtime = true }]
+
+# https://github.com/astral-sh/uv/issues/6437#issuecomment-3167274955
+[tool.uv.extra-build-variables]
+flash-attn = { FLASH_ATTENTION_SKIP_CUDA_BUILD = "TRUE" }
+
+[project.optional-dependencies]
+test = ["pytest", "pytest-cov"]
+dev = ["pre-commit"]
+
+[tool.uv.sources]
+kvcompression = { workspace = true }
+torch = [
+  { index = "pytorch-cpu", marker = "sys_platform != 'linux'" },
+  { index = "pytorch-cu128", marker = "sys_platform == 'linux'" },
+]
+
+[[tool.uv.index]]
+name = "pytorch-cpu"
+url = "https://download.pytorch.org/whl/cpu"
+explicit = true
+
+[[tool.uv.index]]
+name = "pytorch-cu128"
+url = "https://download.pytorch.org/whl/cu128"
+explicit = true
+
+[tool.pytest.ini_options]
+minversion = "6.2"
+addopts = "-ra"
+testpaths = ["tests"]
+
+[tool.mypy]
+files = ["src/**/*.py", "src/tests/**/*.py"]
+ignore_missing_imports = true
+
+[tool.ruff]
+exclude = [".git", ".venv", "build", "dist", "node_modules"]
+line-length = 88
+indent-width = 4
+target-version = "py310"
