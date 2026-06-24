@@ -12,6 +12,7 @@ dependencies = [
     "numpy>=1.26",
     "datasets>=2.18",
     "pyyaml>=6.0",
+    "tensorboard>=2.14",
 ]
 
 [build-system]
