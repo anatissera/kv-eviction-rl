@@ -121,7 +121,7 @@ class SharedKVVecEnv(VecEnv):
         self,
         model,
         tokenizer,
-        examples:              list[dict],
+        examples:              list[dict],   # cycled in order; len tracked as n_examples
         budget_min:            int   = 128,   # total cache capacity lower bound
         budget_max:            int   = 256,   # total cache capacity upper bound
         max_len:               int   = 256,   # observation / action-mask width
@@ -151,6 +151,7 @@ class SharedKVVecEnv(VecEnv):
         self.n_recent              = n_recent
         self.length_penalty_weight = length_penalty_weight
         self.truncation_penalty    = truncation_penalty
+        self.n_examples            = len(examples)
         self._rng                  = np.random.default_rng(seed)
 
         _shaping_needs_imp = {"terminal", "per_step", "per_step_recency"}
@@ -446,11 +447,16 @@ class SharedKVVecEnv(VecEnv):
             rewards      = step_shaping + term_rewards
             dones        = np.ones(self.num_envs, dtype=bool)
             terminal_obs = self._obs()
+            # episode_count was incremented in reset() at the start of this episode.
+            example_idx  = (self._episode_count - 1) % self.n_examples
+            dataset_pass = (self._episode_count - 1) // self.n_examples
             infos        = [{"terminal_observation": terminal_obs[i],
                              "correct": correct, "alignment": align,
                              "episode_seconds": episode_seconds,
                              "context_size": self.prompt_len + self.step_count,
-                             "truncated": truncated}
+                             "truncated": truncated,
+                             "example_idx": example_idx,
+                             "dataset_pass": dataset_pass}
                             for i in range(self.num_envs)]
             new_obs = self.reset()
         else:

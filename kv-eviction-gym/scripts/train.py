@@ -80,6 +80,8 @@ class TrainingLogger(BaseCallback):
         self._episode_seconds_buf: list[float] = []
         self._truncated_buf: list[bool] = []
         self._context_size_buf: list[int] = []
+        self._example_counts: dict[int, int] = {}   # example_idx → total times seen
+        self._dataset_pass: int = 0                 # latest dataset_pass seen
 
     def _on_training_start(self) -> None:
         self._file   = open(self.csv_path, "w", newline="")
@@ -88,6 +90,7 @@ class TrainingLogger(BaseCallback):
             "timestep", "ep_rew_mean", "ep_len_mean",
             "correctness_rate", "alignment_mean", "episode_seconds_mean",
             "episodes", "truncation_rate", "context_size_mean",
+            "examples_seen", "dataset_pass",
         ])
 
     def _on_step(self) -> bool:
@@ -104,6 +107,12 @@ class TrainingLogger(BaseCallback):
                 self._episode_seconds_buf.append(episode_seconds)
             self._truncated_buf.append(infos[0].get("truncated", False))
             self._context_size_buf.append(infos[0].get("context_size", 0))
+            idx = infos[0].get("example_idx")
+            if idx is not None:
+                self._example_counts[idx] = self._example_counts.get(idx, 0) + 1
+            dp = infos[0].get("dataset_pass")
+            if dp is not None:
+                self._dataset_pass = max(self._dataset_pass, dp)
         return True
 
     def _on_rollout_end(self) -> None:
@@ -126,6 +135,9 @@ class TrainingLogger(BaseCallback):
                       if self._truncated_buf else float("nan"))
         context_size_mean = (sum(self._context_size_buf) / len(self._context_size_buf)
                              if self._context_size_buf else float("nan"))
+        examples_seen = len(self._example_counts)
+        max_seen      = max(self._example_counts.values()) if self._example_counts else 0
+        dataset_pass  = self._dataset_pass
         self._correct_buf.clear()
         self._align_buf.clear()
         self._episode_seconds_buf.clear()
@@ -138,6 +150,7 @@ class TrainingLogger(BaseCallback):
             f"{corr_rate:.4f}", f"{align_mean:.4f}",
             f"{episode_seconds_mean:.3f}", episodes,
             f"{trunc_rate:.4f}", f"{context_size_mean:.1f}",
+            examples_seen, dataset_pass,
         ])
         self._file.flush()
 
@@ -150,7 +163,8 @@ class TrainingLogger(BaseCallback):
             print(f"  t={self.num_timesteps:>9,}  rew={mean_rew:.4f}"
                   f"  correct={corr_str}  align={align_str}"
                   f"  ep_time={sec_str}  episodes={episodes}"
-                  f"  trunc={trunc_str}")
+                  f"  trunc={trunc_str}"
+                  f"  seen={examples_seen} (max {max_seen}x)  pass={dataset_pass}")
 
         if mean_rew > self.best_mean:
             self.best_mean = mean_rew
