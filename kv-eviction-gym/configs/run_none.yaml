@@ -23,7 +23,7 @@ max_new_tokens: 800
 # Requires attn_implementation='eager' (set automatically when enabled).
 # Disable with use_attention_shaping: false to halve compute and use pure correctness.
 use_attention_shaping: false
-attention_weight: 0.1
+attention_weight: 0.0
 
 # How the attention-alignment shaping is paid out:
 #   per_step — pay it incrementally: at the step a layer-env evicts original prompt

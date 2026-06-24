@@ -99,15 +99,32 @@ class EvalProbeCallback(BaseCallback):
     # ------------------------------------------------------------------
     def _on_training_start(self) -> None:
         self.run_dir.mkdir(parents=True, exist_ok=True)
-        self._csv_file = open(self.run_dir / "probe_curve.csv", "w", newline="")
+        csv_path = self.run_dir / "probe_curve.csv"
+        file_exists = csv_path.exists()
+        self._csv_file = open(csv_path, "a" if file_exists else "w", newline="")
         self._csv_writer = csv.writer(self._csv_file)
-        self._csv_writer.writerow([
+        if not file_exists:
+            self._csv_writer.writerow([
             "timestep",
             "correct_full", "correct_random", "correct_kv_norm",
             "correct_learned", "retention",
             "evict_attn_percentile", "evict_mean_pos_frac", "evict_sink_frac",
             "evict_generated_frac", "truncation_rate",
         ])
+
+        
+        import pickle
+        anchors_path = self.run_dir / "probe_anchors.pkl"
+        if anchors_path.exists():
+            logger.info(f"Loading existing probe anchors from {anchors_path}")
+            with open(anchors_path, "rb") as f:
+                data = pickle.load(f)
+            self._probes = data["probes"]
+            self._correct_full_mean = data["full_mean"]
+            self._correct_random_mean = data["random_mean"]
+            self._correct_kvnorm_mean = data["kvnorm_mean"]
+            self._attn_available = data["attn_available"]
+            return
 
         rng = np.random.default_rng(0)   # fixed → random anchor is reproducible
         full_vals, rand_vals, kvn_vals = [], [], []
@@ -165,6 +182,16 @@ class EvalProbeCallback(BaseCallback):
         self._correct_full_mean   = float(np.mean(full_vals))
         self._correct_random_mean = float(np.mean(rand_vals))
         self._correct_kvnorm_mean = float(np.mean(kvn_vals))
+
+        with open(anchors_path, "wb") as f:
+            pickle.dump({
+                "probes": self._probes,
+                "full_mean": self._correct_full_mean,
+                "random_mean": self._correct_random_mean,
+                "kvnorm_mean": self._correct_kvnorm_mean,
+                "attn_available": self._attn_available
+            }, f)
+
 
         if self.verbose:
             print(f"[probe] {len(self._probes)} fixed examples | "
