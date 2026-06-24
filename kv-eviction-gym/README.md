@@ -11,44 +11,70 @@ decode step, keeping the cache at a fixed budget throughout generation. See
 
 ## Setup
 
+**Requirements:** Python ≥ 3.10, CUDA GPU (L4/T4/A100 recommended), [uv](https://docs.astral.sh/uv/).
+
 ```bash
+# Install uv (skip if already installed)
+curl -LsSf https://astral.sh/uv/install.sh | sh
+source $HOME/.local/bin/env
+
 cd kv-eviction-gym
-pip install -e .
+uv sync          # creates .venv and installs all dependencies incl. tensorboard
 ```
 
-Requires Python ≥ 3.10 and PyTorch ≥ 2.2. On a GPU server with CUDA, install
-`flash-attn` separately if you want to disable attention shaping and use
-`flash_attention_2` for faster training.
+Dependencies are declared in `pyproject.toml` and include: `torch`, `transformers`,
+`stable-baselines3`, `sb3-contrib`, `tensorboard`, `datasets`, `gymnasium`.
+
+> **Note:** always use `uv sync` (not `pip install`). Plain pip will miss
+> `tensorboard` and other indirect deps declared in `pyproject.toml`.
 
 ---
 
-## Full pipeline (recommended)
+## Training on a GPU VM (one command)
 
 ```bash
-bash run.sh [run_name] [config] [eval_budget] [eval_n]
+HF_TOKEN=<your_token> bash setup_and_train.sh --run-name my_run
 ```
 
-This runs four steps in sequence:
+`setup_and_train.sh` handles the full setup automatically:
+1. Installs `uv` if missing
+2. Runs `uv sync` to create/update the venv
+3. Checks CUDA availability
+4. Launches `scripts/train.py` with `configs/run_none.yaml`
 
-| Step | What happens |
-|------|-------------|
-| 1 | `pip install -e .` |
-| 2 | Train MaskablePPO — saves best model, periodic checkpoints, learning curve CSV, TensorBoard events |
-| 3 | Plot learning curves → `runs/<name>/learning_curve.png` |
-| 4 | Evaluate on 100 GSM8K test examples → `runs/<name>/eval_results.json` |
+Optional flags:
+```bash
+# Resume from a checkpoint
+HF_TOKEN=... bash setup_and_train.sh --run-name resumed --resume-from runs/my_run/best_model.zip
 
-**Examples:**
+# Use a different config
+HF_TOKEN=... bash setup_and_train.sh --config configs/quickstart.yaml --run-name test
+```
+
+---
+
+## Training only (manual)
 
 ```bash
-# Defaults: timestamped run name, configs/train.yaml, budget=180, n=100
-bash run.sh
-
-# Named run on the server
-bash run.sh server_run1
-
-# Custom config and eval budget
-bash run.sh ablation_no_shaping configs/train_no_shaping.yaml 180 100
+uv run python scripts/train.py --config configs/run_none.yaml --run-name my_run
 ```
+
+Key config options (`configs/run_none.yaml`):
+
+| Field | Default | Notes |
+|-------|---------|-------|
+| `model_name` | `qwen-1.5b` | Model key; defaults loaded from `configs/model_defaults.json` |
+| `n_examples` | `1000` | GSM8K training examples (cycled) |
+| `probe_n` | `32` | Left-out training examples for periodic eval (0 to disable) |
+| `budget_min` | `128` | Minimum cache capacity (tokens) |
+| `budget_max` | `512` | Maximum cache capacity (tokens) |
+| `max_new_tokens` | `800` | Max decode steps per episode |
+| `n_recent` | `32` | Recency window — protected from eviction |
+| `n_sinks` | `4` | Attention sink tokens — protected from eviction |
+| `length_penalty_weight` | `0.5` | Dense signal: `−weight × steps/max_new_tokens` |
+| `truncation_penalty` | `1.0` | Hard penalty when episode hits token cap without EOS |
+| `total_timesteps` | `5000000` | SB3 timestep budget (counts ×28 envs per step) |
+| `shaping_mode` | `none` | `none` = pure correctness (fastest); `per_step` = attention shaping |
 
 All outputs go to `runs/<run_name>/`:
 
@@ -57,39 +83,18 @@ runs/<run_name>/
   config.yaml            # copy of the config used
   best_model.zip         # checkpoint with highest mean episode reward
   final_model.zip        # checkpoint at end of training
-  checkpoints/           # periodic saves (every 50k steps)
-  learning_curve.csv     # timestep, ep_rew_mean, correctness_rate, alignment_mean
-  learning_curve.png     # plot of the above
+  checkpoints/           # periodic saves
+  learning_curve.csv     # timestep, ep_rew_mean, correctness_rate, truncation_rate, …
+  probe_curve.csv        # periodic held-out eval (correctness, retention, gen_frac, …)
+  probe_anchors.pkl      # cached baselines — reused on resume, skip recompute
   tb/                    # TensorBoard event files
-  eval_results.json      # per-example and summary eval results
 ```
-
----
-
-## Training only
-
-```bash
-python scripts/train.py --config configs/train.yaml --run-name my_run
-```
-
-Key config options in `configs/train.yaml`:
-
-| Field | Default | Notes |
-|-------|---------|-------|
-| `model_name` | `qwen-1.5b` | Model key; defaults loaded from `configs/model_defaults.json` |
-| `n_examples` | `200` | GSM8K training examples |
-| `budget_min` | `128` | Minimum cache capacity (tokens) |
-| `budget_max` | `400` | Maximum cache capacity (tokens) |
-| `total_timesteps` | `10000000` | ~1,000 episodes (SB3 counts ×28 envs per step) |
-| `use_attention_shaping` | `true` | Dense reward shaping via reference generate; set `false` to halve training time |
-| `attention_weight` | `0.3` | Mix: `0` = pure correctness, `1` = pure attention alignment |
-| `hidden` | `64` | Policy MLP hidden size |
 
 **Monitoring during training** — the callback prints per rollout:
 
 ```
-t=   14,672  rew=0.3142  correct=28.6%  align=0.412
-t=   29,344  rew=0.3301  correct=31.4%  align=0.438
+t=   14,672  rew=0.3142  correct=28.6%  align=0.412  ep_time=12.3s  episodes=4  trunc=100.0%  seen=4 (max 1x)  pass=0
+t=   29,344  rew=0.3301  correct=31.4%  align=0.438  ep_time=11.8s  episodes=4  trunc=75.0%   seen=8 (max 1x)  pass=0
 ...
 ```
 
@@ -149,7 +154,7 @@ Use `configs/quickstart.yaml` to verify the loop runs end-to-end on CPU/MPS
 in a few minutes (3 examples, small budget, 300k steps):
 
 ```bash
-bash run.sh quickstart configs/quickstart.yaml 128 10
+uv run python scripts/train.py --config configs/quickstart.yaml --run-name quickstart
 ```
 
 ---
