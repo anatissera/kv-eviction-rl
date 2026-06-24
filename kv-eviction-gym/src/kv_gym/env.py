@@ -439,7 +439,7 @@ class SharedKVVecEnv(VecEnv):
             # but never fed as input: include it so the decoded answer is complete.
             if new_next_token != self.eos_id:
                 self.generated.append(new_next_token)
-            term_rewards, correct, align = self._terminal_reward()
+            term_rewards, correct, align = self._terminal_reward(truncated=truncated)
             episode_seconds = time.perf_counter() - self._episode_started_at
             # Terminal step also evicted: add this step's shaping on top of the
             # terminal (correctness) reward.
@@ -529,7 +529,7 @@ class SharedKVVecEnv(VecEnv):
 
         return obs
 
-    def _terminal_reward(self) -> tuple[np.ndarray, bool, float]:
+    def _terminal_reward(self, truncated: bool = False) -> tuple[np.ndarray, bool, float]:
         """Compute and broadcast the episode reward to all layer-envs.
 
         Base reward (shaping_mode='none'):
@@ -601,8 +601,9 @@ class SharedKVVecEnv(VecEnv):
         if self.length_penalty_weight > 0.0:
             score -= self.length_penalty_weight * (self.step_count / self.max_new_tokens)
 
-        # Hard truncation penalty: extra discouragement for hitting the token cap.
-        truncated = (self.step_count >= self.max_new_tokens)
+        # Hard truncation penalty: extra discouragement for hitting the token cap without EOS.
+        # truncated is passed in from step_wait (requires both step_count >= max_new_tokens
+        # AND no EOS token) to avoid penalising episodes that finish cleanly at the cap.
         if self.truncation_penalty > 0.0 and truncated:
             score -= self.truncation_penalty
 

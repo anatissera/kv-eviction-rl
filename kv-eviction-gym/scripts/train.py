@@ -244,7 +244,7 @@ def main():
     if probe_n and probe_n > 0:
         probe_budget = cfg.get("probe_budget", cfg.get("budget_min", 128))
         print(f"probe: n={probe_n} budget={probe_budget} "
-              f"every_n_rollouts={cfg.get('probe_every_n_rollouts', 5)} (held-out test split)")
+              f"every_n_rollouts={cfg.get('probe_every_n_rollouts', 5)} (left-out train split)")
         callback_list.append(EvalProbeCallback(
             llm=model,
             tokenizer=tokenizer,
