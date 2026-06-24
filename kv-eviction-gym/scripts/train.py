@@ -193,8 +193,17 @@ def main():
     print(f"attn_implementation: {attn_impl or 'default'}")
     print(f"Using device: {device}")
 
-    examples = load_gsm8k(n=cfg.get("n_examples", 200), seed=cfg.get("seed", 0), split="train")
+    n_examples = cfg.get("n_examples", 200)
+    probe_n    = cfg.get("probe_n", 32)
 
+    # Load training + probe examples together from the train split so the probe
+    # uses left-out training examples with guaranteed no overlap.
+    all_examples = load_gsm8k(n=n_examples + probe_n, seed=cfg.get("seed", 0), split="train")
+    examples       = all_examples[:n_examples]
+    probe_examples = all_examples[n_examples:]
+
+    print(f"train examples: {len(examples)}  probe examples: {len(probe_examples)} "
+          f"(left-out train split, seed={cfg.get('seed', 0)})")
     print(f"budget_min={cfg.get('budget_min', 128)}  budget_max={cfg.get('budget_max', 256)}"
           f"  max_new_tokens={cfg.get('max_new_tokens', 524)}")
 
@@ -230,12 +239,9 @@ def main():
     ]
 
     # Fixed held-out probe: denoised periodic monitoring (retention + eviction behavior).
+    # probe_examples are the left-out tail of the training draw (loaded above).
     # Disable with probe_n: 0.
-    probe_n = cfg.get("probe_n", 32)
     if probe_n and probe_n > 0:
-        probe_examples = load_gsm8k(
-            n=probe_n, seed=cfg.get("probe_seed", 12345), split="test",
-        )
         probe_budget = cfg.get("probe_budget", cfg.get("budget_min", 128))
         print(f"probe: n={probe_n} budget={probe_budget} "
               f"every_n_rollouts={cfg.get('probe_every_n_rollouts', 5)} (held-out test split)")
