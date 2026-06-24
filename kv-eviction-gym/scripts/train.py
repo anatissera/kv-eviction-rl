@@ -212,6 +212,8 @@ def main():
         shaping_mode=cfg.get("shaping_mode", "none"),
         n_sinks=cfg.get("n_sinks", 4),
         n_recent=cfg.get("n_recent", 8),
+        length_penalty_weight=cfg.get("length_penalty_weight", 0.0),
+        truncation_penalty=cfg.get("truncation_penalty", 0.0),
         seed=cfg.get("seed", 0),
     )
     env = VecMonitor(env)

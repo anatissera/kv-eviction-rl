@@ -71,6 +71,14 @@ total_timesteps: 3000000
 # Recency + sink protection (action-mask window; StreamingLLM\/H2O\/SnapKV standard).
 # Cannot evict the first n_sinks (sinks) or last n_recent (recency window) cache slots.
 n_sinks: 4
-n_recent: 8
+n_recent: 32
+
+# Length / truncation reward shaping (no attention needed, works with sdpa).
+# length_penalty_weight: dense signal even when correctness=0 — shorter episodes
+#   are less penalized.  score -= length_penalty_weight * (step_count / max_new_tokens).
+# truncation_penalty: hard hit when episode hits max_new_tokens without EOS.
+#   score -= truncation_penalty  (applied on top of the length penalty).
+length_penalty_weight: 0.5
+truncation_penalty: 1.0
 
 attn_implementation: sdpa

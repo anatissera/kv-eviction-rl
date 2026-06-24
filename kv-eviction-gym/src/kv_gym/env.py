@@ -132,6 +132,8 @@ class SharedKVVecEnv(VecEnv):
         shaping_mode:          str   = "none",
         n_sinks:               int   = 4,    # protected attention-sink slots (cannot evict)
         n_recent:              int   = 8,    # protected recency-window slots (cannot evict)
+        length_penalty_weight: float = 0.0,  # penalty = weight * (step_count / max_new_tokens)
+        truncation_penalty:    float = 0.0,  # extra penalty when episode hits max_new_tokens
         seed:                  int   = 0,
     ):
         self.model                 = model
@@ -147,6 +149,8 @@ class SharedKVVecEnv(VecEnv):
         self.shaping_mode          = shaping_mode
         self.n_sinks               = n_sinks
         self.n_recent              = n_recent
+        self.length_penalty_weight = length_penalty_weight
+        self.truncation_penalty    = truncation_penalty
         self._rng                  = np.random.default_rng(seed)
 
         _shaping_needs_imp = {"terminal", "per_step", "per_step_recency"}
@@ -528,14 +532,31 @@ class SharedKVVecEnv(VecEnv):
     def _terminal_reward(self) -> tuple[np.ndarray, bool, float]:
         """Compute and broadcast the episode reward to all layer-envs.
 
-        Reward:
-            correctness  — 1.0 if generated answer matches gold, 0.0 otherwise.
-            alignment    — fraction of attention mass captured by prompt tokens
-                           still present in any layer's cache, averaged over layers.
+        Base reward (shaping_mode='none'):
+            +1.0  if the generated answer matches the gold answer, 0 otherwise.
 
+        Optional attention shaping (shaping_mode='terminal' or 'per_step*'):
             score = (1 - attention_weight) * correctness + attention_weight * alignment
-                    [when use_attention_shaping=True and importance is available]
-            score = correctness   [otherwise]
+            where alignment = fraction of attention mass retained in the cache.
+
+        Length penalty (always applied when length_penalty_weight > 0):
+            score -= length_penalty_weight * (step_count / max_new_tokens)
+            Penalises longer episodes proportionally; gives a dense gradient signal
+            even when correctness is always 0 (policy learns to generate shorter).
+
+        Truncation penalty (applied when truncation_penalty > 0 and no EOS was produced):
+            score -= truncation_penalty
+            Hard discouragement for hitting max_new_tokens without finishing.
+
+        Example reward ranges with length_penalty_weight=0.5, truncation_penalty=1.0:
+            correct + short  (20% tokens): +1.0 - 0.10       = +0.90
+            correct + long   (90% tokens): +1.0 - 0.45       = +0.55
+            wrong  + short   (20% tokens):  0.0 - 0.10       = -0.10
+            truncated wrong  (100% tokens):  0.0 - 0.50 - 1.0 = -1.50
+
+        Note: with gamma=1 and gae_lambda=1 (Monte Carlo), this terminal reward is
+        propagated equally to every step in the episode — all eviction decisions share
+        the same credit signal regardless of when they occurred.
 
         All layer-envs receive the same scalar reward (cooperative setting).
 
@@ -573,5 +594,16 @@ class SharedKVVecEnv(VecEnv):
             score = (1.0 - self.attention_weight) * correctness
         else:  # "none"
             score = correctness
+
+        # Length penalty: dense signal proportional to how much of max_new_tokens was used.
+        # Correct + short episode: ~1.0 - small.  Truncated wrong episode: 0 - max_weight.
+        # Gives PPO a gradient even when correctness is always 0.
+        if self.length_penalty_weight > 0.0:
+            score -= self.length_penalty_weight * (self.step_count / self.max_new_tokens)
+
+        # Hard truncation penalty: extra discouragement for hitting the token cap.
+        truncated = (self.step_count >= self.max_new_tokens)
+        if self.truncation_penalty > 0.0 and truncated:
+            score -= self.truncation_penalty
 
         return np.full(self.num_envs, score, dtype=np.float32), bool(correctness), align
