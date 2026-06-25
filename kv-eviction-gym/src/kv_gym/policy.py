@@ -66,6 +66,8 @@ class PerTokenMLP(BaseFeaturesExtractor):
 
     def forward(self, observations: torch.Tensor) -> torch.Tensor:
         # observations: [batch, max_len, feature_dim]
+        # Cast to float32: buffer stores fp16 to save RAM; network needs fp32.
+        observations = observations.float()
         batch = observations.shape[0]
         x = observations.view(batch * self.max_len, self.feature_dim)
 

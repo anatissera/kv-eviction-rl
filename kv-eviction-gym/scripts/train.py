@@ -26,6 +26,7 @@ from sb3_contrib import MaskablePPO
 
 from kv_gym.env import SharedKVVecEnv
 from kv_gym.policy import PerTokenMLP
+from kv_gym.buffer import FP16ObsMaskableRolloutBuffer
 from kv_gym.vendor.loader import load_model_and_tokenizer
 from kv_gym.vendor.gsm8k import load_gsm8k
 from kv_gym.probe import EvalProbeCallback
@@ -66,17 +67,22 @@ class BudgetCurriculumCallback(BaseCallback):
     then gradually tightens, forcing the policy to learn aggressive eviction.
     Budget is updated at the start of each rollout so the change takes effect on the
     next episode reset.
+
+    curriculum_fraction: what fraction of total_timesteps the annealing spans.
+    Default 1.0 = full training.  0.75 = reach budget_min_end at 75% of training
+    so the last quarter trains at the hardest budget.
     """
 
     def __init__(self, budget_min_start: int, budget_min_end: int,
-                 total_timesteps: int, verbose: int = 0):
+                 total_timesteps: int, curriculum_fraction: float = 1.0,
+                 verbose: int = 0):
         super().__init__(verbose)
-        self.budget_min_start = budget_min_start
-        self.budget_min_end   = budget_min_end
-        self.total_timesteps  = total_timesteps
+        self.budget_min_start  = budget_min_start
+        self.budget_min_end    = budget_min_end
+        self.curriculum_end_ts = int(total_timesteps * max(curriculum_fraction, 1e-6))
 
     def _on_rollout_start(self) -> None:
-        frac    = min(self.num_timesteps / self.total_timesteps, 1.0)
+        frac    = min(self.num_timesteps / self.curriculum_end_ts, 1.0)
         new_min = int(self.budget_min_start
                       + (self.budget_min_end - self.budget_min_start) * frac)
         # VecMonitor wraps SharedKVVecEnv; .venv reaches the underlying env.
@@ -284,12 +290,16 @@ def main():
     budget_min_start = cfg.get("budget_min_start", None)
     budget_min_end   = cfg.get("budget_min_end",   None)
     if budget_min_start is not None and budget_min_end is not None:
-        total_ts = cfg.get("total_timesteps", 500_000)
-        print(f"budget curriculum: {budget_min_start} → {budget_min_end} over {total_ts:,} steps")
+        total_ts           = cfg.get("total_timesteps", 500_000)
+        curriculum_frac    = cfg.get("curriculum_fraction", 1.0)
+        curriculum_end_ts  = int(total_ts * curriculum_frac)
+        print(f"budget curriculum: {budget_min_start} → {budget_min_end} "
+              f"over first {curriculum_frac:.0%} of training ({curriculum_end_ts:,} steps)")
         callback_list.append(BudgetCurriculumCallback(
             budget_min_start=budget_min_start,
             budget_min_end=budget_min_end,
             total_timesteps=total_ts,
+            curriculum_fraction=curriculum_frac,
             verbose=1,
         ))
 
@@ -341,6 +351,21 @@ def main():
             verbose=1,
             device=device,
         )
+
+    # Replace the rollout buffer with the fp16 version to halve observation RAM.
+    # Must happen after PPO construction (which allocates the default buffer)
+    # and before learn() (which writes into the buffer).
+    ppo.rollout_buffer = FP16ObsMaskableRolloutBuffer(
+        buffer_size=ppo.n_steps,
+        observation_space=ppo.observation_space,
+        action_space=ppo.action_space,
+        device=ppo.device,
+        gamma=ppo.gamma,
+        gae_lambda=ppo.gae_lambda,
+        n_envs=ppo.n_envs,
+    )
+    print(f"rollout buffer: FP16ObsMaskableRolloutBuffer "
+          f"(n_steps={ppo.n_steps}, n_envs={ppo.n_envs})")
 
     ppo.learn(
         total_timesteps=cfg.get("total_timesteps", 500_000),
