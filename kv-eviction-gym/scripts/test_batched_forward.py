@@ -47,32 +47,58 @@ def decode_step(model, next_tok, past_kv, position):
         )
     return out.logits, out.past_key_values
 
+def _n_layers(cache):
+    if hasattr(cache, "layers"):
+        return len(cache.layers)
+    return len(cache.key_cache)
+
+def _get_kv(cache, l):
+    """Return (K, V) tensors [1, H, S, D] for layer l."""
+    if hasattr(cache, "layers"):
+        return cache.layers[l].keys, cache.layers[l].values
+    return cache.key_cache[l], cache.value_cache[l]
+
+def _set_kv(cache, l, K, V):
+    if hasattr(cache, "layers"):
+        cache.layers[l].keys   = K
+        cache.layers[l].values = V
+    else:
+        cache.key_cache[l]   = K
+        cache.value_cache[l] = V
+
 def clone_cache(cache):
     new = DynamicCache()
-    for l in range(len(cache.key_cache)):
-        new.key_cache.append(cache.key_cache[l].clone())
-        new.value_cache.append(cache.value_cache[l].clone())
+    # Force same internal structure by copying layer-by-layer
+    for l in range(_n_layers(cache)):
+        K, V = _get_kv(cache, l)
+        K2 = K.clone(); V2 = V.clone()
+        if hasattr(cache, "layers"):
+            import copy
+            new.layers.append(copy.copy(cache.layers[l]))
+            new.layers[l].keys   = K2
+            new.layers[l].values = V2
+        else:
+            new.key_cache.append(K2)
+            new.value_cache.append(V2)
     return new
 
 def cache_to_batched(cache_a, cache_b):
     """Stack two single-sequence caches into one batch=2 cache."""
     batched = DynamicCache()
-    for l in range(len(cache_a.key_cache)):
-        batched.key_cache.append(
-            torch.cat([cache_a.key_cache[l], cache_b.key_cache[l]], dim=0)
-        )
-        batched.value_cache.append(
-            torch.cat([cache_a.value_cache[l], cache_b.value_cache[l]], dim=0)
-        )
+    for l in range(_n_layers(cache_a)):
+        Ka, Va = _get_kv(cache_a, l)
+        Kb, Vb = _get_kv(cache_b, l)
+        K_bat = torch.cat([Ka, Kb], dim=0)
+        V_bat = torch.cat([Va, Vb], dim=0)
+        if hasattr(cache_a, "layers"):
+            import copy
+            batched.layers.append(copy.copy(cache_a.layers[l]))
+            batched.layers[l].keys   = K_bat
+            batched.layers[l].values = V_bat
+        else:
+            batched.key_cache.append(K_bat)
+            batched.value_cache.append(V_bat)
     return batched
-
-def split_cache(batched_cache, idx):
-    """Extract one sequence from a batched cache."""
-    single = DynamicCache()
-    for l in range(len(batched_cache.key_cache)):
-        single.key_cache.append(batched_cache.key_cache[l][idx:idx+1])
-        single.value_cache.append(batched_cache.value_cache[l][idx:idx+1])
-    return single
 
 def check(name, a, b, atol=ATOL):
     a = a.float().cpu()
@@ -126,10 +152,13 @@ def main():
     all_pass &= check("logits[1] batch==seq_b", logits_batch[1], logits_b1[0])
 
     # Check KV cache layer 0
-    ka_batch = kv_batch.key_cache[0][0]   # [H, S, D]
-    kb_batch = kv_batch.key_cache[0][1]
-    ka_seq   = kv_a1.key_cache[0][0]
-    kb_seq   = kv_b1.key_cache[0][0]
+    K_bat, _ = _get_kv(kv_batch, 0)   # [2, H, S, D]
+    ka_batch = K_bat[0]
+    kb_batch = K_bat[1]
+    Ka_seq, _ = _get_kv(kv_a1, 0)
+    Kb_seq, _ = _get_kv(kv_b1, 0)
+    ka_seq = Ka_seq[0]
+    kb_seq = Kb_seq[0]
     all_pass &= check("KV cache layer0 seq_a", ka_batch, ka_seq)
     all_pass &= check("KV cache layer0 seq_b", kb_batch, kb_seq)
 
@@ -179,7 +208,7 @@ def main():
     for l in range(n_layers):
         _evict_slot(kv_a_evicted, l, EVICT_SLOT)
 
-    logits_a_evict_seq, _ = decode_step(model, next_a, kv_a_evicted, pos - 1)
+    logits_a_evict_seq, _ = decode_step(model, next_a, kv_a_evicted, pos)
 
     # Batched: mask out slot 2 for seq_a only
     # attention_mask shape: [2, L] for the KV cache + [2, 1] for the new token = [2, L+1]
@@ -198,6 +227,70 @@ def main():
     logits_a_evict_bat = out3.logits[0:1]
 
     all_pass &= check("evict: mask==physical (seq_a)", logits_a_evict_bat, logits_a_evict_seq)
+
+    print()
+    print("=" * 60)
+    print("TEST 4: Per-layer batched eviction — different slot per (batch, layer)")
+    print("=" * 60)
+    # This is the real use case: each layer independently evicts a different slot,
+    # and we want to do it for a batch of B episodes simultaneously.
+    #
+    # Ground truth: B sequential single-episode forward passes, each with
+    #   _evict_slot(cache, l, slot_b_l) for every layer l.
+    # Batched:      one forward pass with batch=B, where we physically remove
+    #   slot_b_l from cache.key_cache[l][b] before the forward pass.
+
+    B = 2
+    # Random but deterministic per-layer eviction slots for each episode
+    rng = np.random.default_rng(42)
+    # slots[b, l] = which cache slot episode b evicts at layer l
+    slots = rng.integers(1, L - 1, size=(B, n_layers))  # avoid first/last slot
+
+    # --- Sequential ground truth ---
+    # Episode a: evict slots[0, l] at each layer l
+    kv_a_pl = clone_cache(kv_a1)
+    for l in range(n_layers):
+        _evict_slot(kv_a_pl, l, int(slots[0, l]))
+
+    # Episode b: evict slots[1, l] at each layer l
+    kv_b_pl = clone_cache(kv_b1)
+    for l in range(n_layers):
+        _evict_slot(kv_b_pl, l, int(slots[1, l]))
+
+    logits_a_pl_seq, _ = decode_step(model, next_a, kv_a_pl, pos)
+    logits_b_pl_seq, _ = decode_step(model, next_b, kv_b_pl, pos)
+
+    # --- Batched per-layer physical eviction ---
+    # Start from the batched cache and remove per-(batch, layer) slots in-place.
+    kv_bat_pl = cache_to_batched(kv_a1, kv_b1)
+
+    slots_t = torch.tensor(slots, device=DEVICE)   # [B, n_layers]
+    for l in range(n_layers):
+        K, V = _get_kv(kv_bat_pl, l)   # [B, H, S, D]
+        S = K.shape[2]
+        H = K.shape[1]
+        D = K.shape[3]
+        # Build keep-mask: [B, S] True for kept positions
+        keep = torch.ones(B, S, dtype=torch.bool, device=DEVICE)
+        keep[torch.arange(B), slots_t[:, l]] = False  # [B, S]
+        # Gather kept positions: reshape K to [B*H, S, D], apply mask, reshape back
+        K_new = K[keep.unsqueeze(1).unsqueeze(-1).expand(B, H, S, D)].reshape(B, H, S-1, D)
+        V_new = V[keep.unsqueeze(1).unsqueeze(-1).expand(B, H, S, D)].reshape(B, H, S-1, D)
+        _set_kv(kv_bat_pl, l, K_new, V_new)
+
+    # One batched forward pass — all sequences now have cache size S-1
+    attn_mask_pl = torch.ones(B, (L - 1) + 1, device=DEVICE, dtype=torch.long)
+    with torch.no_grad():
+        out4 = model(
+            input_ids=next_batch,
+            past_key_values=kv_bat_pl,
+            position_ids=pos_batch,
+            attention_mask=attn_mask_pl,
+            use_cache=True,
+        )
+
+    all_pass &= check("per-layer evict batch logits[0]", out4.logits[0:1], logits_a_pl_seq)
+    all_pass &= check("per-layer evict batch logits[1]", out4.logits[1:2], logits_b_pl_seq)
 
     print()
     print("=" * 60)
