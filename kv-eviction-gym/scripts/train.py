@@ -256,8 +256,7 @@ def main():
     # probe_examples are the left-out tail of the training draw (loaded above).
     # Disable with probe_n: 0.
     if probe_n and probe_n > 0:
-        probe_budget = cfg.get("probe_budget", cfg.get("budget_min", 128))
-        print(f"probe: n={probe_n} budget={probe_budget} "
+        print(f"probe: n={probe_n} budget=[{cfg.get('budget_min', 128)},{cfg.get('budget_max', 256)}] "
               f"every_n_rollouts={cfg.get('probe_every_n_rollouts', 5)} (left-out train split)")
         callback_list.append(EvalProbeCallback(
             llm=model,

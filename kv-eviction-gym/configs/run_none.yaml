@@ -12,8 +12,8 @@ seed: 0
 # The env clamps the lower bound to max(budget_min, prompt_len) so the full
 # prompt always fits without pre-eviction.  Eviction starts at decode step
 # budget − prompt_len + 1 (when the cache first exceeds budget).
-budget_min: 128
-budget_max: 512
+budget_min: 256
+budget_max: 600
 max_len: 800
 max_new_tokens: 800
 
@@ -51,7 +51,8 @@ hidden: 64
 # kv_norm correctness are fixed anchors computed once. Set probe_n: 0 to disable.
 probe_n: 32                # left-out training examples used for probe (loaded from train split)
 probe_every_n_rollouts: 15 # frequency of probe evaluation
-probe_budget: 200
+                           # probe uses same budget range as training (budget_min..budget_max),
+                           # assigned per-example at init with fixed seed — variety but reproducible
 probe_n_sinks: 4           # sink positions for evict_sink_frac diagnostic
 
 # PPO hyperparameters
