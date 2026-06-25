@@ -66,12 +66,12 @@ probe_every_n_rollouts: 15 # frequency of probe evaluation
                            # assigned per-example at init with fixed seed — variety but reproducible
 probe_n_sinks: 4           # sink positions for evict_sink_frac diagnostic
 
-# PPO hyperparameters
-# Episode = full generation (up to max_new_tokens=800 decode steps).
-# n_steps=512: fp16 obs buffer ~10.9 GiB RAM; peak during swap_and_flatten ~28 GiB (2× copy).
-# total transitions per rollout = 512 × 28 = 14336.
-n_steps:         512
-batch_size:      1024    # ≈28 minibatches per epoch × 4 epochs = 112 grad steps
+# Batched env: n_parallel episodes decoded together in one forward pass.
+# n_envs = n_parallel * n_layers = 4 * 28 = 112.
+# n_steps=128 → 128 × 112 = 14336 transitions per rollout (same as before).
+n_parallel:      4
+n_steps:         128
+batch_size:      1024    # ≈14 minibatches per epoch × 4 epochs = 56 grad steps
 n_epochs:        4
 gamma:           1.0     # no discount — every eviction shares the same terminal reward
 gae_lambda:      1.0     # lambda=1 gives identical advantages for all steps (Monte Carlo)

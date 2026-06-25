@@ -25,6 +25,7 @@ from stable_baselines3.common.vec_env import VecMonitor
 from sb3_contrib import MaskablePPO
 
 from kv_gym.env import SharedKVVecEnv
+from kv_gym.batched_env import BatchedSharedKVVecEnv
 from kv_gym.policy import PerTokenMLP
 from kv_gym.buffer import FP16ObsMaskableRolloutBuffer
 from kv_gym.vendor.loader import load_model_and_tokenizer
@@ -256,7 +257,8 @@ def main():
     print(f"budget_min={cfg.get('budget_min', 128)}  budget_max={cfg.get('budget_max', 256)}"
           f"  max_new_tokens={cfg.get('max_new_tokens', 524)}")
 
-    env = SharedKVVecEnv(
+    n_parallel = cfg.get("n_parallel", 1)
+    env_kwargs = dict(
         model=model,
         tokenizer=tokenizer,
         examples=examples,
@@ -274,6 +276,11 @@ def main():
         truncation_penalty=cfg.get("truncation_penalty", 0.0),
         seed=cfg.get("seed", 0),
     )
+    if n_parallel > 1:
+        print(f"env: BatchedSharedKVVecEnv  n_parallel={n_parallel}")
+        env = BatchedSharedKVVecEnv(n_parallel=n_parallel, **env_kwargs)
+    else:
+        env = SharedKVVecEnv(**env_kwargs)
     env = VecMonitor(env)
 
     checkpoint_freq = cfg.get("checkpoint_freq", 50_000)
