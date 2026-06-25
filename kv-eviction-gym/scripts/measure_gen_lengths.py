@@ -11,12 +11,19 @@ model = AutoModelForCausalLM.from_pretrained(
 ).cuda()
 model.eval()
 
-examples = load_gsm8k(n=50, seed=0, split="train")
+import sys
+n_total = int(sys.argv[1]) if len(sys.argv) > 1 else 1050
+offset  = int(sys.argv[2]) if len(sys.argv) > 2 else 0
+all_ex  = load_gsm8k(n=n_total, seed=0, split="train")
+examples = all_ex[offset:offset+50]
+print(f"Examples {offset}–{offset+50} of {n_total}")
+
 gen_lengths, prompt_lengths, correct = [], [], []
 eos = tok.eos_token_id
 
 for i, ex in enumerate(examples):
-    prompt, ans = format_gsm8k(ex)
+    prompt, _ = format_gsm8k(ex)
+    gold = ex["gold_answers"][0]
     ids = tok(prompt, return_tensors="pt").input_ids.cuda()
     prompt_lengths.append(ids.shape[1])
     with torch.no_grad():
@@ -24,7 +31,7 @@ for i, ex in enumerate(examples):
     gen = out[0, ids.shape[1]:]
     gen_lengths.append(len(gen))
     text = tok.decode(gen)
-    correct.append(str(ans) in text)
+    correct.append(str(gold) in text)
     if (i + 1) % 10 == 0:
         print(f"  {i+1}/50 done")
 
