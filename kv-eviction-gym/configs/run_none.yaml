@@ -12,8 +12,15 @@ seed: 0
 # The env clamps the lower bound to max(budget_min, prompt_len) so the full
 # prompt always fits without pre-eviction.  Eviction starts at decode step
 # budget − prompt_len + 1 (when the cache first exceeds budget).
-budget_min: 256
+budget_min: 256      # used as the final (hardest) budget after curriculum completes
 budget_max: 600
+
+# Budget curriculum: linearly anneal budget_min from easy → hard over training.
+# Starts near budget_max so episodes rarely truncate (policy sees real +1 reward),
+# then tightens to force learning aggressive eviction.
+# Set both to enable; remove/comment to disable (uses fixed budget_min above).
+budget_min_start: 580   # almost no eviction → most episodes complete → real reward signal
+budget_min_end:   256   # final target: ~143 tokens headroom at p90 prompt length
 max_len: 800
 max_new_tokens: 800
 

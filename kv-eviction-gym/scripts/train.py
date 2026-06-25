@@ -59,6 +59,35 @@ def load_config(path: str) -> dict:
     return cfg
 
 
+class BudgetCurriculumCallback(BaseCallback):
+    """Linearly anneals env.budget_min from budget_min_start → budget_min_end over training.
+
+    Starts easy (large budget → few evictions → episodes complete → real reward signal),
+    then gradually tightens, forcing the policy to learn aggressive eviction.
+    Budget is updated at the start of each rollout so the change takes effect on the
+    next episode reset.
+    """
+
+    def __init__(self, budget_min_start: int, budget_min_end: int,
+                 total_timesteps: int, verbose: int = 0):
+        super().__init__(verbose)
+        self.budget_min_start = budget_min_start
+        self.budget_min_end   = budget_min_end
+        self.total_timesteps  = total_timesteps
+
+    def _on_rollout_start(self) -> None:
+        frac    = min(self.num_timesteps / self.total_timesteps, 1.0)
+        new_min = int(self.budget_min_start
+                      + (self.budget_min_end - self.budget_min_start) * frac)
+        # VecMonitor wraps SharedKVVecEnv; .venv reaches the underlying env.
+        self.training_env.venv.budget_min = new_min
+        if self.verbose:
+            print(f"  [curriculum] budget_min={new_min}  (frac={frac:.2f})")
+
+    def _on_step(self) -> bool:
+        return True
+
+
 class TrainingLogger(BaseCallback):
     """Writes one CSV row per rollout; tracks correctness rate and saves the best model.
 
@@ -251,6 +280,18 @@ def main():
             verbose=1,
         ),
     ]
+
+    budget_min_start = cfg.get("budget_min_start", None)
+    budget_min_end   = cfg.get("budget_min_end",   None)
+    if budget_min_start is not None and budget_min_end is not None:
+        total_ts = cfg.get("total_timesteps", 500_000)
+        print(f"budget curriculum: {budget_min_start} → {budget_min_end} over {total_ts:,} steps")
+        callback_list.append(BudgetCurriculumCallback(
+            budget_min_start=budget_min_start,
+            budget_min_end=budget_min_end,
+            total_timesteps=total_ts,
+            verbose=1,
+        ))
 
     # Fixed held-out probe: denoised periodic monitoring (retention + eviction behavior).
     # probe_examples are the left-out tail of the training draw (loaded above).
