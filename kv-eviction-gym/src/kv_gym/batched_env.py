@@ -159,6 +159,7 @@ class BatchedSharedKVVecEnv(VecEnv):
         self.tokenizer             = tokenizer
         self.examples              = examples
         self.N                     = n_parallel
+        self.n_parallel            = n_parallel  # alias expected by EpisodeMaskablePPO
         self.budget_min            = budget_min
         self.budget_max            = budget_max
         self.max_len               = max_len
