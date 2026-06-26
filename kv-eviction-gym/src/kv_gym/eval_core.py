@@ -13,7 +13,7 @@ evicted per layer before the next token is generated.
 from __future__ import annotations
 
 from collections.abc import Sequence
-from typing import Literal
+from typing import TYPE_CHECKING, Literal
 
 import numpy as np
 import torch
@@ -21,6 +21,9 @@ from torch import Tensor
 
 from kv_gym.features import build_obs
 from kv_gym.vendor.answer_extraction_gsm8k import flexible_extract
+
+if TYPE_CHECKING:
+    from kv_gym.free_growth_cache import FreeGrowthCache
 
 
 Mode = Literal["mean", "sum", "instant"]
@@ -333,12 +336,14 @@ def make_random_evict_fn(L: int, rng, n_sinks: int = 0, n_recent: int = 0):
 def run_online_episode(
     model,
     tokenizer,
-    input_ids:      Tensor,
-    budget:         int,
-    max_new_tokens: int,
-    device:         torch.device,
+    input_ids:          Tensor,
+    budget:             int,
+    max_new_tokens:     int,
+    device:             torch.device,
     evict_fn,
-    per_layer_imp:  Tensor | None = None,  # Kept for backward compatibility but unused
+    per_layer_imp:      Tensor | None = None,  # Kept for backward compatibility but unused
+    free_growth_cache:  "FreeGrowthCache | None" = None,
+    example_idx:        int | None = None,
 ) -> tuple[str, list[float], list[tuple[int, int]], bool, float, float]:
     """Run one full online episode.
 
@@ -385,6 +390,29 @@ def run_online_episode(
     evicted:     list[tuple[int, int]] = []
     tracker = PositionTracker(L, T)
 
+    # ── Free-growth cache hit: skip sequential decode, reconstruct in one pass ──
+    # The free-growth phase decodes (budget+1-T) tokens before the first eviction.
+    # Since the LLM is frozen these are deterministic and can be cached.
+    # On a hit we replace ~(budget-T) sequential decode steps with one prefill.
+    _fg_cache_saved = False
+    if free_growth_cache is not None and example_idx is not None:
+        n_needed = budget + 1 - T
+        cached   = free_growth_cache.get(example_idx)
+        if cached is not None and len(cached) >= n_needed:
+            fg_tokens = cached[:n_needed].tolist()
+            if eos not in fg_tokens:
+                tok_tensor = torch.tensor([fg_tokens], dtype=torch.long, device=device)
+                full_input = torch.cat([input_ids.to(device), tok_tensor], dim=1)
+                model.eval()
+                with torch.no_grad():
+                    rec_out  = model(input_ids=full_input, use_cache=True)
+                past_kv  = rec_out.past_key_values
+                next_tok = int(rec_out.logits[0, -1].argmax())
+                true_pos = T + len(fg_tokens)
+                generated = list(fg_tokens)
+                tracker   = PositionTracker(L, T + len(fg_tokens))
+                _fg_cache_saved = True  # no need to save again
+
     truncated = True
     for _ in range(max_new_tokens):
         if eos is not None and next_tok == eos:
@@ -394,6 +422,16 @@ def run_online_episode(
 
         cache_size = _get_cache_size(past_kv)
         if cache_size > budget:
+            # Save free-growth tokens on first eviction (cache miss path).
+            # At this point generated[-1] is the token appended this iteration
+            # (not a free-growth token in the batched-env sense); the fg tokens
+            # are generated[:-1], which has exactly budget+1-T entries.
+            if (not _fg_cache_saved
+                    and free_growth_cache is not None
+                    and example_idx is not None):
+                free_growth_cache.put(example_idx, generated[:-1])
+                _fg_cache_saved = True
+
             if getattr(evict_fn, "needs_kv", True):
                 K, V = _extract_all_kv(past_kv, L)
             else:

@@ -338,11 +338,12 @@ def main():
             max_new_tokens=cfg.get("max_new_tokens", 524),
             max_len=cfg.get("max_len", 512),
             every_n_rollouts=cfg.get("probe_every_n_rollouts", 5),
-            n_sinks=cfg.get("n_sinks", 4),      # match the env window so the probe
-            n_recent=cfg.get("n_recent", 8),    # measures the same action space
+            n_sinks=cfg.get("n_sinks", 4),
+            n_recent=cfg.get("n_recent", 8),
             run_dir=run_dir,
             device=device,
             verbose=1,
+            free_growth_cache=fg_cache,
         ))
 
     callbacks = CallbackList(callback_list)

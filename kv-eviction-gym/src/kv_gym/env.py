@@ -48,6 +48,7 @@ from stable_baselines3.common.vec_env import VecEnv
 
 from kv_gym.features import feature_dim
 from kv_gym.eval_core import valid_action_mask
+from kv_gym.free_growth_cache import FreeGrowthCache
 from kv_gym.rewards.attention_shaping import compute_token_importance
 from kv_gym.vendor.answer_extraction_gsm8k import flexible_extract
 from kv_gym.vendor.prompts import format_gsm8k
@@ -135,6 +136,7 @@ class SharedKVVecEnv(VecEnv):
         length_penalty_weight: float = 0.0,  # penalty = weight * (step_count / max_new_tokens)
         truncation_penalty:    float = 0.0,  # extra penalty when episode hits max_new_tokens
         seed:                  int   = 0,
+        free_growth_cache:     FreeGrowthCache | None = None,
     ):
         self.model                 = model
         self.tokenizer             = tokenizer
@@ -153,6 +155,8 @@ class SharedKVVecEnv(VecEnv):
         self.truncation_penalty    = truncation_penalty
         self.n_examples            = len(examples)
         self._rng                  = np.random.default_rng(seed)
+        self._cache                = free_growth_cache
+        self._example_cursor: int  = 0
 
         _shaping_needs_imp = {"terminal", "per_step", "per_step_recency"}
         if shaping_mode not in (_shaping_needs_imp | {"none"}):
@@ -177,7 +181,7 @@ class SharedKVVecEnv(VecEnv):
         act_space = spaces.Discrete(max_len)
         super().__init__(self.n_layers, obs_space, act_space)
 
-        self._example_iter: Iterator[dict] = itertools.cycle(examples)
+        self._example_iter: Iterator[dict] = itertools.cycle(examples)  # kept for compat
         self._pending_actions: np.ndarray | None = None
 
         # Episode state — initialised in reset()
@@ -213,7 +217,10 @@ class SharedKVVecEnv(VecEnv):
 
     def reset(self):
         self._episode_started_at = time.perf_counter()
-        example    = next(self._example_iter)
+        example_idx  = self._example_cursor % self.n_examples
+        example      = self.examples[example_idx]
+        self._example_cursor += 1
+
         prompt_text, _ = format_gsm8k(example)
         self.gold_answer = example["gold_answers"][0]
 
@@ -225,19 +232,29 @@ class SharedKVVecEnv(VecEnv):
             "Increase max_len or truncate prompts before training."
         )
 
-        # Budget = total cache capacity (prompt + generated tokens combined).
-        # If T <= budget_max: sample from [max(budget_min, T), budget_max] so the
-        # full prompt always fits before eviction starts.
-        # If T > budget_max: clamp to budget_max — the cache is already over budget
-        # from step 0, so the policy must evict immediately. Still valid signal.
         if T <= self.budget_max:
             budget_lo = max(self.budget_min, T)
             self.budget = int(self._rng.integers(budget_lo, self.budget_max + 1))
         else:
             self.budget = self.budget_max
         self.prompt_len = T
+        self.step_count = 0
+        self.generated  = []
+        self._prompt_ids = inputs["input_ids"]
 
-        # --- Prefill ---
+        # ── Try cache hit: reconstruct KV in one forward pass ─────────────────
+        if self._cache is not None:
+            n_needed = self.budget + 1 - T
+            cached   = self._cache.get(example_idx)
+            if cached is not None and len(cached) >= n_needed:
+                fg_tokens = cached[:n_needed].tolist()
+                if self.eos_id not in fg_tokens:
+                    self._reconstruct_from_tokens(fg_tokens)
+                    self._free_growth_done = False
+                    self._episode_count += 1
+                    return self._obs()
+
+        # ── Cache miss: normal prefill + sequential free-growth ───────────────
         self.model.eval()
         with torch.no_grad():
             out = self.model(input_ids=inputs["input_ids"], use_cache=True)
@@ -246,77 +263,63 @@ class SharedKVVecEnv(VecEnv):
         self.next_token    = int(out.logits[0, -1].argmax().item())
         self.true_position = T
         self.cache_size    = T
-        self.step_count    = 0
-        self.generated     = []
+        self.slot_to_pos   = [list(range(T)) for _ in range(self.n_layers)]
 
-        # Slot→position maps: after prefill, slot s holds original position s.
-        self.slot_to_pos = [list(range(T)) for _ in range(self.n_layers)]
-
-        # Per-token importance for attention-alignment reward shaping.
-        # When use_attention_shaping=True: runs model.generate() with
-        # output_attentions=True (requires attn_implementation="eager").
-        # Raises RuntimeError if the backend doesn't support it.
-        # When use_attention_shaping=False: no shaping, pure correctness reward.
         if self.use_attention_shaping:
             K_list, V_list = [], []
             for l in range(self.n_layers):
-                K_l, V_l = _get_layer_kv(self.past_kv, l)  # [H, T, D] float32 cpu
+                K_l, V_l = _get_layer_kv(self.past_kv, l)
                 K_list.append(K_l)
                 V_list.append(V_l)
-            K_all = torch.stack(K_list)  # [L, H, T, D]
-            V_all = torch.stack(V_list)
             self._token_importance = compute_token_importance(
                 model=self.model,
                 input_ids=inputs["input_ids"].cpu(),
-                K=K_all,
-                V=V_all,
+                K=torch.stack(K_list),
+                V=torch.stack(V_list),
                 max_new_tokens=self.max_new_tokens,
                 device=self.device,
-            )  # [T], sums to 1
+            )
         else:
             self._token_importance = None
 
-        # Free-growth phase: decode internally until cache_size > budget.
-        # This ensures every call to step_wait() is a genuine eviction step —
-        # no no-op steps dilute the policy gradient with zero-reward transitions.
         self._free_growth_done = False
-        self._run_free_growth()
+        self._run_free_growth(example_idx)
 
-        # If the episode ended during free-growth (EOS before any eviction was
-        # needed), skip it entirely and reset to the next example.  This prevents
-        # SB3 from ever pairing an observation with an action that had no effect
-        # on the outcome — the dead episode is simply discarded.
         if self._free_growth_done:
             return self.reset()
 
         self._episode_count += 1
         logger.info(
-            "episode=%d  prompt_len=%d  budget=%d  ratio=%.2f  "
-            "free_growth_steps=%d",
+            "episode=%d  prompt_len=%d  budget=%d  ratio=%.2f  free_growth_steps=%d",
             self._episode_count, T, self.budget,
-            self.budget / T,
-            self.cache_size - T,   # decode steps taken during free-growth
+            self.budget / T, self.cache_size - T,
         )
-
         return self._obs()
 
-    def _run_free_growth(self) -> None:
+    def _reconstruct_from_tokens(self, fg_tokens: list[int]) -> None:
+        """Reconstruct KV cache from cached free-growth tokens in one forward pass."""
+        T          = self.prompt_len
+        tok_tensor = torch.tensor([fg_tokens], dtype=torch.long, device=self.device)
+        full_input = torch.cat([self._prompt_ids, tok_tensor], dim=1)
+        self.model.eval()
+        with torch.no_grad():
+            out = self.model(input_ids=full_input, use_cache=True)
+        self.past_kv       = out.past_key_values
+        self.next_token    = int(out.logits[0, -1].argmax().item())
+        self.true_position = T + len(fg_tokens)
+        self.cache_size    = T + len(fg_tokens)
+        self.step_count    = len(fg_tokens)
+        self.generated     = list(fg_tokens)
+        self.slot_to_pos   = [list(range(self.cache_size)) for _ in range(self.n_layers)]
+        self._token_importance = None  # attention shaping not supported on cache hits
+
+    def _run_free_growth(self, example_idx: int | None = None) -> None:
         """Decode without eviction until cache_size > budget or episode ends.
 
-        After this returns, either:
-          - cache_size == budget + 1  → step_wait() will always evict, no no-ops.
-          - _free_growth_done == True → EOS/max_steps reached; step_wait() returns
-            done immediately and calls reset() for the next episode.
-
-        Why this eliminates credit-assignment dilution
-        -----------------------------------------------
-        With the old design, the rollout buffer contained up to (budget - T)
-        no-op transitions per episode (steps where cache ≤ budget so no eviction
-        fired).  With gamma=1 and terminal-only reward, those steps received the
-        same advantage as genuine eviction steps, diluting the gradient by a factor
-        of max_new_tokens / n_eviction_steps.  Moving free-growth here means the
-        rollout buffer only ever contains real eviction decisions.
+        Saves generated tokens to cache on successful completion so future
+        resets of this example can skip the sequential decode entirely.
         """
+        new_tokens: list[int] = []
         while self.cache_size <= self.budget:
             pos = torch.tensor([[self.true_position]], device=self.device)
             with torch.no_grad():
@@ -328,6 +331,7 @@ class SharedKVVecEnv(VecEnv):
                     use_cache=True,
                 )
             self.generated.append(self.next_token)
+            new_tokens.append(self.next_token)
             self.past_kv      = step_out.past_key_values
             new_next_token    = int(step_out.logits[0, -1].argmax().item())
             for l in range(self.n_layers):
@@ -338,11 +342,13 @@ class SharedKVVecEnv(VecEnv):
             self.next_token    = new_next_token
             if new_next_token == self.eos_id or self.step_count >= self.max_new_tokens:
                 self._free_growth_done = True
-                # Same truncation fix as step_wait: include the last predicted token
-                # if episode ended by step limit rather than EOS.
                 if new_next_token != self.eos_id:
                     self.generated.append(new_next_token)
-                break
+                return  # ended during free-growth — don't cache this episode
+
+        # Free-growth completed normally: save to cache.
+        if self._cache is not None and example_idx is not None:
+            self._cache.put(example_idx, new_tokens)
 
     def step_async(self, actions: np.ndarray):
         self._pending_actions = actions

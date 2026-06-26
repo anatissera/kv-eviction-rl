@@ -50,6 +50,10 @@ logger = logging.getLogger(__name__)
 
 
 class EvalProbeCallback(BaseCallback):
+    # Probe examples use cache keys offset by this value so they never collide
+    # with training example keys (training has at most a few thousand examples).
+    PROBE_CACHE_OFFSET = 1_000_000
+
     def __init__(
         self,
         llm,
@@ -66,6 +70,7 @@ class EvalProbeCallback(BaseCallback):
         device:           torch.device | None = None,
         ref_max_new_tokens: int = 64,
         verbose:          int = 1,
+        free_growth_cache = None,  # FreeGrowthCache | None
     ):
         super().__init__(verbose)
         self.llm              = llm
@@ -81,6 +86,7 @@ class EvalProbeCallback(BaseCallback):
         self.run_dir          = Path(run_dir)
         self.device           = device or next(llm.parameters()).device
         self.ref_max_new_tokens = ref_max_new_tokens
+        self.free_growth_cache  = free_growth_cache
 
         self.L = llm.config.num_hidden_layers
 
@@ -150,17 +156,23 @@ class EvalProbeCallback(BaseCallback):
                 self.device, self.max_new_tokens,
             )
             full = float(full_val)
+            probe_idx = len(self._probes)
+            cache_key = self.PROBE_CACHE_OFFSET + probe_idx
             rand_text, _, _, _, _, _ = run_online_episode(
                 self.llm, self.tokenizer, cap.input_ids, ex_budget,
                 self.max_new_tokens, self.device,
                 make_random_evict_fn(self.L, np.random.default_rng(rng.integers(1 << 30)),
                                      self.n_sinks, self.n_recent),
+                free_growth_cache=self.free_growth_cache,
+                example_idx=cache_key,
             )
             rand = float(flexible_extract(rand_text, [cap.gold_answer]))
             kvn_text, _, _, _, _, _ = run_online_episode(
                 self.llm, self.tokenizer, cap.input_ids, ex_budget,
                 self.max_new_tokens, self.device,
                 make_kv_norm_evict_fn(self.L, self.n_sinks, self.n_recent),
+                free_growth_cache=self.free_growth_cache,
+                example_idx=cache_key,
             )
             kvn = float(flexible_extract(kvn_text, [cap.gold_answer]))
 
@@ -212,11 +224,13 @@ class EvalProbeCallback(BaseCallback):
         gen_flags: list[float] = []   # 1.0 if the evicted token was a generated token
         truncs = []
 
-        for p in self._probes:
+        for pi, p in enumerate(self._probes):
             text, corr, ev, trunc, _, _ = run_online_episode(
                 self.llm, self.tokenizer, p["input_ids"], p["budget"],
                 self.max_new_tokens, self.device, evict_fn,
                 per_layer_imp=p["per_layer_imp"],
+                free_growth_cache=self.free_growth_cache,
+                example_idx=self.PROBE_CACHE_OFFSET + pi,
             )
             learned.append(float(flexible_extract(text, [p["gold"]])))
             corrs.extend(corr)
