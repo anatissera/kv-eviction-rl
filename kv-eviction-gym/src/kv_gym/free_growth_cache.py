@@ -71,7 +71,9 @@ class FreeGrowthCache:
     def put(self, example_idx: int, tokens: list[int] | np.ndarray) -> None:
         """Save tokens atomically.  Safe for concurrent writes (last write wins)."""
         p   = self._path(example_idx)
-        tmp = p.with_suffix(".tmp")
+        # np.save appends .npy if the path doesn't already end in .npy, so we
+        # keep the .npy extension on the temp path to prevent a double-suffix.
+        tmp = p.with_name(p.stem + ".tmp.npy")
         np.save(tmp, np.array(tokens, dtype=np.int32))
         tmp.replace(p)   # atomic on POSIX
 
