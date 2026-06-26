@@ -29,6 +29,7 @@ from kv_gym.batched_env import BatchedSharedKVVecEnv
 from kv_gym.policy import PerTokenMLP
 from kv_gym.buffer import FP16ObsMaskableRolloutBuffer
 from kv_gym.episode_ppo import EpisodeMaskablePPO
+from kv_gym.free_growth_cache import FreeGrowthCache
 from kv_gym.vendor.loader import load_model_and_tokenizer
 from kv_gym.vendor.gsm8k import load_gsm8k
 from kv_gym.probe import EvalProbeCallback
@@ -259,6 +260,17 @@ def main():
           f"  max_new_tokens={cfg.get('max_new_tokens', 524)}")
 
     n_parallel = cfg.get("n_parallel", 1)
+
+    fg_cache = None
+    fg_cache_dir = cfg.get("free_growth_cache_dir", None)
+    if fg_cache_dir:
+        model_key = cfg.get("model_name", "unknown")
+        fg_cache  = FreeGrowthCache(fg_cache_dir, model_key)
+        n_cached, _ = fg_cache.stats()
+        print(f"free_growth_cache: {fg_cache_dir}/{model_key}  ({n_cached} cached examples)")
+    else:
+        print("free_growth_cache: disabled")
+
     env_kwargs = dict(
         model=model,
         tokenizer=tokenizer,
@@ -279,7 +291,7 @@ def main():
     )
     if n_parallel > 1:
         print(f"env: BatchedSharedKVVecEnv  n_parallel={n_parallel}")
-        env = BatchedSharedKVVecEnv(n_parallel=n_parallel, **env_kwargs)
+        env = BatchedSharedKVVecEnv(n_parallel=n_parallel, free_growth_cache=fg_cache, **env_kwargs)
     else:
         env = SharedKVVecEnv(**env_kwargs)
     env = VecMonitor(env)

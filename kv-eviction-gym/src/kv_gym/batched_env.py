@@ -39,6 +39,7 @@ from kv_gym.eval_core import valid_action_mask
 from kv_gym.rewards.attention_shaping import compute_token_importance
 from kv_gym.vendor.answer_extraction_gsm8k import flexible_extract
 from kv_gym.vendor.prompts import format_gsm8k
+from kv_gym.free_growth_cache import FreeGrowthCache
 from transformers import DynamicCache
 
 logger = logging.getLogger(__name__)
@@ -119,6 +120,7 @@ class EpisodeState:
     token_importance: object = None  # torch.Tensor | None
     started_at:       float = 0.0
     count:            int   = 0
+    prompt_ids:       object = None  # torch.Tensor | None — kept for cache reconstruction
 
 
 # ---------------------------------------------------------------------------
@@ -151,6 +153,7 @@ class BatchedSharedKVVecEnv(VecEnv):
         length_penalty_weight: float = 0.0,
         truncation_penalty:    float = 0.0,
         seed:                  int   = 0,
+        free_growth_cache:     FreeGrowthCache | None = None,
     ):
         self.model                 = model
         self.tokenizer             = tokenizer
@@ -171,6 +174,8 @@ class BatchedSharedKVVecEnv(VecEnv):
         self.n_examples            = len(examples)
         self._rng                  = np.random.default_rng(seed)
         self.eos_id                = tokenizer.eos_token_id
+        self._cache                = free_growth_cache
+        self._example_cursor: int  = 0   # tracks which example we're on for cache keys
 
         cfg             = model.config
         self.n_layers   = cfg.num_hidden_layers
@@ -183,7 +188,7 @@ class BatchedSharedKVVecEnv(VecEnv):
         act_space = spaces.Discrete(max_len)
         super().__init__(self.N * self.n_layers, obs_space, act_space)
 
-        self._example_iter: Iterator[dict] = itertools.cycle(examples)
+        self._example_iter: Iterator[dict] = itertools.cycle(examples)  # kept for compat
         self._pending_actions: np.ndarray | None = None
 
         # Shared budget for all episodes in the current batch
@@ -351,38 +356,65 @@ class BatchedSharedKVVecEnv(VecEnv):
 
     def _reset_episode(self, b: int) -> None:
         """Prefill + free-growth for episode b (batch=1, sequential).
+
         Uses self._shared_budget so the new cache_size matches the running batch.
         Retries if the episode finishes during free-growth (no eviction needed).
+
+        When a FreeGrowthCache is attached, the free-growth phase is replaced by
+        a single forward pass (prefill with prompt + cached tokens) on cache hits,
+        saving ~300-500 sequential decode steps per episode reset.
         """
         ep = self.episodes[b]
         while True:
-            ep.started_at = time.perf_counter()
-            example    = next(self._example_iter)
+            ep.started_at  = time.perf_counter()
+            example_idx    = self._example_cursor % self.n_examples
+            example        = self.examples[example_idx]
+            self._example_cursor += 1
+
             prompt_txt, _ = format_gsm8k(example)
             ep.gold_answer = example["gold_answers"][0]
 
             inputs = self.tokenizer(prompt_txt, return_tensors="pt").to(self.device)
             T      = inputs["input_ids"].shape[1]
-
             if T > self.max_len:
-                continue   # prompt too long — skip
+                continue
 
-            # Use shared budget (clamped so full prompt always fits)
-            ep.budget   = max(self._shared_budget, T)
+            ep.budget     = max(self._shared_budget, T)
             ep.prompt_len = T
+            ep.step_count = 0
+            ep.generated  = []
+            ep.prompt_ids = inputs["input_ids"]  # kept for cache reconstruction
 
-            # Prefill
+            # ── Try cache hit ──────────────────────────────────────────────
+            if self._cache is not None:
+                cached = self._cache.get(example_idx)
+                if cached is not None:
+                    n_needed = ep.budget + 1 - T
+                    if len(cached) >= n_needed:
+                        # Full hit: reconstruct KV in one forward pass
+                        fg_tokens = cached[:n_needed].tolist()
+                        if self.eos_id in fg_tokens:
+                            continue  # would have ended during free-growth — skip
+                        self._reconstruct_from_tokens(ep, fg_tokens)
+                        break
+                    elif len(cached) > 0 and self.eos_id not in cached.tolist():
+                        # Partial hit: reconstruct what we have, then extend
+                        self._reconstruct_from_tokens(ep, cached.tolist())
+                        free_growth_done = self._run_free_growth_sequential(ep, example_idx,
+                                                                             cached_so_far=list(cached))
+                        if not free_growth_done:
+                            break
+                        continue
+
+            # ── Cache miss: normal prefill + sequential free-growth ────────
             self.model.eval()
             with torch.no_grad():
                 out = self.model(input_ids=inputs["input_ids"], use_cache=True)
-
-            ep.past_kv      = out.past_key_values
-            ep.next_token   = int(out.logits[0, -1].argmax().item())
+            ep.past_kv       = out.past_key_values
+            ep.next_token    = int(out.logits[0, -1].argmax().item())
             ep.true_position = T
-            ep.cache_size   = T
-            ep.step_count   = 0
-            ep.generated    = []
-            ep.slot_to_pos  = [list(range(T)) for _ in range(self.n_layers)]
+            ep.cache_size    = T
+            ep.slot_to_pos   = [list(range(T)) for _ in range(self.n_layers)]
 
             if self.use_attention_shaping:
                 K_list, V_list = [], []
@@ -398,18 +430,50 @@ class BatchedSharedKVVecEnv(VecEnv):
             else:
                 ep.token_importance = None
 
-            # Free-growth
-            free_growth_done = self._run_free_growth(ep)
+            free_growth_done = self._run_free_growth_sequential(ep, example_idx,
+                                                                 cached_so_far=[])
             if not free_growth_done:
-                break   # reached eviction phase — good
+                break
 
         logger.info("episode=%d  b=%d  prompt_len=%d  budget=%d  cache_size=%d",
-                    ep.count, b, T, ep.budget, ep.cache_size)
+                    ep.count, b, ep.prompt_len, ep.budget, ep.cache_size)
 
-    def _run_free_growth(self, ep: EpisodeState) -> bool:
-        """Decode ep until cache_size > ep.budget (batch=1).
-        Returns True if episode ended during free-growth (caller should retry).
+    # ------------------------------------------------------------------
+    # Free-growth helpers
+    # ------------------------------------------------------------------
+
+    def _reconstruct_from_tokens(self, ep: EpisodeState, fg_tokens: list[int]) -> None:
+        """Reconstruct the KV cache from cached free-growth tokens in one forward pass.
+
+        Replaces ~len(fg_tokens) sequential decode steps with a single prefill of
+        (prompt + fg_tokens), which is equivalent by the causal attention invariant.
         """
+        T          = ep.prompt_len
+        tok_tensor = torch.tensor([fg_tokens], dtype=torch.long, device=self.device)
+        full_input = torch.cat([ep.prompt_ids, tok_tensor], dim=1)  # [1, T+fg_len]
+        self.model.eval()
+        with torch.no_grad():
+            out = self.model(input_ids=full_input, use_cache=True)
+        ep.past_kv       = out.past_key_values
+        ep.next_token    = int(out.logits[0, -1].argmax().item())
+        ep.true_position = T + len(fg_tokens)
+        ep.cache_size    = T + len(fg_tokens)
+        ep.step_count    = len(fg_tokens)
+        ep.generated     = list(fg_tokens)
+        ep.slot_to_pos   = [list(range(ep.cache_size)) for _ in range(self.n_layers)]
+        ep.token_importance = None  # attention shaping not supported with cache
+
+    def _run_free_growth_sequential(self, ep: EpisodeState, example_idx: int,
+                                    cached_so_far: list[int]) -> bool:
+        """Sequential decode until cache_size > ep.budget.
+
+        Continues from whatever state ep is currently in (either after normal
+        prefill or after partial cache reconstruction).  Saves newly generated
+        tokens to cache on success.
+
+        Returns True if the episode ended during free-growth (caller should retry).
+        """
+        new_tokens: list[int] = []
         while ep.cache_size <= ep.budget:
             pos = torch.tensor([[ep.true_position]], device=self.device)
             with torch.no_grad():
@@ -421,6 +485,7 @@ class BatchedSharedKVVecEnv(VecEnv):
                     use_cache=True,
                 )
             ep.generated.append(ep.next_token)
+            new_tokens.append(ep.next_token)
             ep.past_kv  = step_out.past_key_values
             new_tok     = int(step_out.logits[0, -1].argmax().item())
             for l in range(self.n_layers):
@@ -432,7 +497,12 @@ class BatchedSharedKVVecEnv(VecEnv):
             if new_tok == self.eos_id or ep.step_count >= self.max_new_tokens:
                 if new_tok != self.eos_id:
                     ep.generated.append(new_tok)
-                return True   # ended during free-growth
+                return True  # ended during free-growth — don't cache this episode
+
+        # Free-growth completed normally: update the cache with all tokens so far.
+        if self._cache is not None:
+            self._cache.put(example_idx, cached_so_far + new_tokens)
+
         return False
 
     def _obs_episode(self, b: int) -> np.ndarray:

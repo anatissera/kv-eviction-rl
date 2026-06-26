@@ -97,3 +97,10 @@ length_penalty_weight: 0.5
 truncation_penalty: 1.0
 
 attn_implementation: sdpa
+
+# Free-growth disk cache: stores the generated tokens from each episode's
+# free-growth phase so subsequent resets skip ~300-500 decode steps and
+# instead do one forward pass (prefill with prompt + cached tokens).
+# Shared across training runs: set to a stable path on disk.
+# Set to null or remove to disable.
+free_growth_cache_dir: ~/.kv_eviction_cache
