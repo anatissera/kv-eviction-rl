@@ -215,7 +215,25 @@ class TrainingLogger(BaseCallback):
             self._file.close()
 
 
+def _fix_glibc_malloc_threshold() -> None:
+    # glibc dynamically raises M_MMAP_THRESHOLD after large frees (up to 32 MB).
+    # Each obs array is ~17.8 MB (28 layers × 620 × 512 fp16). After rollout 1
+    # frees ~14 GB of obs, glibc raises the threshold past 17.8 MB so R2+ obs
+    # land in the brk arena instead of mmap — arena pages are not returned to the
+    # OS on free, causing +6 GB/ep duplication during buffer assembly → OOM.
+    # Pinning the threshold to 128 KB forces every obs alloc through mmap so
+    # freeing it does munmap → immediate OS reclaim. No-op on non-Linux.
+    try:
+        import ctypes, ctypes.util
+        _libc = ctypes.CDLL(ctypes.util.find_library("c") or "libc.so.6")
+        _libc.mallopt(-3, 131072)   # M_MMAP_THRESHOLD = 128 KB (disable dynamic growth)
+        _libc.mallopt(-1, 131072)   # M_TRIM_THRESHOLD = 128 KB (trim arena aggressively)
+    except Exception:
+        pass
+
+
 def main():
+    _fix_glibc_malloc_threshold()
     args = parse_args()
     cfg  = load_config(args.config)
 
