@@ -1,0 +1,57 @@
+# Training config for batched parallel PPO with budget curriculum.
+# Uses BatchedSharedKVVecEnv (N episodes, one batched forward pass) +
+# EpisodeMaskablePPO (complete-episode rollouts) + FP16ObsMaskableRolloutBuffer.
+# This is the config used for none_v9 on kv-none-v2.
+
+model_name:   qwen-1.5b
+device:       auto
+
+# Data
+n_examples: 1000
+seed: 0
+
+# Budget
+budget_min: 256      # final (hardest) budget after curriculum completes
+budget_max: 600
+
+# Budget curriculum: linearly anneal budget_min from easy → hard over training.
+budget_min_start:    400
+budget_min_end:      256
+curriculum_fraction: 0.75
+max_len: 620
+max_new_tokens: 800
+
+# Reward shaping
+use_attention_shaping: false
+attention_weight: 0.0
+shaping_mode: none
+
+# Policy MLP hidden size
+hidden: 64
+
+# Probe monitoring
+probe_n: 32
+probe_every_n_rollouts: 15
+probe_n_sinks: 4
+
+# Batched env + EpisodePPO
+n_parallel:      5
+n_steps:         650     # cap: budget_max(600) - T_min(~50) + margin
+batch_size:      512
+
+n_epochs:        4
+gamma:           1.0
+gae_lambda:      1.0
+clip_range:      0.2
+ent_coef:        0.01
+total_timesteps: 5000000
+
+# Action mask protection
+n_sinks: 4
+n_recent: 32
+
+# Reward shaping
+length_penalty_weight: 0.5
+truncation_penalty: 1.0
+
+attn_implementation: sdpa

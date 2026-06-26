@@ -81,7 +81,7 @@ class EpisodeMaskablePPO(MaskablePPO):
         super()._setup_model()
         self.n_steps = real_n_steps
 
-    def collect_rollouts(self, env, callback, rollout_buffer, n_rollout_steps):
+    def collect_rollouts(self, env, callback, rollout_buffer, n_rollout_steps, use_masking=True):
         assert self._last_obs is not None
 
         n_envs_total = env.num_envs       # N × n_layers
