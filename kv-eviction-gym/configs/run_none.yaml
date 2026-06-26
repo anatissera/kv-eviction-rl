@@ -25,7 +25,7 @@ budget_min_end:      256   # final target: ~143 tokens headroom at p90 prompt le
 # The last (1 - fraction) of training stays at budget_min_end.
 # 0.75 → reaches 256 at step 3.75M; last ~174 rollouts (25%) train at hardest budget.
 curriculum_fraction: 0.75
-max_len: 800
+max_len: 620        # safe ceiling: cache_size ≤ budget_max+1 = 601 always
 max_new_tokens: 800
 
 # Reward shaping: blend sparse correctness with future-attention alignment.
@@ -67,11 +67,15 @@ probe_every_n_rollouts: 15 # frequency of probe evaluation
 probe_n_sinks: 4           # sink positions for evict_sink_frac diagnostic
 
 # Batched env: n_parallel episodes decoded together in one forward pass.
-# n_envs = n_parallel * n_layers = 4 * 28 = 112.
-# n_steps=128 → 128 × 112 = 14336 transitions per rollout (same as before).
-n_parallel:      4
-n_steps:         128
-batch_size:      1024    # ≈14 minibatches per epoch × 4 epochs = 56 grad steps
+# n_envs = n_parallel * n_layers = 3 * 28 = 84.
+# EpisodeMaskablePPO collects complete episodes per rollout (variable n_steps).
+# n_steps acts as a safety cap: episodes that haven't finished by then are
+# bootstrapped. In normal operation (budget≤600, T≤205) all episodes finish
+# well before the cap.
+n_parallel:      5
+n_steps:         650     # cap: budget_max(600) - T_min(~50) + margin
+batch_size:      512
+
 n_epochs:        4
 gamma:           1.0     # no discount — every eviction shares the same terminal reward
 gae_lambda:      1.0     # lambda=1 gives identical advantages for all steps (Monte Carlo)

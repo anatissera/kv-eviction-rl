@@ -28,6 +28,7 @@ from kv_gym.env import SharedKVVecEnv
 from kv_gym.batched_env import BatchedSharedKVVecEnv
 from kv_gym.policy import PerTokenMLP
 from kv_gym.buffer import FP16ObsMaskableRolloutBuffer
+from kv_gym.episode_ppo import EpisodeMaskablePPO
 from kv_gym.vendor.loader import load_model_and_tokenizer
 from kv_gym.vendor.gsm8k import load_gsm8k
 from kv_gym.probe import EvalProbeCallback
@@ -334,13 +335,19 @@ def main():
 
     callbacks = CallbackList(callback_list)
 
+    # EpisodeMaskablePPO is used when n_parallel > 1: collects complete episodes
+    # per rollout (no partial-episode contamination). n_steps acts as a safety cap.
+    # For n_parallel == 1 (sequential), standard MaskablePPO is used.
+    ppo_class = EpisodeMaskablePPO if n_parallel > 1 else MaskablePPO
+    print(f"ppo: {ppo_class.__name__}")
+
     if args.resume_from:
         print(f"Resuming training from checkpoint: {args.resume_from}")
-        ppo = MaskablePPO.load(args.resume_from, env=env, device=device)
+        ppo = ppo_class.load(args.resume_from, env=env, device=device)
         # Point to the correct tensorboard directory
         ppo.tensorboard_log = str(tb_dir)
     else:
-        ppo = MaskablePPO(
+        ppo = ppo_class(
             "MlpPolicy",
             env,
             policy_kwargs={
@@ -359,20 +366,24 @@ def main():
             device=device,
         )
 
-    # Replace the rollout buffer with the fp16 version to halve observation RAM.
-    # Must happen after PPO construction (which allocates the default buffer)
-    # and before learn() (which writes into the buffer).
-    ppo.rollout_buffer = FP16ObsMaskableRolloutBuffer(
-        buffer_size=ppo.n_steps,
-        observation_space=ppo.observation_space,
-        action_space=ppo.action_space,
-        device=ppo.device,
-        gamma=ppo.gamma,
-        gae_lambda=ppo.gae_lambda,
-        n_envs=ppo.n_envs,
-    )
-    print(f"rollout buffer: FP16ObsMaskableRolloutBuffer "
-          f"(n_steps={ppo.n_steps}, n_envs={ppo.n_envs})")
+    if n_parallel > 1:
+        # EpisodeMaskablePPO creates its own FP16 buffer dynamically each rollout.
+        # The initial buffer is never used for data — just needs to exist.
+        print(f"rollout buffer: dynamic FP16ObsMaskableRolloutBuffer (episode-based, "
+              f"n_parallel={n_parallel}, n_steps_cap={ppo.n_steps})")
+    else:
+        # Static fp16 buffer for single-episode mode.
+        ppo.rollout_buffer = FP16ObsMaskableRolloutBuffer(
+            buffer_size=ppo.n_steps,
+            observation_space=ppo.observation_space,
+            action_space=ppo.action_space,
+            device=ppo.device,
+            gamma=ppo.gamma,
+            gae_lambda=ppo.gae_lambda,
+            n_envs=ppo.n_envs,
+        )
+        print(f"rollout buffer: FP16ObsMaskableRolloutBuffer "
+              f"(n_steps={ppo.n_steps}, n_envs={ppo.n_envs})")
 
     ppo.learn(
         total_timesteps=cfg.get("total_timesteps", 500_000),
