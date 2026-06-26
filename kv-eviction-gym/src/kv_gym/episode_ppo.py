@@ -70,6 +70,17 @@ class EpisodeMaskablePPO(MaskablePPO):
     finish before the cap.
     """
 
+    def _setup_model(self) -> None:
+        # MaskablePPO.__init__ allocates a default rollout buffer of shape
+        # (n_steps, n_envs, *obs_shape). With n_steps=650 and n_envs=140 that
+        # is ~108 GB. Since collect_rollouts replaces self.rollout_buffer each
+        # rollout with a correctly-sized dynamic buffer, we only need a 1-row
+        # placeholder here.
+        real_n_steps = self.n_steps
+        self.n_steps = 1
+        super()._setup_model()
+        self.n_steps = real_n_steps
+
     def collect_rollouts(self, env, callback, rollout_buffer, n_rollout_steps):
         assert self._last_obs is not None
 
