@@ -104,7 +104,7 @@ truncation_penalty: 1.0
 # Scale: typical LM H ≈ 2–5 nats; over T≈400 steps, weight=0.001 adds ~1–2 total reward
 # (same order as the terminal correctness reward) without swamping it.
 # Set to 0.0 to disable (pure correctness reward baseline).
-entropy_reward_weight: 0.0
+entropy_reward_weight: 0.001
 
 attn_implementation: sdpa
 
