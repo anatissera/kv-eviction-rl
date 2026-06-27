@@ -17,6 +17,7 @@ Two optimisations here:
 """
 
 import numpy as np
+from gymnasium import spaces
 from sb3_contrib.common.maskable.buffers import MaskableRolloutBuffer
 
 
@@ -29,11 +30,42 @@ class FP16ObsMaskableRolloutBuffer(MaskableRolloutBuffer):
     """
 
     def reset(self) -> None:
-        super().reset()
-        # Parent allocated observations as float32; downcast to float16.
-        # The transient double-allocation here is fine — reset is not on the
-        # critical RAM path (the model graph is already freed after the update).
-        self.observations = self.observations.astype(np.float16)
+        # Do NOT call super().reset(): it allocates observations as fp32 first
+        # (using observation_space.dtype), which for large buffers causes OOM
+        # before we could ever downcast to fp16. Replicate the parent chain here
+        # but allocate observations directly as fp16.
+        # np.empty (not np.zeros) avoids the eager memset that would bring all
+        # 12 GB of pages into physical RAM before the copy loop. Every position
+        # is written by collect_rollouts before the buffer is read, so zeros are
+        # not needed. np.empty uses mmap(MAP_ANONYMOUS) → OS demand-paging → 0
+        # physical pages until first write.
+        self.observations = np.empty(
+            (self.buffer_size, self.n_envs, *self.obs_shape), dtype=np.float16
+        )
+        self.actions = np.zeros(
+            (self.buffer_size, self.n_envs, self.action_dim), dtype=np.float32
+        )
+        self.rewards = np.zeros((self.buffer_size, self.n_envs), dtype=np.float32)
+        self.returns = np.zeros((self.buffer_size, self.n_envs), dtype=np.float32)
+        self.episode_starts = np.zeros((self.buffer_size, self.n_envs), dtype=np.float32)
+        self.values = np.zeros((self.buffer_size, self.n_envs), dtype=np.float32)
+        self.log_probs = np.zeros((self.buffer_size, self.n_envs), dtype=np.float32)
+        self.advantages = np.zeros((self.buffer_size, self.n_envs), dtype=np.float32)
+        self.generator_ready = False
+        # MaskableRolloutBuffer also needs action_masks.
+        if isinstance(self.action_space, spaces.Discrete):
+            mask_dims = self.action_space.n
+        elif isinstance(self.action_space, spaces.MultiDiscrete):
+            mask_dims = sum(self.action_space.nvec)
+        else:
+            raise ValueError(f"Unsupported action space: {self.action_space}")
+        self.mask_dims = mask_dims
+        self.action_masks = np.ones(
+            (self.buffer_size, self.n_envs, mask_dims), dtype=np.float32
+        )
+        # BaseBuffer.reset()
+        self.pos = 0
+        self.full = False
 
     # add() deliberately NOT overridden: NumPy auto-casts float32 → float16 on
     # assignment when self.observations.dtype == float16.
@@ -42,13 +74,13 @@ class FP16ObsMaskableRolloutBuffer(MaskableRolloutBuffer):
     def swap_and_flatten(arr: np.ndarray) -> np.ndarray:
         """Reshape [n_steps, n_envs, *shape] → [n_steps*n_envs, *shape].
 
-        Makes the transposed view contiguous before reshape so that reshape
-        returns a cheap view instead of a second full copy.  Peak is still ~2×
-        but both copies share the dtype of arr (float16 for observations,
-        int64/float32 for other small tensors).
+        Merges the first two dimensions with a plain reshape (zero-copy view on
+        C-contiguous arrays).  The standard SB3 implementation transposes first
+        which forces a full copy — for the observation array (~17 GB fp16) that
+        copy alone OOMs.  Sample ordering within the merged axis changes vs the
+        transpose approach, but PPO training shuffles mini-batch indices with a
+        random permutation so ordering is irrelevant.
         """
-        shape = arr.shape
-        if len(shape) < 3:
-            shape = (*shape, 1)
-        contiguous = np.ascontiguousarray(arr.swapaxes(0, 1))
-        return contiguous.reshape(shape[0] * shape[1], *shape[2:])
+        if arr.ndim < 3:
+            arr = arr[..., None]
+        return arr.reshape(arr.shape[0] * arr.shape[1], *arr.shape[2:])

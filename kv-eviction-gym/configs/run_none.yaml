@@ -67,12 +67,14 @@ probe_every_n_rollouts: 15 # frequency of probe evaluation
 probe_n_sinks: 4           # sink positions for evict_sink_frac diagnostic
 
 # Batched env: n_parallel episodes decoded together in one forward pass.
-# n_envs = n_parallel * n_layers = 3 * 28 = 84.
+# n_envs = n_parallel * n_layers = 2 * 28 = 56.
 # EpisodeMaskablePPO collects complete episodes per rollout (variable n_steps).
 # n_steps acts as a safety cap: episodes that haven't finished by then are
 # bootstrapped. In normal operation (budget≤600, T≤205) all episodes finish
 # well before the cap.
-n_parallel:      5
+# n_parallel=2 (not 3): stacking peak = ready[0] + ep_list + stack + overhead
+# = 3 × ~7 GB + 4 GB = 25 GB, safely within 31 GB RAM. n_parallel=3 peaked at 33 GB.
+n_parallel:      2
 n_steps:         650     # cap: budget_max(600) - T_min(~50) + margin
 batch_size:      512
 
