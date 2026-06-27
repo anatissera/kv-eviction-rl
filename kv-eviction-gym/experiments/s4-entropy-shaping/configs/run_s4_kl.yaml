@@ -1,0 +1,60 @@
+# S4-exact: per-step information-theoretic reward shaping (KL-to-full-cache).
+# IDENTICAL to configs/corr_reward.yaml (the `none` baseline) EXCEPT the kl_* block,
+# so the only difference vs baseline is the added dense per-step shaping.
+# Launch: python scripts/train.py --config experiments/s4-entropy-shaping/configs/run_s4_kl.yaml --run-name s4_kl_v1
+
+model_name:   qwen-1.5b
+device:       auto
+
+# Data
+n_examples: 1000
+seed: 0
+
+budget_min: 256
+budget_max: 600
+budget_min_start:    400
+budget_min_end:      256
+curriculum_fraction: 0.75
+max_len: 620
+max_new_tokens: 800
+
+use_attention_shaping: false
+attention_weight: 0.0
+shaping_mode: none
+
+hidden: 64
+
+probe_n: 32
+probe_every_n_rollouts: 15
+probe_n_sinks: 4
+
+n_parallel:      2
+n_steps:         650
+batch_size:      512
+
+n_epochs:        4
+gamma:           1.0
+gae_lambda:      1.0
+clip_range:      0.2
+ent_coef:        0.01
+total_timesteps: 5000000
+
+n_sinks: 4
+n_recent: 32
+
+length_penalty_weight: 0.5
+truncation_penalty: 1.0
+
+attn_implementation: sdpa
+
+free_growth_cache_dir: ~/.kv_eviction_cache
+
+# ── S4 information-theoretic per-step shaping ──────────────────────────────
+# r_step[b] = -kl_weight * clip(KL(p_full || p_evict), 0, kl_clip), broadcast to
+# all 28 layer-slots of episode b. Maintains a never-evicted shadow cache per
+# episode (one extra batch=1 forward per step → ~2-2.5x decode compute). Works
+# with sdpa (no attention capture needed). See experiments/.../README.md.
+kl_shaping: true
+kl_mode:    exact     # KL(p_full || p_evict) — causal effect of each eviction
+kl_weight:  0.05      # calibrate via dry-run so summed per-episode shaping ≈ 0.3-0.5
+kl_clip:    5.0       # clip per-step damage (nats) to tame outliers

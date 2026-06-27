@@ -101,6 +101,29 @@ def _replace_slice(batch_cache: DynamicCache, b: int,
         _set_kv_bat(batch_cache, l, K_bat, V_bat)
 
 
+def _clone_cache(cache: DynamicCache) -> DynamicCache:
+    """Deep-copy a DynamicCache (clone K,V tensors per layer).
+
+    Used by the S4 shadow "full" cache: a copy of the episode's KV at the moment
+    eviction begins (cache_size = budget+1), grown but NEVER evicted, so we can
+    measure the next-token distribution the model WOULD produce with the full
+    context at each decode step.
+    """
+    n_layers = _n_layers_cache(cache)
+    new = DynamicCache()
+    for l in range(n_layers):
+        K, V = _get_kv_bat(cache, l)
+        if hasattr(cache, "layers"):
+            import copy
+            new.layers.append(copy.copy(cache.layers[l]))
+            new.layers[l].keys   = K.clone()
+            new.layers[l].values = V.clone()
+        else:
+            new.key_cache.append(K.clone())
+            new.value_cache.append(V.clone())
+    return new
+
+
 # ---------------------------------------------------------------------------
 # Per-episode state
 # ---------------------------------------------------------------------------
@@ -121,6 +144,10 @@ class EpisodeState:
     started_at:       float = 0.0
     count:            int   = 0
     prompt_ids:       object = None  # torch.Tensor | None — kept for cache reconstruction
+    # S4 information-theoretic shaping: shadow full (never-evicted) cache + KL accumulators
+    past_kv_full:     object = None  # DynamicCache | None — full-context shadow cache
+    kl_sum:           float = 0.0    # running sum of per-step damage (KL or entropy)
+    kl_count:         int   = 0
 
 
 # ---------------------------------------------------------------------------
@@ -155,6 +182,10 @@ class BatchedSharedKVVecEnv(VecEnv):
         entropy_reward_weight: float = 0.0,
         seed:                  int   = 0,
         free_growth_cache:     FreeGrowthCache | None = None,
+        kl_shaping:            bool  = False,
+        kl_mode:               str   = "exact",   # "exact" (KL-to-full) | "proxy" (self-entropy)
+        kl_weight:             float = 0.0,
+        kl_clip:               float = 5.0,
     ):
         self.model                 = model
         self.tokenizer             = tokenizer
@@ -178,6 +209,10 @@ class BatchedSharedKVVecEnv(VecEnv):
         self._rng                  = np.random.default_rng(seed)
         self.eos_id                = tokenizer.eos_token_id
         self._cache                = free_growth_cache
+        self.kl_shaping            = kl_shaping
+        self.kl_mode               = kl_mode
+        self.kl_weight             = kl_weight
+        self.kl_clip               = kl_clip
         self._example_cursor: int  = 0   # tracks which example we're on for cache keys
 
         cfg             = model.config
@@ -264,8 +299,10 @@ class BatchedSharedKVVecEnv(VecEnv):
         self._batch_kv = out.past_key_values
         new_tokens = out.logits[:, -1].argmax(dim=-1).cpu().tolist()  # [N]
 
-        # Per-episode next-token entropy (computed once, broadcast to layer-envs below).
-        # Low entropy → model is confident after this eviction → positive signal.
+        # Per-episode next-token entropy (Alex's entropy_reward_weight; computed once,
+        # broadcast to layer-envs below). Low entropy → model is confident after this
+        # eviction → positive signal. Equivalent to S4 kl_mode='proxy'; left intact so
+        # corr_reward_v1 and the kl_shaping arms can coexist (independent flags).
         # Uses float32 for numerical stability; vocab ~150k so log_softmax matters.
         if self.entropy_reward_weight != 0.0:
             with torch.no_grad():
@@ -275,6 +312,42 @@ class BatchedSharedKVVecEnv(VecEnv):
             _entropy_per_ep = -(log_p.exp() * log_p).sum(dim=-1).cpu().numpy()  # [N]
         else:
             _entropy_per_ep = None
+
+        # 2b. S4 information-theoretic per-step shaping.
+        #   step_r[b] = -kl_weight * clip(damage[b], 0, kl_clip)
+        #     exact : damage = KL(p_full || p_evict) — the causal effect of THIS
+        #             step's evictions on the model's next-token distribution,
+        #             measured against a never-evicted shadow cache (per episode).
+        #     proxy : damage = H(p_evict) — reference-free output entropy (cheap,
+        #             biased: a confidently-wrong model scores low).
+        #   next_toks / pos_ids still hold the PRE-update values fed to the
+        #   evicted forward, so the full forward is fed the identical token+pos.
+        step_r = np.zeros(self.N, dtype=np.float32)
+        if self.kl_shaping:
+            logits_evict = out.logits[:, -1]                        # [N, vocab]
+            logp_evict   = torch.log_softmax(logits_evict, dim=-1)  # [N, vocab]
+            if self.kl_mode == "proxy":
+                p_evict = logp_evict.exp()
+                damage  = -(p_evict * logp_evict).sum(dim=-1)       # [N] entropy (nats)
+            else:  # exact — one batch=1 forward per episode on the full shadow cache
+                damage = torch.zeros(self.N, device=self.device)
+                for b, ep in enumerate(self.episodes):
+                    with torch.no_grad():
+                        full_out = self.model(
+                            input_ids=next_toks[b:b+1],
+                            past_key_values=ep.past_kv_full,
+                            position_ids=pos_ids[b:b+1],
+                            use_cache=True,
+                        )
+                    ep.past_kv_full = full_out.past_key_values  # grow (never evicted)
+                    logp_full = torch.log_softmax(full_out.logits[0, -1], dim=-1)
+                    damage[b] = (logp_full.exp() * (logp_full - logp_evict[b])).sum()
+            damage_np = damage.detach().float().cpu().numpy()
+            clipped   = np.clip(damage_np, 0.0, self.kl_clip)
+            step_r    = (-self.kl_weight * clipped).astype(np.float32)
+            for b, ep in enumerate(self.episodes):
+                ep.kl_sum   += float(damage_np[b])
+                ep.kl_count += 1
 
         # 3. Update per-episode state
         for b, ep in enumerate(self.episodes):
@@ -297,10 +370,17 @@ class BatchedSharedKVVecEnv(VecEnv):
             done = (ep.next_token == self.eos_id or ep.step_count >= self.max_new_tokens)
             base = b * self.n_layers
 
+            # Per-step KL shaping is broadcast to every layer-slot of this episode
+            # (the KL signal is joint over layers — see plan's "layer-shared" note).
+            # 0.0 when kl_shaping is off, so the baseline reward is unchanged.
+            for l in range(self.n_layers):
+                all_rewards[base + l] = step_r[b]
+
             if done:
                 truncated   = (ep.next_token != self.eos_id and
                                ep.step_count >= self.max_new_tokens)
                 rewards, correct, align = self._terminal_reward(b, truncated)
+                kl_step_mean = ep.kl_sum / max(ep.kl_count, 1)
 
                 # NOTE: we deliberately do NOT compute/store a
                 # "terminal_observation" here. EpisodeMaskablePPO ignores the
@@ -314,7 +394,7 @@ class BatchedSharedKVVecEnv(VecEnv):
                 # per done step and the dead-weight infos payload.
                 ep.count += 1
                 for l in range(self.n_layers):
-                    all_rewards[base + l] = rewards[l]
+                    all_rewards[base + l] += rewards[l]   # terminal on top of step shaping
                     all_dones  [base + l] = True
                     all_infos  [base + l] = {
                         "correct":        correct,
@@ -322,6 +402,7 @@ class BatchedSharedKVVecEnv(VecEnv):
                         "episode_seconds": time.perf_counter() - ep.started_at,
                         "context_size":   ep.prompt_len + ep.step_count,
                         "truncated":      truncated,
+                        "kl_step_mean":   kl_step_mean,
                     }
 
                 # Reset this episode (batch=1, sequential)
@@ -464,6 +545,16 @@ class BatchedSharedKVVecEnv(VecEnv):
                                                                  cached_so_far=[])
             if not free_growth_done:
                 break
+
+        # S4 exact: snapshot the full (pre-eviction) cache as the never-evicted
+        # shadow. ep.past_kv is now at cache_size = budget+1; from here the live
+        # cache gets evicted while past_kv_full only grows.
+        ep.kl_sum   = 0.0
+        ep.kl_count = 0
+        if self.kl_shaping and self.kl_mode == "exact":
+            ep.past_kv_full = _clone_cache(ep.past_kv)
+        else:
+            ep.past_kv_full = None
 
         logger.info("episode=%d  b=%d  prompt_len=%d  budget=%d  cache_size=%d",
                     ep.count, b, ep.prompt_len, ep.budget, ep.cache_size)

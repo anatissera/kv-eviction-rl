@@ -118,6 +118,7 @@ class TrainingLogger(BaseCallback):
         self._episode_seconds_buf: list[float] = []
         self._truncated_buf: list[bool] = []
         self._context_size_buf: list[int] = []
+        self._kl_buf: list[float] = []              # per-episode kl_step_mean (S4 shaping)
         self._example_counts: dict[int, int] = {}   # example_idx → total times seen
         self._dataset_pass: int = 0                 # latest dataset_pass seen
 
@@ -128,7 +129,7 @@ class TrainingLogger(BaseCallback):
             "timestep", "ep_rew_mean", "ep_len_mean",
             "correctness_rate", "alignment_mean", "episode_seconds_mean",
             "episodes", "truncation_rate", "context_size_mean",
-            "examples_seen", "dataset_pass",
+            "examples_seen", "dataset_pass", "kl_step_mean",
         ])
 
     def _on_step(self) -> bool:
@@ -145,6 +146,9 @@ class TrainingLogger(BaseCallback):
                 self._episode_seconds_buf.append(episode_seconds)
             self._truncated_buf.append(infos[0].get("truncated", False))
             self._context_size_buf.append(infos[0].get("context_size", 0))
+            kl_sm = infos[0].get("kl_step_mean")
+            if kl_sm is not None:
+                self._kl_buf.append(kl_sm)
             idx = infos[0].get("example_idx")
             if idx is not None:
                 self._example_counts[idx] = self._example_counts.get(idx, 0) + 1
@@ -176,11 +180,14 @@ class TrainingLogger(BaseCallback):
         examples_seen = len(self._example_counts)
         max_seen      = max(self._example_counts.values()) if self._example_counts else 0
         dataset_pass  = self._dataset_pass
+        kl_step_mean  = (sum(self._kl_buf) / len(self._kl_buf)
+                         if self._kl_buf else float("nan"))
         self._correct_buf.clear()
         self._align_buf.clear()
         self._episode_seconds_buf.clear()
         self._truncated_buf.clear()
         self._context_size_buf.clear()
+        self._kl_buf.clear()
 
         self._writer.writerow([
             self.num_timesteps,
@@ -188,9 +195,12 @@ class TrainingLogger(BaseCallback):
             f"{corr_rate:.4f}", f"{align_mean:.4f}",
             f"{episode_seconds_mean:.3f}", episodes,
             f"{trunc_rate:.4f}", f"{context_size_mean:.1f}",
-            examples_seen, dataset_pass,
+            examples_seen, dataset_pass, f"{kl_step_mean:.5f}",
         ])
         self._file.flush()
+
+        if self.model is not None and hasattr(self.model, "logger") and kl_step_mean == kl_step_mean:
+            self.model.logger.record("reward/kl_step_mean", kl_step_mean)
 
         if self.verbose:
             corr_str  = f"{corr_rate:.1%}" if corr_rate == corr_rate else "n/a"
@@ -309,8 +319,20 @@ def main():
         seed=cfg.get("seed", 0),
     )
     if n_parallel > 1:
-        print(f"env: BatchedSharedKVVecEnv  n_parallel={n_parallel}")
-        env = BatchedSharedKVVecEnv(n_parallel=n_parallel, free_growth_cache=fg_cache, **env_kwargs)
+        kl_shaping = cfg.get("kl_shaping", False)
+        print(f"env: BatchedSharedKVVecEnv  n_parallel={n_parallel}"
+              + (f"  kl_shaping={cfg.get('kl_mode', 'exact')} "
+                 f"w={cfg.get('kl_weight', 0.0)} clip={cfg.get('kl_clip', 5.0)}"
+                 if kl_shaping else ""))
+        env = BatchedSharedKVVecEnv(
+            n_parallel=n_parallel,
+            free_growth_cache=fg_cache,
+            kl_shaping=kl_shaping,
+            kl_mode=cfg.get("kl_mode", "exact"),
+            kl_weight=cfg.get("kl_weight", 0.0),
+            kl_clip=cfg.get("kl_clip", 5.0),
+            **env_kwargs,
+        )
     else:
         env = SharedKVVecEnv(**env_kwargs)
     env = VecMonitor(env)
