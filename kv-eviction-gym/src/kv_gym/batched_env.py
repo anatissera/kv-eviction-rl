@@ -152,6 +152,7 @@ class BatchedSharedKVVecEnv(VecEnv):
         n_recent:              int   = 8,
         length_penalty_weight: float = 0.0,
         truncation_penalty:    float = 0.0,
+        entropy_reward_weight: float = 0.0,
         seed:                  int   = 0,
         free_growth_cache:     FreeGrowthCache | None = None,
     ):
@@ -172,6 +173,7 @@ class BatchedSharedKVVecEnv(VecEnv):
         self.n_recent              = n_recent
         self.length_penalty_weight = length_penalty_weight
         self.truncation_penalty    = truncation_penalty
+        self.entropy_reward_weight = entropy_reward_weight
         self.n_examples            = len(examples)
         self._rng                  = np.random.default_rng(seed)
         self.eos_id                = tokenizer.eos_token_id
@@ -262,6 +264,18 @@ class BatchedSharedKVVecEnv(VecEnv):
         self._batch_kv = out.past_key_values
         new_tokens = out.logits[:, -1].argmax(dim=-1).cpu().tolist()  # [N]
 
+        # Per-episode next-token entropy (computed once, broadcast to layer-envs below).
+        # Low entropy → model is confident after this eviction → positive signal.
+        # Uses float32 for numerical stability; vocab ~150k so log_softmax matters.
+        if self.entropy_reward_weight != 0.0:
+            with torch.no_grad():
+                log_p = torch.nn.functional.log_softmax(
+                    out.logits[:, -1].float(), dim=-1
+                )  # [N, vocab]
+            _entropy_per_ep = -(log_p.exp() * log_p).sum(dim=-1).cpu().numpy()  # [N]
+        else:
+            _entropy_per_ep = None
+
         # 3. Update per-episode state
         for b, ep in enumerate(self.episodes):
             ep.generated.append(ep.next_token)
@@ -287,17 +301,22 @@ class BatchedSharedKVVecEnv(VecEnv):
                 truncated   = (ep.next_token != self.eos_id and
                                ep.step_count >= self.max_new_tokens)
                 rewards, correct, align = self._terminal_reward(b, truncated)
-                terminal_obs = self._obs_episode(b)
 
+                # NOTE: we deliberately do NOT compute/store a
+                # "terminal_observation" here. EpisodeMaskablePPO ignores the
+                # infos returned by env.step() (it derives returns from the
+                # terminal reward directly), so a terminal observation would be
+                # dead weight. The previous version materialized a full
+                # [n_layers, max_len, feature_dim] fp32 array (~35 MB, a
+                # GPU→CPU copy) and held n_layers references to it in all_infos
+                # every time an episode finished — co-resident with the growing
+                # obs lists. Dropping it removes one of two _obs_episode() calls
+                # per done step and the dead-weight infos payload.
                 ep.count += 1
-                ep_info = {
-                    "terminal_observation": terminal_obs[l] for l in range(self.n_layers)
-                }
                 for l in range(self.n_layers):
                     all_rewards[base + l] = rewards[l]
                     all_dones  [base + l] = True
                     all_infos  [base + l] = {
-                        "terminal_observation": terminal_obs[l],
                         "correct":        correct,
                         "alignment":      align,
                         "episode_seconds": time.perf_counter() - ep.started_at,
@@ -313,6 +332,16 @@ class BatchedSharedKVVecEnv(VecEnv):
             # obs for this episode (after possible reset → shows new episode start)
             ep_obs = self._obs_episode(b)
             all_obs[base : base + self.n_layers] = ep_obs
+
+        # Add entropy reward (dense, every step including terminal).
+        # reward = -weight * H(next_token_dist): lower entropy → higher reward.
+        # Broadcast episode-level entropy to all n_layers envs for that episode.
+        if _entropy_per_ep is not None:
+            for b in range(self.N):
+                base = b * self.n_layers
+                all_rewards[base : base + self.n_layers] -= (
+                    self.entropy_reward_weight * _entropy_per_ep[b]
+                )
 
         return all_obs, all_rewards, all_dones, all_infos
 

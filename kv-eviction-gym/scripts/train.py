@@ -305,6 +305,7 @@ def main():
         n_recent=cfg.get("n_recent", 8),
         length_penalty_weight=cfg.get("length_penalty_weight", 0.0),
         truncation_penalty=cfg.get("truncation_penalty", 0.0),
+        entropy_reward_weight=cfg.get("entropy_reward_weight", 0.0),
         seed=cfg.get("seed", 0),
     )
     if n_parallel > 1:
