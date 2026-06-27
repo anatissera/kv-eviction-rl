@@ -63,8 +63,16 @@ def _finalize_episode(b, n_layers, ready,
             nxt = rews_arr[t] + nxt
             rets_arr[t] = nxt
     else:
-        # Complete episode: return = terminal reward for every step (gamma=1).
-        rets_arr = np.full_like(vals_arr, terminal_reward)
+        # Complete episode, gamma=1: G_t = Σ_{k=t}^{T} r_k (suffix sum of rewards).
+        # With only a sparse terminal reward, rews_arr[t]=0 for t<T and the suffix
+        # sum collapses to the constant terminal_reward — same as before.
+        # With dense per-step rewards (e.g. entropy_reward_weight > 0), this
+        # correctly propagates each step's reward backward to all earlier timesteps.
+        rets_arr = np.zeros_like(vals_arr)
+        nxt = np.zeros(rews_arr.shape[1], dtype=rews_arr.dtype)  # [n_layers]
+        for t in reversed(range(T)):
+            nxt = rews_arr[t] + nxt
+            rets_arr[t] = nxt
 
     advs_arr = rets_arr - vals_arr
 
