@@ -206,6 +206,10 @@ class EpisodeMaskablePPO(MaskablePPO):
             useful = sum(n_layers for b in range(N) if not ep_done[b])
             self.num_timesteps += useful
 
+            # Populate ep_info_buffer so TrainingLogger / SB3 rollout stats work.
+            # Standard collect_rollouts calls this; our override must too.
+            self._update_info_buffer(infos, dones)
+
             callback.update_locals(locals())
             if not callback.on_step():
                 return False
