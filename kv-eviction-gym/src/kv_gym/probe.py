@@ -136,55 +136,59 @@ class EvalProbeCallback(BaseCallback):
         full_vals, rand_vals, kvn_vals = [], [], []
 
         for ex in self.probe_examples:
-            cap = capture(self.llm, self.tokenizer, ex, self.device)
-            T = cap.prompt_len
-            
-            ex_budget = int(rng.integers(self.budget_min, self.budget_max + 1))
-            
-            # Skip prompts that can't be evicted (too long, or already <= budget).
-            if T > self.max_len or T >= ex_budget:
-                continue
+            try:
+                cap = capture(self.llm, self.tokenizer, ex, self.device)
+                T = cap.prompt_len
 
-            per_layer_imp = capture_per_layer_attention(
-                self.llm, cap.input_ids, self.device, self.ref_max_new_tokens,
-            )
-            if per_layer_imp is not None:
-                self._attn_available = True
+                ex_budget = int(rng.integers(self.budget_min, self.budget_max + 1))
 
-            full_val, _, _ = score_full_cache(
-                self.llm, self.tokenizer, cap.input_ids, cap.gold_answer,
-                self.device, self.max_new_tokens,
-            )
-            full = float(full_val)
-            probe_idx = len(self._probes)
-            cache_key = self.PROBE_CACHE_OFFSET + probe_idx
-            rand_text, _, _, _, _, _ = run_online_episode(
-                self.llm, self.tokenizer, cap.input_ids, ex_budget,
-                self.max_new_tokens, self.device,
-                make_random_evict_fn(self.L, np.random.default_rng(rng.integers(1 << 30)),
-                                     self.n_sinks, self.n_recent),
-                free_growth_cache=self.free_growth_cache,
-                example_idx=cache_key,
-            )
-            rand = float(flexible_extract(rand_text, [cap.gold_answer]))
-            kvn_text, _, _, _, _, _ = run_online_episode(
-                self.llm, self.tokenizer, cap.input_ids, ex_budget,
-                self.max_new_tokens, self.device,
-                make_kv_norm_evict_fn(self.L, self.n_sinks, self.n_recent),
-                free_growth_cache=self.free_growth_cache,
-                example_idx=cache_key,
-            )
-            kvn = float(flexible_extract(kvn_text, [cap.gold_answer]))
+                # Skip prompts that can't be evicted (too long, or already <= budget).
+                if T > self.max_len or T >= ex_budget:
+                    continue
 
-            self._probes.append({
-                "input_ids":     cap.input_ids,
-                "gold":          cap.gold_answer,
-                "per_layer_imp": per_layer_imp,
-                "full":          full,
-                "T":             T,
-                "budget":        ex_budget,
-            })
-            full_vals.append(full); rand_vals.append(rand); kvn_vals.append(kvn)
+                per_layer_imp = capture_per_layer_attention(
+                    self.llm, cap.input_ids, self.device, self.ref_max_new_tokens,
+                )
+                if per_layer_imp is not None:
+                    self._attn_available = True
+
+                full_val, _, _ = score_full_cache(
+                    self.llm, self.tokenizer, cap.input_ids, cap.gold_answer,
+                    self.device, self.max_new_tokens,
+                )
+                full = float(full_val)
+                probe_idx = len(self._probes)
+                cache_key = self.PROBE_CACHE_OFFSET + probe_idx
+                rand_text, _, _, _, _, _ = run_online_episode(
+                    self.llm, self.tokenizer, cap.input_ids, ex_budget,
+                    self.max_new_tokens, self.device,
+                    make_random_evict_fn(self.L, np.random.default_rng(rng.integers(1 << 30)),
+                                         self.n_sinks, self.n_recent),
+                    free_growth_cache=self.free_growth_cache,
+                    example_idx=cache_key,
+                )
+                rand = float(flexible_extract(rand_text, [cap.gold_answer]))
+                kvn_text, _, _, _, _, _ = run_online_episode(
+                    self.llm, self.tokenizer, cap.input_ids, ex_budget,
+                    self.max_new_tokens, self.device,
+                    make_kv_norm_evict_fn(self.L, self.n_sinks, self.n_recent),
+                    free_growth_cache=self.free_growth_cache,
+                    example_idx=cache_key,
+                )
+                kvn = float(flexible_extract(kvn_text, [cap.gold_answer]))
+
+                self._probes.append({
+                    "input_ids":     cap.input_ids,
+                    "gold":          cap.gold_answer,
+                    "per_layer_imp": per_layer_imp,
+                    "full":          full,
+                    "T":             T,
+                    "budget":        ex_budget,
+                })
+                full_vals.append(full); rand_vals.append(rand); kvn_vals.append(kvn)
+            except Exception as _probe_ex:
+                logger.warning(f"EvalProbeCallback: skipping probe example {len(self._probes)} "
+                               f"due to error: {_probe_ex}")
 
         if not self._probes:
             logger.warning("EvalProbeCallback: no usable probe examples "
