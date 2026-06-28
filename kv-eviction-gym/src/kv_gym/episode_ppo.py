@@ -111,6 +111,11 @@ class EpisodeMaskablePPO(MaskablePPO):
         super()._setup_model()
         self.n_steps = real_n_steps
 
+        # Repeat-problem support: train on the same N problems for this many
+        # consecutive rollouts before sampling new ones. Set from train.py.
+        self.repeats_per_problem: int = 1
+        self._problem_repeat_idx: int = 0
+
     def train(self) -> None:
         # Free the rollout buffer immediately after training rather than at the
         # start of the next collect_rollouts. The next rollout builds a fresh
@@ -150,6 +155,17 @@ class EpisodeMaskablePPO(MaskablePPO):
         # materializing fp32 observations for the restarted "phantom" episodes
         # every wall-step — the source of the iteration-2 RSS blow-up. Resetting
         # here makes every rollout behave like iteration 1 (buffer_rows ≈ 678).
+        #
+        # Repeat-problem: for the first rollout of each problem-group, reset to
+        # new problems (_repeat_episode=False). For subsequent rollouts in the
+        # same group, reset to the same problems (_repeat_episode=True) so the
+        # policy gets multiple gradient updates on the same task.
+        is_repeat = (self._problem_repeat_idx > 0)
+        env.venv._repeat_episode = is_repeat
+        self._problem_repeat_idx = (self._problem_repeat_idx + 1) % self.repeats_per_problem
+        print(f"  [repeat] {'same' if is_repeat else 'new'} problems "
+              f"(idx={self._problem_repeat_idx - 1 if is_repeat else 0}/"
+              f"{self.repeats_per_problem})", flush=True)
         obs = env.reset()
         self._last_obs = obs
 

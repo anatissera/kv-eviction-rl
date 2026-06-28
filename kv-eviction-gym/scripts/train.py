@@ -423,8 +423,10 @@ def main():
     if n_parallel > 1:
         # EpisodeMaskablePPO creates its own FP16 buffer dynamically each rollout.
         # The initial buffer is never used for data — just needs to exist.
+        ppo.repeats_per_problem = cfg.get("repeats_per_problem", 1)
         print(f"rollout buffer: dynamic FP16ObsMaskableRolloutBuffer (episode-based, "
-              f"n_parallel={n_parallel}, n_steps_cap={ppo.n_steps})")
+              f"n_parallel={n_parallel}, n_steps_cap={ppo.n_steps}, "
+              f"repeats_per_problem={ppo.repeats_per_problem})")
     else:
         # Static fp16 buffer for single-episode mode.
         ppo.rollout_buffer = FP16ObsMaskableRolloutBuffer(

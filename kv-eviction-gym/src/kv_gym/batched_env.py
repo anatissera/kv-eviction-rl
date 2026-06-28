@@ -238,15 +238,33 @@ class BatchedSharedKVVecEnv(VecEnv):
         # Batched KV cache [N, H, S, D] per layer
         self._batch_kv: DynamicCache | None = None
 
+        # Repeat-problem support: when True, reset() re-uses the same examples and
+        # budget as the previous reset() instead of sampling fresh ones.
+        # Set by EpisodeMaskablePPO before calling env.reset() each rollout.
+        self._repeat_episode: bool = False
+        # Last example index used per slot — populated by _reset_episode().
+        self._current_example_indices: list[int] = [0] * self.N
+        # When set, _reset_episode(b) uses this index instead of the cursor.
+        self._forced_example_idx: list[int | None] = [None] * self.N
+
     # ------------------------------------------------------------------
     # VecEnv interface
     # ------------------------------------------------------------------
 
     def reset(self):
-        # Sample one shared budget for all N episodes
-        self._shared_budget = int(self._rng.integers(self.budget_min, self.budget_max + 1))
-        for b in range(self.N):
-            self._reset_episode(b)
+        if self._repeat_episode:
+            # Re-use same examples and budget; only re-run the prefill+free-growth.
+            # The free-growth cache makes this a single forward pass (fast).
+            for b in range(self.N):
+                self._forced_example_idx[b] = self._current_example_indices[b]
+            for b in range(self.N):
+                self._reset_episode(b)
+                self._forced_example_idx[b] = None
+        else:
+            # Normal reset: fresh budget and fresh examples.
+            self._shared_budget = int(self._rng.integers(self.budget_min, self.budget_max + 1))
+            for b in range(self.N):
+                self._reset_episode(b)
         self._batch_kv = _stack_caches([ep.past_kv for ep in self.episodes])
         return self._obs()
 
@@ -477,10 +495,15 @@ class BatchedSharedKVVecEnv(VecEnv):
         """
         ep = self.episodes[b]
         while True:
-            ep.started_at  = time.perf_counter()
-            example_idx    = self._example_cursor % self.n_examples
-            example        = self.examples[example_idx]
-            self._example_cursor += 1
+            ep.started_at = time.perf_counter()
+            if self._forced_example_idx[b] is not None:
+                # Repeat mode: reuse the same example. Don't advance the cursor.
+                example_idx = self._forced_example_idx[b]
+            else:
+                example_idx = self._example_cursor % self.n_examples
+                self._current_example_indices[b] = example_idx
+                self._example_cursor += 1
+            example = self.examples[example_idx]
 
             prompt_txt, _ = format_gsm8k(example)
             ep.gold_answer = example["gold_answers"][0]
@@ -488,6 +511,9 @@ class BatchedSharedKVVecEnv(VecEnv):
             inputs = self.tokenizer(prompt_txt, return_tensors="pt").to(self.device)
             T      = inputs["input_ids"].shape[1]
             if T > self.max_len:
+                # Forced example too long (shouldn't happen — it passed before).
+                # Fall back to random sampling so we don't loop forever.
+                self._forced_example_idx[b] = None
                 continue
 
             ep.budget     = max(self._shared_budget, T)
@@ -505,7 +531,9 @@ class BatchedSharedKVVecEnv(VecEnv):
                         # Full hit: reconstruct KV in one forward pass
                         fg_tokens = cached[:n_needed].tolist()
                         if self.eos_id in fg_tokens:
-                            continue  # would have ended during free-growth — skip
+                            # Episode ends during free-growth — fall back to random.
+                            self._forced_example_idx[b] = None
+                            continue
                         self._reconstruct_from_tokens(ep, fg_tokens)
                         break
                     elif len(cached) > 0 and self.eos_id not in cached.tolist():
@@ -545,6 +573,8 @@ class BatchedSharedKVVecEnv(VecEnv):
                                                                  cached_so_far=[])
             if not free_growth_done:
                 break
+            # Episode ended during free-growth — fall back to random on retry.
+            self._forced_example_idx[b] = None
 
         # S4 exact: snapshot the full (pre-eviction) cache as the never-evicted
         # shadow. ep.past_kv is now at cache_size = budget+1; from here the live
