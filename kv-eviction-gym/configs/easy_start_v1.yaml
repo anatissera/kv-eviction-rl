@@ -1,0 +1,68 @@
+# Training config: easy-start curriculum to break cold-start.
+# Launch with: python scripts/train.py --config configs/easy_start_v1.yaml --run-name easy_start_v1
+#
+# Root cause of cold-start: random eviction destroys reasoning context → LM loops
+# → never produces EOS → 100% truncation → correctness reward never fires → no learning.
+#
+# Fix: start with budget_min_start=590 ≈ budget_max=600. At this budget, the cache
+# fits the full prompt (~200-400 tokens) plus ~200-400 tokens of free generation
+# before eviction starts. Most GSM8K solutions fit within this window, so episodes
+# complete and the policy sees correctness rewards from iteration 1.
+# The curriculum then tightens budget_min to 256 over 75% of training, gradually
+# forcing the policy to learn real aggressive eviction.
+
+model_name:   qwen-1.5b
+device:       auto
+
+n_examples: 1000
+seed: 0
+
+budget_min: 256
+budget_max: 600
+
+# Easy start: near budget_max → minimal eviction → episodes complete → correctness fires.
+budget_min_start:    590
+budget_min_end:      256
+curriculum_fraction: 0.75
+max_len: 620
+max_new_tokens: 800
+
+use_attention_shaping: false
+attention_weight: 0.0
+shaping_mode: none
+
+hidden: 64
+
+probe_n: 32
+probe_every_n_rollouts: 15
+probe_n_sinks: 4
+
+n_parallel:      2
+n_steps:         650
+batch_size:      512
+
+n_epochs:        4
+gamma:           1.0
+gae_lambda:      1.0
+clip_range:      0.2
+ent_coef:        0.01
+total_timesteps: 5000000
+
+n_sinks: 4
+n_recent: 32
+
+length_penalty_weight: 0.5
+truncation_penalty: 1.0
+
+# No entropy reward: correctness signal fires naturally from the start,
+# providing return variance without needing a proxy reward.
+entropy_reward_weight: 0.0
+
+# 5 attempts per problem: policy gets multiple gradient updates on the same
+# task before advancing. With correctness now firing, later attempts in each
+# group benefit from earlier gradient updates and may answer correctly more often.
+repeats_per_problem: 5
+
+attn_implementation: sdpa
+
+free_growth_cache_dir: ~/.kv_eviction_cache
