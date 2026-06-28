@@ -158,11 +158,18 @@ class TrainingLogger(BaseCallback):
         return True
 
     def _on_rollout_end(self) -> None:
+        # ep_info_buffer is only populated by the standard SB3 PPO collect_rollouts
+        # loop, which EpisodeMaskablePPO does not use. Fall back to NaN so the CSV
+        # row is still written with all other metrics intact.
         buf = self.model.ep_info_buffer
-        if not buf:
+        if buf:
+            mean_rew = float(sum(ep["r"] for ep in buf) / len(buf))
+            mean_len = float(sum(ep["l"] for ep in buf) / len(buf))
+        else:
+            mean_rew = float("nan")
+            mean_len = float("nan")
+        if not self._episode_seconds_buf:
             return
-        mean_rew = float(sum(ep["r"] for ep in buf) / len(buf))
-        mean_len = float(sum(ep["l"] for ep in buf) / len(buf))
 
         corr_rate = (sum(self._correct_buf) / len(self._correct_buf)
                      if self._correct_buf else float("nan"))
