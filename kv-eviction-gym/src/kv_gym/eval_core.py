@@ -218,32 +218,46 @@ class PositionTracker:
 # ── Recency + sink protection ──────────────────────────────────────────────────
 
 def valid_action_mask(
-    cache_size: int, max_len: int, n_sinks: int = 0, n_recent: int = 0
+    cache_size: int, max_len: int, n_sinks: int = 0, n_recent: int = 0, n_prompt: int = 0
 ) -> np.ndarray:
-    """[max_len] bool mask of evictable slots: protects the first `n_sinks` (attention
-    sinks) and the last `n_recent` (recency window) cache slots.
+    """[max_len] bool mask of evictable slots: protects the first `max(n_sinks, n_prompt)`
+    head slots and the last `n_recent` (recency window) cache slots.
 
     The live cache stays sorted by original position ascending (evictions compact
     preserving order; new tokens append at the end), so slot 0..n_sinks-1 are the
     oldest/sink tokens and slot cache_size-n_recent..cache_size-1 are the most recent.
 
-    Guard: if the window would cover the whole cache, fall back to all-evictable so
-    MaskablePPO always has ≥1 valid action.
+    `n_prompt` (= prompt length T) protects the entire problem statement from eviction:
+    once protected, the prompt never moves from slots [0, T), so only GENERATED tokens
+    (slots ≥ T, minus the recency window) are evictable. This is the inductive bias from
+    HANDOFF.md step 3: preserve the question, compress the intermediate reasoning. It also
+    structurally prevents the "evict recent generated" collapse. n_prompt=0 → old behavior.
+
+    Graceful degradation (never returns an all-False mask — MaskablePPO needs ≥1 valid
+    action): if the prompt+recency window covers everything, drop prompt protection (keep
+    sink+recent); if that still covers everything, relax to all-evictable.
     """
     mask = np.zeros(max_len, dtype=bool)
-    lo = min(n_sinks, max(0, cache_size - 1))
-    hi = max(lo, cache_size - n_recent)
-    if hi <= lo:                      # window covers everything → relax to all slots
+
+    def _window(head: int) -> tuple[int, int]:
+        lo = min(head, max(0, cache_size - 1))
+        hi = max(lo, cache_size - n_recent)
+        return lo, hi
+
+    lo, hi = _window(max(n_sinks, n_prompt))
+    if hi <= lo:                          # prompt window covers everything → drop prompt
+        lo, hi = _window(n_sinks)
+    if hi <= lo:                          # sink+recent still covers everything → relax
         mask[:cache_size] = True
     else:
         mask[lo:hi] = True
     return mask
 
 
-def _valid_slots(cache_size: int, n_sinks: int, n_recent: int) -> list[int]:
-    """Indices of evictable slots given the recency+sink window (same policy as
+def _valid_slots(cache_size: int, n_sinks: int, n_recent: int, n_prompt: int = 0) -> list[int]:
+    """Indices of evictable slots given the prompt+recency+sink window (same policy as
     valid_action_mask), for baselines that pick among candidates."""
-    m = valid_action_mask(cache_size, cache_size, n_sinks, n_recent)
+    m = valid_action_mask(cache_size, cache_size, n_sinks, n_recent, n_prompt)
     return [i for i in range(cache_size) if m[i]]
 
 
@@ -255,10 +269,10 @@ def make_learned_evict_fn(policy, L: int, max_len: int, n_sinks: int = 0, n_rece
     The action mask protects the first `n_sinks` and last `n_recent` cache slots —
     must match the env's action_masks() used during training.
     """
-    def evict(K: Tensor, V: Tensor, tracker: PositionTracker, scores=None) -> list[int]:
+    def evict(K: Tensor, V: Tensor, tracker: PositionTracker, scores=None, n_prompt=0) -> list[int]:
         cache_size = K.shape[2]
         obs   = build_obs(K, V, cache_size, max_len)          # [L, max_len, feat]
-        row   = valid_action_mask(cache_size, max_len, n_sinks, n_recent)
+        row   = valid_action_mask(cache_size, max_len, n_sinks, n_recent, n_prompt)
         masks = np.broadcast_to(row, (L, max_len)).copy()
         actions, _ = policy.predict(obs, action_masks=masks, deterministic=True)
         return [int(a) for a in actions]
@@ -266,8 +280,13 @@ def make_learned_evict_fn(policy, L: int, max_len: int, n_sinks: int = 0, n_rece
 
 
 def make_streaming_evict_fn(n_sinks: int, L: int):
-    """StreamingLLM: evict the oldest non-sink slot (always slot n_sinks)."""
-    def evict(K: Tensor, V: Tensor, tracker: PositionTracker, scores=None) -> list[int]:
+    """StreamingLLM: evict the oldest non-sink slot (always slot n_sinks).
+
+    Reference baseline: keeps its canonical StreamingLLM rule (evict oldest non-sink) and
+    ignores `n_prompt` — it is the "what plain StreamingLLM does" reference, not a competitor
+    under our prompt-protection rules.
+    """
+    def evict(K: Tensor, V: Tensor, tracker: PositionTracker, scores=None, n_prompt=0) -> list[int]:
         return [n_sinks] * L
     evict.needs_kv = False
     return evict
@@ -291,7 +310,7 @@ def make_attention_evict_fn(*args, **kwargs):
         n_sinks = args[1] if len(args) > 1 else kwargs.get("n_sinks", 0)
         n_recent = args[2] if len(args) > 2 else kwargs.get("n_recent", 0)
 
-    def evict(K: Tensor, V: Tensor, tracker: PositionTracker, scores=None) -> list[int]:
+    def evict(K: Tensor, V: Tensor, tracker: PositionTracker, scores=None, n_prompt=0) -> list[int]:
         assert scores is not None, (
             "Dynamic attention scores must be provided for attn_layer. "
             "Ensure attn_implementation='eager' is used."
@@ -299,7 +318,7 @@ def make_attention_evict_fn(*args, **kwargs):
         slots = []
         for l in range(L):
             n = tracker.size(l)
-            cand = _valid_slots(n, n_sinks, n_recent)
+            cand = _valid_slots(n, n_sinks, n_recent, n_prompt)
             # Find the candidate slot with the lowest dynamic score in layer l
             imps = [scores[l, s].item() for s in cand]
             slots.append(cand[int(np.argmin(imps))])
@@ -311,10 +330,10 @@ def make_attention_evict_fn(*args, **kwargs):
 
 def make_kv_norm_evict_fn(L: int, n_sinks: int = 0, n_recent: int = 0):
     """KV-norm: per layer, evict the valid slot with the lowest current ||K||+||V|| norm."""
-    def evict(K: Tensor, V: Tensor, tracker: PositionTracker, scores=None) -> list[int]:
+    def evict(K: Tensor, V: Tensor, tracker: PositionTracker, scores=None, n_prompt=0) -> list[int]:
         # K, V: [L, H, seq, D] — mean over heads
         norms = (K.norm(dim=-1) + V.norm(dim=-1)).mean(dim=1)  # [L, seq]
-        cand = _valid_slots(K.shape[2], n_sinks, n_recent)
+        cand = _valid_slots(K.shape[2], n_sinks, n_recent, n_prompt)
         cand_t = torch.tensor(cand)
         return [cand[int(norms[l, cand_t].argmin().item())] for l in range(L)]
     return evict
@@ -322,9 +341,9 @@ def make_kv_norm_evict_fn(L: int, n_sinks: int = 0, n_recent: int = 0):
 
 def make_random_evict_fn(L: int, rng, n_sinks: int = 0, n_recent: int = 0):
     """Random: uniformly random valid slot per layer (respects the window)."""
-    def evict(K: Tensor, V: Tensor, tracker: PositionTracker, scores=None) -> list[int]:
+    def evict(K: Tensor, V: Tensor, tracker: PositionTracker, scores=None, n_prompt=0) -> list[int]:
         cache_size = tracker.size(0)
-        cand = _valid_slots(cache_size, n_sinks, n_recent)
+        cand = _valid_slots(cache_size, n_sinks, n_recent, n_prompt)
         return [cand[int(rng.integers(0, len(cand)))] for _ in range(L)]
     evict.needs_kv = False
     return evict
@@ -344,11 +363,15 @@ def run_online_episode(
     per_layer_imp:      Tensor | None = None,  # Kept for backward compatibility but unused
     free_growth_cache:  "FreeGrowthCache | None" = None,
     example_idx:        int | None = None,
+    protect_prompt:     bool = False,
 ) -> tuple[str, list[float], list[tuple[int, int]], bool, float, float]:
     """Run one full online episode.
 
     At each decode step the cache grows by one token.  When cache_size > budget
     the evict_fn removes one token per layer before decoding continues.
+
+    `protect_prompt`: if True, the prompt tokens (first T cache slots) are never evicted —
+    must match the training env's `protect_prompt` so eval uses the same action rules.
     """
     import time
     if device.type == "cuda":
@@ -437,8 +460,10 @@ def run_online_episode(
             else:
                 K, V = None, None
             
-            # Pass the dynamic scores to the evict_fn if available
-            slots = evict_fn(K, V, tracker, scores=scores)
+            # Pass the dynamic scores to the evict_fn if available.
+            # protect_prompt → tell the evict_fn the prompt length T so the first T
+            # cache slots (the question) are never evictable (matches training env).
+            slots = evict_fn(K, V, tracker, scores=scores, n_prompt=(T if protect_prompt else 0))
 
             # Correlation: importance rank percentile of chosen slot vs dynamic oracle
             if attn_available and scores is not None:
