@@ -215,9 +215,21 @@ class BatchedSharedKVVecEnv(VecEnv):
         self.kl_mode               = kl_mode
         self.kl_weight             = kl_weight
         self.kl_clip               = kl_clip
-        # Per-example budget calibration. Values are base_budget = T + cached_len.
-        # Effective budget at runtime: base_budget - self._eviction_k.
-        # Updated by BudgetCurriculumCallback to anneal K from easy → hard.
+        # Per-example budget calibration (solves the cold-start / free-growth skip problem).
+        #
+        # Root cause of cold-start: _reset_episode skips examples whose EOS appears
+        # during free-growth (i.e., where the answer fits within budget).  The training
+        # set collapses to hard examples where EOS never fires → 100% truncation.
+        #
+        # Fix: pre-compute base_budget[i] = T + cached_len for each example i.
+        # At runtime: ep.budget = base_budget[i] - eviction_k.
+        #   n_needed = ep.budget + 1 - T = cached_len - eviction_k + 1  ≤  cached_len
+        #   → full cache hit guaranteed → no EOS in fg_tokens → episode NOT skipped.
+        #   → agent makes eviction_k steps and EOS enters range → episode completes.
+        #
+        # K-curriculum (BudgetCurriculumCallback): _eviction_k starts small (easy,
+        # EOS nearby, high completion rate) and grows (harder, more compression needed).
+        # This is "lower min and max with time" for the per-example budget regime.
         self._per_example_base_budgets = per_example_base_budgets
         self._eviction_k: int          = eviction_k
         self._example_cursor: int      = 0   # tracks which example we're on for cache keys
@@ -493,8 +505,16 @@ class BatchedSharedKVVecEnv(VecEnv):
     def _reset_episode(self, b: int) -> None:
         """Prefill + free-growth for episode b (batch=1, sequential).
 
-        Uses self._shared_budget so the new cache_size matches the running batch.
-        Retries if the episode finishes during free-growth (no eviction needed).
+        Budget selection (in priority order):
+          1. Per-example budget (calibrated): ep.budget = base_budget[i] - self._eviction_k
+             where base_budget[i] = T + cached_len.  With this budget, n_needed =
+             cached_len - K + 1, which is always < cached_len → guaranteed full cache
+             hit → episode is NEVER skipped for free-growth completion.  The agent
+             must then make exactly K eviction steps before EOS enters range.
+             K is annealed by BudgetCurriculumCallback: small K (easy, EOS nearby)
+             at training start → large K (hard, strong compression) at end.
+          2. Shared budget (fallback): sampled once per reset() call, used for any
+             example not in per_example_base_budgets (probe examples, un-cached).
 
         When a FreeGrowthCache is attached, the free-growth phase is replaced by
         a single forward pass (prefill with prompt + cached tokens) on cache hits,
