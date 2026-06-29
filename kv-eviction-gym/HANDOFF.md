@@ -343,3 +343,116 @@ Files already on the VM:
 - `base_budget[i] - eviction_k_end ≥ T[i]`: budget can't go below prompt length.
 - `max_len ≥ max(base_budget) + 1`: model's position embedding limit.
 - `max_new_tokens ≥ max(base_budget) - T_min`: total generation cap must exceed max budget.
+
+---
+
+## Phase 3: Chat template fix — cold-start SOLVED (2026-06-29)
+
+*Full write-up in `CHAT_TEMPLATE_FIX.md` (Ana Paula's analysis). This section summarises the
+outcome and documents the active overnight run.*
+
+### Root cause: plain-text prompts to an Instruct model
+
+Every run up to this point fed raw GSM8K text (`format_gsm8k`) directly to
+`Qwen2.5-1.5B-**Instruct**`. Instruct models are fine-tuned to generate inside a chat frame and
+emit EOS only when they see `<|im_end|>` — which only appears in the correct chat template. Without
+it, the model generates 900+ tokens of repetition and never emits EOS. Evidence:
+
+- Plain-text: 0/300 episodes finish (all truncated).
+- Chat template (`format_gsm8k_chat`): 5/5 episodes finish in a quick sanity check.
+
+**Per-example budgets and `find_easy_examples.py` are no longer needed.** With the chat template,
+gen_len ≈ 100–400 tokens for essentially all GSM8K examples. `budget=200` leaves ≈ 90 tokens of
+free-growth followed by a ≈ 110–310-step RL phase, during which EOS appears naturally.
+
+### Fix applied
+
+`src/kv_gym/vendor/prompts.py` — new function `format_gsm8k_chat`:
+```python
+def format_gsm8k_chat(tokenizer, example):
+    raw, max_new = format_gsm8k(example)
+    text = tokenizer.apply_chat_template(
+        [{"role": "user", "content": raw}],
+        tokenize=False, add_generation_prompt=True,
+    )
+    return text, max_new
+```
+`src/kv_gym/batched_env.py` now imports and calls `format_gsm8k_chat`.
+
+**Free-growth cache invalidated.** The 694 entries in `~/.kv_eviction_cache/qwen-1.5b/` were built
+with the plain-text format and must NOT be reused. Delete them before starting new runs (or set
+`free_growth_cache_dir` to a fresh path). The cache will be rebuilt automatically from the first
+training run. After the smoke run, 83 new entries were built.
+
+### Smoke run results (`chat_smoke_v1`, 120k steps, 2026-06-29)
+
+Config: `configs/chat_smoke_v1.yaml` — budget=200 fixed, no curriculum, `protect_prompt=true`,
+1000 examples, `repeats_per_problem=2`, `probe_n=4`.
+
+| Metric | Rollout 1 | Final (122k steps) |
+|---|---|---|
+| truncation_rate | 0% | 0% |
+| correct | 100% | 100% |
+| ep_rew_mean | 0.789 | 0.468 |
+| ep_len_mean | 121 | 169 |
+| correct_learned | — | 0.750 (= random) |
+| correct_full | — | 1.000 |
+| evict_generated_frac | — | 1.00 (expected with protect_prompt) |
+| explained_variance | — | −0.521 (value fn just starting) |
+
+Conclusion: training loop works end-to-end. `correct_learned = correct_random` at 120k steps is
+expected — the value function needs more steps to separate signal from noise.
+Models saved at `runs/chat_smoke_v1/` on VM `kv-chat-v1`.
+
+### Active overnight run: `chat_full_v1`
+
+VM: **`kv-chat-v1`**, zone `us-west1-a`, g2-standard-8 (L4 GPU), **non-preemptible (STANDARD)**.
+
+Config: `configs/chat_full_v1.yaml`. Key differences from smoke run:
+- `total_timesteps: 5_000_000` (~5M steps, estimated 10–14h)
+- `budget_min_start=200 → budget_min_end=120` over first 80% of training (compression curriculum)
+- `budget_max=200` (fixed ceiling; shared budget sampled from `[budget_min, 200]` each rollout)
+- `repeats_per_problem=5` (more on-policy signal per problem before rotating)
+- `probe_n=32`, `probe_every_n_rollouts=15` (stable eval with less overhead)
+
+Run launched 2026-06-29 ~14:25 UTC-3. Session: `tmux attach -t chat_full_v1`.
+Log: `~/kv-eviction-gym/runs/chat_full_v1/train.log`.
+
+**Note:** run_name is auto-generated as a timestamp (e.g. `20260629_142502`), NOT `chat_full_v1`.
+The log and models live in `runs/<timestamp>/`, not `runs/chat_full_v1/`.
+
+```bash
+# Monitor:
+gcloud compute ssh kv-chat-v1 --zone=us-west1-a
+tmux attach -t chat_full_v1
+# or:
+tail -f ~/kv-eviction-gym/runs/<timestamp>/train.log
+
+# Download results when done:
+gcloud compute scp --recurse kv-chat-v1:~/kv-eviction-gym/runs/<timestamp>/ \
+    ./runs/chat_full_v1_results/ --zone=us-west1-a
+
+# ALWAYS stop VM when done:
+gcloud compute instances stop kv-chat-v1 --zone=us-west1-a
+```
+
+### What to look for in results
+
+- `correct_learned > correct_random (0.75)` on the probe → policy learning selective eviction
+- `evict_generated_frac` staying at 1.0 is CORRECT (prompt protected, only generated tokens evictable)
+- `evict_mean_pos_frac` drifting below 0.77 → policy evicting older generated tokens (good)
+- `explained_variance` rising above 0 → value function learning the reward structure
+- If `correct_learned` never separates from `correct_random` by 1M steps → consider extending
+  `repeats_per_problem` or adding attention shaping (`shaping_mode: per_step_recency`)
+
+### Reward structure (for reference)
+
+At each RL step: agent picks one KV slot to evict (from generated tokens only, excluding first
+`n_sinks=4` and last `n_recent=32`). At episode end (EOS emitted):
+- `+1.0` if answer extraction finds the correct number, `0.0` if wrong
+- `−length_penalty_weight × ep_len / max_len` (discourages padding / stalling)
+- `−truncation_penalty` if EOS never appeared (shouldn't happen with chat template)
+- `+entropy_reward_weight × H(π)` per step (exploration)
+
+All rewards propagated via GAE with `γ=λ=1.0` (undiscounted, full-return). The policy must learn
+that early eviction choices causally affect whether the model can correctly answer 100–300 steps later.
