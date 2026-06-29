@@ -69,7 +69,12 @@ free_growth_cache_dir: ~/.kv_eviction_cache
 protect_prompt: true
 
 # ── S4-exact causal KL shaping (the ONLY difference vs chat_full_v1) ──────────
+# kl_weight CALIBRATED from chat_smoke_s4_kl (7 rollouts, us-east1-c, 2026-06-29):
+# mean per-episode raw shaping Σ(ep_len × kl_step_mean) ≈ 7.64 nats, so
+# kl_weight=0.05 ⇒ E[Σ shaping] ≈ 0.38 — squarely in the [0.3,0.5] target,
+# sub-dominant to the correctness reward (±1). Smoke also confirmed: 0% truncation,
+# no OOM/crash from the S4 shadow forward on an L4 (23 GB).
 kl_shaping: true
 kl_mode:    exact
-kl_weight:  0.05      # SET from chat_smoke_s4_kl calibration before launching
+kl_weight:  0.05
 kl_clip:    5.0
