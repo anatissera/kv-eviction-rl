@@ -1,0 +1,95 @@
+# Training config: easy examples identified by full-cache gen_len inference.
+#
+# PREREQUISITE — run ONCE on the VM to identify easy examples and generate budgets:
+#   python scripts/find_easy_examples.py \
+#       --model-name qwen-1.5b \
+#       --n-examples 1000 \
+#       --max-gen-len 400 \
+#       --min-gen-len 150 \
+#       --output per_example_budgets_easy.json
+#
+# Why easy examples:
+#   The free-growth skip logic (`if eos_id in fg_tokens: continue`) discards any
+#   episode where the model finishes during free-growth. This means ALL examples
+#   that the model can complete within budget are silently thrown away.
+#   The 694 FreeGrowthCache entries are ALL hard examples (gen_len >> max_new_tokens).
+#
+#   Easy examples (gen_len ∈ [150, 400]) are the ones the skip logic was discarding.
+#   With per-example calibration (base_budget = T + gen_len):
+#     - ep.budget = base_budget - eviction_k  →  n_fg = gen_len - eviction_k
+#     - Free-growth stops at n_fg < gen_len  →  EOS not in fg_tokens  →  NOT skipped
+#     - RL phase: agent makes eviction_k steps, then EOS appears  →  reward fires
+#
+# K-curriculum:
+#   eviction_k_start=20 : agent makes 20 evictions before EOS — very easy
+#   eviction_k_end=100  : 100 evictions required — harder compression
+#   Constraint: eviction_k_end < min_gen_len=150  ✓
+#
+# First episode of each example: runs free-growth from scratch (no cache yet),
+# caches the n_fg tokens. Subsequent episodes: served from FreeGrowthCache (fast).
+
+model_name: qwen-1.5b
+device:     auto
+
+per_example_budgets_path: per_example_budgets_easy.json
+n_examples: 1000
+
+seed: 0
+
+# Shared budget fallback (for probe eval and any un-calibrated examples).
+budget_min: 200
+budget_max: 450
+
+# K-curriculum: eviction steps grow over training.
+# Effective budget: base_budget[i] - eviction_k  (shrinks over time → harder).
+eviction_k_start: 20
+eviction_k_end:   100
+curriculum_fraction: 0.80
+
+# budget_min anneals for probe eval (shared budget mode).
+budget_min_start: 400
+budget_min_end:   200
+
+# max_len: must be >= max(base_budget). With max_gen_len=400, T≈91: max≈491.
+max_len:        500
+# max_new_tokens: must be > max_gen_len + T. Set with slack for sampling variance.
+max_new_tokens: 600
+
+use_attention_shaping: false
+attention_weight:      0.0
+shaping_mode:          none
+
+hidden: 64
+
+probe_n:                32
+probe_every_n_rollouts: 15
+probe_n_sinks:          4
+
+n_parallel:   2
+n_steps:      650
+batch_size:   512
+
+n_epochs:     4
+gamma:        1.0
+gae_lambda:   1.0
+clip_range:   0.2
+ent_coef:     0.01
+total_timesteps: 5000000
+
+n_sinks:  4
+n_recent: 32
+
+length_penalty_weight: 0.5
+truncation_penalty:    1.0
+
+# Entropy reward provides dense per-step signal before correctness fires,
+# preventing explained_variance=NaN in early rollouts.
+entropy_reward_weight: 0.001
+
+# 5 repeats: policy gets multiple gradient updates on the same calibrated
+# examples before rotating to new ones.
+repeats_per_problem: 5
+
+attn_implementation: sdpa
+
+free_growth_cache_dir: ~/.kv_eviction_cache
