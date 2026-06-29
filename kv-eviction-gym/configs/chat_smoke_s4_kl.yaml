@@ -1,0 +1,70 @@
+# S4-KL CALIBRATION SMOKE — chat_smoke_v1 + S4-exact KL shaping.
+#
+# Identical to chat_smoke_v1 (Alex's validated smoke: 0% truncation, correctness
+# fires) with ONE addition: per-step S4-exact reward shaping
+#   r_step[b] = -kl_weight * clip(KL(p_full[b] || p_evict[b]), 0, kl_clip)
+# measuring the causal damage each eviction does to the LLM next-token dist.
+#
+# PURPOSE: (1) confirm the kl_shaping path runs end-to-end on the (now working)
+# task without OOM/crash and logs `kl_step_mean`; (2) CALIBRATE kl_weight so the
+# per-episode shaping sum is sub-dominant to correctness (±1) — target Σ ≈ 0.3-0.5.
+# kl_weight below is a PLACEHOLDER; read kl_step_mean from learning_curve.csv and
+# reset kl_weight = 0.4 / (mean ep_len * kl_step_mean) before the full run.
+#
+# PRE-REQ on the VM: rm -rf ~/.kv_eviction_cache/*  (stale raw-format tokens).
+
+model_name: qwen-1.5b
+device:     auto
+
+n_examples: 1000
+seed: 0
+
+budget_min: 200
+budget_max: 200
+
+max_len:        250
+max_new_tokens: 600
+
+use_attention_shaping: false
+attention_weight:      0.0
+shaping_mode:          none
+
+hidden: 64
+
+probe_n:                4
+probe_every_n_rollouts: 2
+probe_n_sinks:          4
+
+n_parallel:   2
+n_steps:      650
+batch_size:   512
+
+n_epochs:     4
+gamma:        1.0
+gae_lambda:   1.0
+clip_range:   0.2
+ent_coef:     0.01
+total_timesteps: 120000
+
+n_sinks:  4
+n_recent: 32
+
+length_penalty_weight: 0.5
+truncation_penalty:    1.0
+
+entropy_reward_weight: 0.001    # kept identical to baseline (== S4-proxy), so the
+                                # ONLY new variable vs chat_full_v1 is the KL term
+
+repeats_per_problem: 2
+
+attn_implementation: sdpa
+
+free_growth_cache_dir: ~/.kv_eviction_cache
+
+protect_prompt: true
+
+# ── S4-exact causal KL shaping (the novel arm) ───────────────────────────────
+kl_shaping: true
+kl_mode:    exact     # KL(p_full || p_evict) via per-episode shadow full-cache forward
+kl_weight:  0.05      # PLACEHOLDER — recalibrate from logged kl_step_mean (see header)
+kl_clip:    5.0       # nats; caps per-step damage outliers
