@@ -547,11 +547,21 @@ class BatchedSharedKVVecEnv(VecEnv):
                 self._forced_example_idx[b] = None
                 continue
 
+            if T > self._shared_budget:
+                # Prompt longer than the current shared budget. batch_kv is
+                # pre-allocated at _shared_budget+1 slots; an episode with
+                # ep.budget=T would grow its KV to T+1 > _shared_budget+1 and
+                # crash _replace_slice. Skip and pick a different example.
+                # This can trigger mid-rollout when the curriculum anneals
+                # budget_min below the prompt length of some examples.
+                self._forced_example_idx[b] = None
+                continue
+
             # All episodes in a batch MUST share the same budget so the batched
             # KV cache stays at a uniform seq length (invariant: cache_size = budget+1).
             # Per-example base_budgets are used only to filter which examples are
             # eligible for training (see train.py), NOT to set different cache sizes.
-            ep.budget = max(self._shared_budget, T)
+            ep.budget = self._shared_budget
             ep.prompt_len = T
             ep.step_count = 0
             ep.generated  = []
