@@ -47,7 +47,7 @@ sys.path.insert(0, str(Path(__file__).parent.parent / "src"))
 
 from kv_gym.free_growth_cache import FreeGrowthCache
 from kv_gym.vendor.gsm8k import load_gsm8k
-from kv_gym.vendor.prompts import format_gsm8k
+from kv_gym.vendor.prompts import format_gsm8k_chat
 from kv_gym.vendor.loader import KNOWN_MODELS
 
 
@@ -107,7 +107,7 @@ def main():
                 print(f"  [{i:04d}] skip: cached_len={cached_len} < min={args.min_cached_len}")
             continue
 
-        prompt_txt, _ = format_gsm8k(example)
+        prompt_txt, _ = format_gsm8k_chat(tokenizer, example)
         T = tokenizer(prompt_txt, return_tensors="pt")["input_ids"].shape[1]
 
         base_budget = T + cached_len

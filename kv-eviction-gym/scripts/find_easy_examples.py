@@ -53,7 +53,7 @@ from transformers import AutoModelForCausalLM, AutoTokenizer
 sys.path.insert(0, str(Path(__file__).parent.parent / "src"))
 
 from kv_gym.vendor.gsm8k import load_gsm8k
-from kv_gym.vendor.prompts import format_gsm8k
+from kv_gym.vendor.prompts import format_gsm8k_chat
 from kv_gym.vendor.loader import KNOWN_MODELS
 
 
@@ -96,7 +96,7 @@ def main():
     budgets: dict[str, int] = {}
 
     for i, ex in enumerate(examples):
-        prompt, _ = format_gsm8k(ex)
+        prompt, _ = format_gsm8k_chat(tokenizer, ex)
         ids = tokenizer(prompt, return_tensors="pt").input_ids.cuda()
         T = ids.shape[1]
 

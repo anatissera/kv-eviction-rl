@@ -17,7 +17,7 @@ from dataclasses import dataclass
 import torch
 from torch import Tensor
 
-from kv_gym.vendor.prompts import format_gsm8k
+from kv_gym.vendor.prompts import format_gsm8k_chat
 
 
 @dataclass
@@ -46,7 +46,7 @@ def capture(
     Returns:
         AllHeadCapture with K, V on CPU.
     """
-    prompt_text, _ = format_gsm8k(example)
+    prompt_text, _ = format_gsm8k_chat(tokenizer, example)
     inputs = tokenizer(prompt_text, return_tensors="pt").to(device)
     prompt_len = inputs["input_ids"].shape[1]
 

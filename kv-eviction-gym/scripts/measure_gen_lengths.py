@@ -3,7 +3,7 @@ import torch
 import numpy as np
 from transformers import AutoModelForCausalLM, AutoTokenizer
 from kv_gym.vendor.gsm8k import load_gsm8k
-from kv_gym.vendor.prompts import format_gsm8k
+from kv_gym.vendor.prompts import format_gsm8k_chat
 
 tok = AutoTokenizer.from_pretrained("Qwen/Qwen2-1.5B-Instruct")
 model = AutoModelForCausalLM.from_pretrained(
@@ -22,7 +22,7 @@ gen_lengths, prompt_lengths, correct = [], [], []
 eos = tok.eos_token_id
 
 for i, ex in enumerate(examples):
-    prompt, _ = format_gsm8k(ex)
+    prompt, _ = format_gsm8k_chat(tok, ex)
     gold = ex["gold_answers"][0]
     ids = tok(prompt, return_tensors="pt").input_ids.cuda()
     prompt_lengths.append(ids.shape[1])

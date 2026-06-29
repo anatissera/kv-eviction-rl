@@ -11,12 +11,29 @@ Todos los runs hasta ahora murieron en la **misma pared**, independientemente de
 | `corr_reward_v1` (Alex) | correctness + entropía | 100% trunc, retention=0, evict_generated_frac≈0.90 |
 | `s4_kl_v1` (nuestro) | correctness + KL-to-full (S4-exact) | 100% trunc, retention 0-5%, idéntico patrón |
 
-**Causa raíz (no es el reward, es estructural):** el *free-growth skip*
-(`batched_env._reset_episode`: `if eos_id in fg_tokens: continue`) descarta silenciosamente
-todo ejemplo donde EOS aparece durante el free-growth → el set de entrenamiento queda sesgado
-a puros ejemplos difíciles (gen_len ≫ max_new_tokens) → **todos los episodios truncan →
-correctness=0% → EV=NaN → no se aprende nada.** El `FreeGrowthCache` (694 entradas) contiene
-SOLO ejemplos difíciles por construcción.
+**Causa raíz REAL (corregida 2026-06-29 — supera el diagnóstico del HANDOFF):** el pipeline
+le pasaba el prompt **crudo, sin chat template**. Qwen2.5-**Instruct** fue fine-tuneado para
+responder dentro de un frame `<|im_start|>assistant … <|im_end|>` y emitir su token de fin de
+turno (que ES `tokenizer.eos_token_id = 151645 = <|im_end|>`) para parar. Con el prompt crudo el
+modelo nunca entra en ese frame → **nunca emite EOS → genera hasta el tope SIEMPRE.** Evidencia
+dura (mismo modelo, mismos ejemplos): prompt crudo = **0/300** terminan (gen_len=600 todos);
+chat template = **5/5** terminan (gen_len 206–302, EOS emitido). Esto explica todo de una vez:
+100% truncation, correctness=0%, EV=NaN, y el *free-growth skip* (`if eos_id in fg_tokens`)
+**ni siquiera disparaba** porque EOS nunca aparecía. El "skip descarta ejemplos fáciles" del
+HANDOFF era un síntoma, no la causa.
+
+**FIX (commit en main 2026-06-29):** `format_gsm8k_chat(tokenizer, example)` envuelve el prompt
+con `apply_chat_template(..., add_generation_prompt=True)`. Aplicado en TODOS los chokepoints de
+tokenización: `capture.py` (eval+probe), `batched_env.py` + `env.py` (training), y los scripts
+`find_easy_examples.py` / `compute_per_example_budgets.py` / `measure_gen_lengths.py`. La
+extracción de respuesta (`flexible_extract` = último número del texto) ya maneja el formato del
+Instruct (`\boxed{}`, `**$X**`) sin necesitar `####`. Test: `tests/test_chat_template.py`.
+**Pendiente operativo:** limpiar `~/.kv_eviction_cache` en la VM (los tokens cacheados son del
+formato crudo viejo) antes del próximo run.
+
+Diagnóstico previo (del HANDOFF, ahora reinterpretado como síntoma): el *free-growth skip*
+descartaba ejemplos donde EOS aparece en free-growth → sesgo a difíciles. Con EOS funcionando,
+casi todos los ejemplos terminan en [150,400] solos, así que `find_easy` casi no hace falta.
 
 **Hallazgo clave del handoff (descarta una vía):** la señal de atención es **inútil para GSM8K**
 (`attn_oracle = 0.100 = random`, peor que `kv_norm = 0.133`). NO conviene warm-startear desde
