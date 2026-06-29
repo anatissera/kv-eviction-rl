@@ -543,13 +543,11 @@ class BatchedSharedKVVecEnv(VecEnv):
                 self._forced_example_idx[b] = None
                 continue
 
-            if (self._per_example_base_budgets is not None
-                    and example_idx in self._per_example_base_budgets):
-                # base_budget = T + cached_len; subtract current K for effective budget.
-                base = self._per_example_base_budgets[example_idx]
-                ep.budget = max(base - self._eviction_k, T)
-            else:
-                ep.budget = max(self._shared_budget, T)
+            # All episodes in a batch MUST share the same budget so the batched
+            # KV cache stays at a uniform seq length (invariant: cache_size = budget+1).
+            # Per-example base_budgets are used only to filter which examples are
+            # eligible for training (see train.py), NOT to set different cache sizes.
+            ep.budget = max(self._shared_budget, T)
             ep.prompt_len = T
             ep.step_count = 0
             ep.generated  = []
