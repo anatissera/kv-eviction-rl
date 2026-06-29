@@ -379,7 +379,8 @@ def main():
         print(f"env: BatchedSharedKVVecEnv  n_parallel={n_parallel}"
               + (f"  kl_shaping={cfg.get('kl_mode', 'exact')} "
                  f"w={cfg.get('kl_weight', 0.0)} clip={cfg.get('kl_clip', 5.0)}"
-                 if kl_shaping else ""))
+                 if kl_shaping else "")
+              + (f"  protect_prompt=ON" if cfg.get("protect_prompt", False) else ""))
         env = BatchedSharedKVVecEnv(
             n_parallel=n_parallel,
             free_growth_cache=fg_cache,
@@ -389,6 +390,7 @@ def main():
             kl_clip=cfg.get("kl_clip", 5.0),
             per_example_base_budgets=per_example_base_budgets,
             eviction_k=cfg.get("eviction_k_start", cfg.get("eviction_k", 100)),
+            protect_prompt=cfg.get("protect_prompt", False),
             **env_kwargs,
         )
     else:
@@ -460,6 +462,7 @@ def main():
             device=device,
             verbose=1,
             free_growth_cache=fg_cache,
+            protect_prompt=cfg.get("protect_prompt", False),
         ))
 
     callbacks = CallbackList(callback_list)

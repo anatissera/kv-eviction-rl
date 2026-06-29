@@ -188,6 +188,7 @@ class BatchedSharedKVVecEnv(VecEnv):
         kl_clip:               float = 5.0,
         per_example_base_budgets: dict[int, int] | None = None,
         eviction_k:               int = 100,
+        protect_prompt:           bool = False,
     ):
         self.model                 = model
         self.tokenizer             = tokenizer
@@ -204,6 +205,7 @@ class BatchedSharedKVVecEnv(VecEnv):
         self.shaping_mode          = shaping_mode
         self.n_sinks               = n_sinks
         self.n_recent              = n_recent
+        self.protect_prompt        = protect_prompt
         self.length_penalty_weight = length_penalty_weight
         self.truncation_penalty    = truncation_penalty
         self.entropy_reward_weight = entropy_reward_weight
@@ -467,7 +469,9 @@ class BatchedSharedKVVecEnv(VecEnv):
         """[N * n_layers, max_len] — same mask broadcast across layers per episode."""
         masks = np.zeros((self.N * self.n_layers, self.max_len), dtype=bool)
         for b, ep in enumerate(self.episodes):
-            row  = valid_action_mask(ep.cache_size, self.max_len, self.n_sinks, self.n_recent)
+            n_prompt = ep.prompt_len if self.protect_prompt else 0
+            row  = valid_action_mask(ep.cache_size, self.max_len, self.n_sinks,
+                                     self.n_recent, n_prompt)
             base = b * self.n_layers
             masks[base : base + self.n_layers] = row
         return masks

@@ -1,0 +1,74 @@
+# PHASE 0c — validation SMOKE for the cold-start unblock.
+# The smoke also CALIBRATES: if truncation_rate stays high, adjust `budget_*`.
+# Goal: confirm H0 — with the easy set (gen_len∈[150,400]) + protection of the
+# The smoke also CALIBRATES: if truncation_rate stays high, adjust `budget_*`. prompt, correctness DISPARA en los primeros rollouts:
+#     truncation_rate < 1.0  Y  correct_learned > 0  (en learning_curve.csv / probe_curve.csv)
+#
+# PREREQUISITE (run ONCE on the VM, ~30-60 min):
+# The smoke also CALIBRATES: if truncation_rate stays high, adjust `budget_*`.   python scripts/find_easy_examples.py --model-name qwen-1.5b --n-examples 1000 \
+#       --max-gen-len 400 --min-gen-len 150 --output per_example_budgets_easy.json
+#
+# Diferencias vs easy_examples_v1 (de Alex): protect_prompt ON, eviction_k bajo y
+# CONSTANT (as easy as possible so EOS shows up fast), tiny run.
+
+model_name: qwen-1.5b
+device:     auto
+
+per_example_budgets_path: per_example_budgets_easy.json
+n_examples: 1000
+
+seed: 0
+
+budget_min: 200
+budget_max: 450
+
+# K constant and low: few evictions before EOS → correctness fires right away.
+eviction_k_start: 20
+eviction_k_end:   20
+curriculum_fraction: 0.80
+
+budget_min_start: 400
+budget_min_end:   200
+
+max_len:        500
+max_new_tokens: 600
+
+use_attention_shaping: false
+attention_weight:      0.0
+shaping_mode:          none
+
+hidden: 64
+
+# Probe chico y frecuente para ver señal rápido.
+probe_n:                4
+probe_every_n_rollouts: 2
+probe_n_sinks:          4
+
+n_parallel:   2
+n_steps:      650
+batch_size:   512
+
+n_epochs:     4
+gamma:        1.0
+gae_lambda:   1.0
+clip_range:   0.2
+ent_coef:     0.01
+# Tiny run: ~a few rollouts, enough to see whether correctness fires.
+total_timesteps: 120000
+
+n_sinks:  4
+n_recent: 32
+
+length_penalty_weight: 0.5
+truncation_penalty:    1.0
+
+entropy_reward_weight: 0.001
+
+repeats_per_problem: 2
+
+attn_implementation: sdpa
+
+free_growth_cache_dir: ~/.kv_eviction_cache
+
+# ── EL DESBLOQUEO NUEVO ──────────────────────────────────────────────────────
+protect_prompt: true

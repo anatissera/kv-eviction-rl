@@ -71,6 +71,7 @@ class EvalProbeCallback(BaseCallback):
         ref_max_new_tokens: int = 64,
         verbose:          int = 1,
         free_growth_cache = None,  # FreeGrowthCache | None
+        protect_prompt:   bool = False,
     ):
         super().__init__(verbose)
         self.llm              = llm
@@ -87,6 +88,7 @@ class EvalProbeCallback(BaseCallback):
         self.device           = device or next(llm.parameters()).device
         self.ref_max_new_tokens = ref_max_new_tokens
         self.free_growth_cache  = free_growth_cache
+        self.protect_prompt     = protect_prompt
 
         self.L = llm.config.num_hidden_layers
 
@@ -166,6 +168,7 @@ class EvalProbeCallback(BaseCallback):
                                          self.n_sinks, self.n_recent),
                     free_growth_cache=self.free_growth_cache,
                     example_idx=cache_key,
+                    protect_prompt=self.protect_prompt,
                 )
                 rand = float(flexible_extract(rand_text, [cap.gold_answer]))
                 kvn_text, _, _, _, _, _ = run_online_episode(
@@ -174,6 +177,7 @@ class EvalProbeCallback(BaseCallback):
                     make_kv_norm_evict_fn(self.L, self.n_sinks, self.n_recent),
                     free_growth_cache=self.free_growth_cache,
                     example_idx=cache_key,
+                    protect_prompt=self.protect_prompt,
                 )
                 kvn = float(flexible_extract(kvn_text, [cap.gold_answer]))
 
@@ -235,6 +239,7 @@ class EvalProbeCallback(BaseCallback):
                 per_layer_imp=p["per_layer_imp"],
                 free_growth_cache=self.free_growth_cache,
                 example_idx=self.PROBE_CACHE_OFFSET + pi,
+                protect_prompt=self.protect_prompt,
             )
             learned.append(float(flexible_extract(text, [p["gold"]])))
             corrs.extend(corr)
