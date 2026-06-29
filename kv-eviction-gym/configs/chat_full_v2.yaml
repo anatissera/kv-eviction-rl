@@ -1,0 +1,68 @@
+# CONTROL arm (v2) — chat template + fixed budget=256 + NO prompt protection.
+#
+# Supersedes chat_full_v1 (which crashed via _replace_slice and used an
+# infeasible 200→120 curriculum). Changes vs v1:
+#   - Fixed budget=256 (NO curriculum): 256 > max chat-format prompt T (=232 over
+#     the 1000 train examples), so the batched env never skips an example for
+#     T > shared_budget and never hits the _replace_slice size mismatch. See
+#     BUDGET_AND_CRASH_FIX.md.
+#   - protect_prompt: false — the agent MAY evict prompt tokens. Only the standard
+#     StreamingLLM-style protection remains (n_sinks=4 + n_recent=32). This is the
+#     more standard / harder KV-eviction problem.
+#
+# This is the CONTROL of the A/B against chat_full_s4_kl (TREATMENT). The ONLY
+# difference between them is the per-step S4-exact KL shaping block. Everything
+# else — budget=256, protect_prompt=false, max_len=288, n_examples=1000, seed=0,
+# entropy_reward_weight=0.001, penalties, 5M horizon — is IDENTICAL.
+
+model_name: qwen-1.5b
+device:     auto
+
+n_examples: 1000
+seed: 0
+
+# Fixed budget=256 ≥ max chat prompt T (=232) → uniform cache, no skip, no crash.
+# NO curriculum keys (budget_min_start/end, curriculum_fraction removed) so
+# train.py's has_curriculum is False → shared budget stays fixed at 256.
+budget_min: 256
+budget_max: 256
+
+max_len:        288     # > budget+1 (=257) and > max T (=232)
+max_new_tokens: 600
+
+use_attention_shaping: false
+attention_weight:      0.0
+shaping_mode:          none
+
+hidden: 64
+
+probe_n:                32
+probe_every_n_rollouts: 15
+probe_n_sinks:          4
+
+n_parallel:   2
+n_steps:      650
+batch_size:   512
+
+n_epochs:     4
+gamma:        1.0
+gae_lambda:   1.0
+clip_range:   0.2
+ent_coef:     0.01
+total_timesteps: 5000000
+
+n_sinks:  4
+n_recent: 32
+
+length_penalty_weight: 0.5
+truncation_penalty:    1.0
+
+entropy_reward_weight: 0.001
+
+repeats_per_problem: 5
+
+attn_implementation: sdpa
+
+free_growth_cache_dir: ~/.kv_eviction_cache
+
+protect_prompt: false

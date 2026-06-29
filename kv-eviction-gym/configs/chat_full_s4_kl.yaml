@@ -7,9 +7,10 @@
 #   r_step[b] = -kl_weight * clip(KL(p_full[b] || p_evict[b]), 0, kl_clip)
 #
 # Comparability (must hold for the A/B to be valid):
-#   same n_examples=1000, same seed=0, same budget curriculum 200→120, same
-#   probe (probe_n=32), same 5M horizon, same penalties + entropy_reward_weight.
-# Headline metric: probe `correct_learned` / retention vs chat_full_v1 over steps.
+#   same n_examples=1000, same seed=0, same fixed budget=256, same protect_prompt
+#   =false, same probe (probe_n=32), same 5M horizon, same penalties +
+#   entropy_reward_weight.
+# Headline metric: probe `correct_learned` / retention vs chat_full_v2 over steps.
 # H1: S4-exact separates from random earlier / higher than the control.
 #
 # PRE-REQ on the VM: rm -rf ~/.kv_eviction_cache/*  (stale raw-format tokens),
@@ -22,14 +23,14 @@ n_examples: 1000
 seed: 0
 
 # Fixed budget = 256 ≥ max chat-format prompt length (measured max T=232 over the
-# 1000 train examples). This is REQUIRED for correctness: with protect_prompt the
-# prompt can't be evicted, so budget must be ≥ T; and the batched env needs a
-# uniform cache size, so any example with T > shared_budget crashes _replace_slice
-# (the bug that killed chat_full_v1 at 309k). budget=256 (>232) makes max(256,T)=256
-# for every example → no crash, no env change needed. Compression still happens on
-# generated CoT (~110 of ~250 gen tokens evicted). NO curriculum: the old 200→120
-# floor was infeasible (40.6% of prompts exceed 120; you can't fit a 232-token
-# protected prompt in 120 slots).
+# 1000 train examples). REQUIRED by the batched env: the shared KV is pre-allocated
+# at budget+1 slots, so the T prompt tokens of every episode must fit → budget ≥ T,
+# else the env skips the example (T > shared_budget) and biases the data — or, on
+# older code, crashes _replace_slice (the bug that killed chat_full_v1 at 309k).
+# This holds regardless of protect_prompt. budget=256 (>232) → uniform cache, no
+# skip, no crash. Compression still happens on the generated CoT (~110 of ~250 gen
+# tokens evicted). NO curriculum: the old 200→120 floor was infeasible (40.6% of
+# prompts exceed 120; you can't pre-allocate a 232-token prompt into 120 slots).
 budget_min: 256
 budget_max: 256
 
@@ -71,7 +72,8 @@ attn_implementation: sdpa
 
 free_growth_cache_dir: ~/.kv_eviction_cache
 
-protect_prompt: true
+protect_prompt: false   # matches the control (chat_full_v2): agent may evict
+                        # prompt tokens; only n_sinks=4 + n_recent=32 protected.
 
 # ── S4-exact causal KL shaping (the ONLY difference vs chat_full_v1) ──────────
 # kl_weight CALIBRATED from chat_smoke_s4_kl (7 rollouts, us-east1-c, 2026-06-29):
