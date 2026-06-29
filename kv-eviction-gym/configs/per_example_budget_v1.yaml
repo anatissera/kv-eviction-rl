@@ -1,4 +1,4 @@
-# Training config: per-example budget calibration from FreeGrowthCache.
+# Training config: per-example budget calibration + entropy reward + K-curriculum.
 # Launch with:
 #   python scripts/train.py --config configs/per_example_budget_v1.yaml \
 #                           --run-name per_example_budget_v1
@@ -8,36 +8,53 @@
 #       --cache-dir ~/.kv_eviction_cache \
 #       --model-name qwen-1.5b \
 #       --n-examples 1000 \
-#       --eviction-steps 100 \
+#       --min-cached-len 150 \
 #       --output per_example_budgets.json
 #
 # How it fixes the cold-start problem:
-#   Each cached example i has a calibrated budget[i] = T[i] + len(cached[i]) - K.
+#   Each cached example i has base_budget[i] = T[i] + cached_len[i].
+#   At runtime: ep.budget[i] = base_budget[i] - eviction_k  (annealed by curriculum).
 #   This ensures:
-#     - Free-growth phase hits the cache exactly (no EOS → episode not skipped).
-#     - The RL agent must evict K≈100 tokens to reach the end of the answer.
-#     - With K small, EOS is nearby → episodes almost always complete → correctness fires.
+#     - Cache lookup is always a full hit (n_needed = cached_len - K + 1 ≤ cached_len).
+#     - No EOS in the first n_needed cached tokens → episode NOT skipped.
+#     - Agent must make eviction_k steps to bring EOS into range.
 #
-# Only calibrated examples are used for training (filtered by train.py).
+# K-curriculum (lowering the effective budget over time):
+#   eviction_k_start=20  → easy start: only 20 evictions needed, EOS nearby,
+#                          episodes almost always complete → correctness fires.
+#   eviction_k_end=150   → hard end: 150 evictions, stronger compression required.
+#   This is the "lower min and max with time" effect for per-example budgets.
+#
+# Entropy reward:
+#   entropy_reward_weight=0.001 provides dense per-step signal.
+#   Guards against explained_variance=NaN in early rollouts before correctness fires.
 
 model_name: qwen-1.5b
 device:     auto
 
 # Path to the JSON file produced by compute_per_example_budgets.py.
+# Contains base_budget[i] = T + cached_len (NO K subtracted — K is applied at runtime).
 # train.py will filter examples to only those in this file.
 per_example_budgets_path: per_example_budgets.json
 
 # n_examples must cover all original indices referenced in per_example_budgets.json.
-# Keep at 1000 (same as all other runs) so the index mapping is correct.
 n_examples: 1000
 seed: 0
 
-# These are used as fallback for any example NOT in per_example_budgets_path
-# (which should be none once filtering is applied). Also used for the probe.
+# Fallback shared budget (for probe eval and any un-calibrated examples).
 budget_min: 256
 budget_max: 600
 
-# No curriculum: budgets are fixed per-example from the calibration file.
+# K-curriculum: eviction steps grow from easy (20) to hard (150) over training.
+# Effective budget per example: base_budget[i] - eviction_k  (decreases over time).
+eviction_k_start: 20
+eviction_k_end:   150
+curriculum_fraction: 0.80   # reach eviction_k_end at 80% of training
+
+# budget_min also anneals (for shared-budget fallback / probe).
+budget_min_start: 560
+budget_min_end:   256
+
 max_len:        620
 max_new_tokens: 800
 
@@ -47,9 +64,9 @@ shaping_mode:          none
 
 hidden: 64
 
-probe_n:                 32
-probe_every_n_rollouts:  15
-probe_n_sinks:           4
+probe_n:                32
+probe_every_n_rollouts: 15
+probe_n_sinks:          4
 
 n_parallel:   2
 n_steps:      650
@@ -68,11 +85,12 @@ n_recent: 32
 length_penalty_weight: 0.5
 truncation_penalty:    1.0
 
-# No entropy reward: correctness signal should fire naturally from iteration 1.
-entropy_reward_weight: 0.0
+# Entropy reward: guards against explained_variance=NaN in early rollouts
+# and provides dense per-step signal to differentiate episode returns.
+entropy_reward_weight: 0.001
 
-# 5 repeats: policy gets 5 gradient updates on the same calibrated problems before
-# advancing. Since episodes now complete, later repeats benefit from earlier updates.
+# 5 repeats per problem: policy gets 5 gradient updates on the same calibrated
+# problems before advancing. Later repeats benefit from earlier updates.
 repeats_per_problem: 5
 
 attn_implementation: sdpa

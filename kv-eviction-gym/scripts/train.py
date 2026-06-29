@@ -64,34 +64,59 @@ def load_config(path: str) -> dict:
 
 
 class BudgetCurriculumCallback(BaseCallback):
-    """Linearly anneals env.budget_min from budget_min_start → budget_min_end over training.
+    """Linearly anneals budget_min, budget_max, and eviction_k over training.
 
-    Starts easy (large budget → few evictions → episodes complete → real reward signal),
-    then gradually tightens, forcing the policy to learn aggressive eviction.
-    Budget is updated at the start of each rollout so the change takes effect on the
-    next episode reset.
+    budget_min: budget_min_start → budget_min_end (shared budget floor)
+    budget_max: budget_max_start → budget_max_end (shared budget ceiling, optional)
+    eviction_k: eviction_k_start → eviction_k_end (per-example budget difficulty, optional)
+                Small K → budget high → easy (EOS nearby, few evictions).
+                Large K → budget low → hard (strong compression required).
 
-    curriculum_fraction: what fraction of total_timesteps the annealing spans.
-    Default 1.0 = full training.  0.75 = reach budget_min_end at 75% of training
-    so the last quarter trains at the hardest budget.
+    All values updated at the start of each rollout.
+    curriculum_fraction: fraction of total_timesteps the annealing spans.
     """
 
     def __init__(self, budget_min_start: int, budget_min_end: int,
                  total_timesteps: int, curriculum_fraction: float = 1.0,
+                 budget_max_start: int | None = None, budget_max_end: int | None = None,
+                 eviction_k_start: int | None = None, eviction_k_end: int | None = None,
                  verbose: int = 0):
         super().__init__(verbose)
         self.budget_min_start  = budget_min_start
         self.budget_min_end    = budget_min_end
+        self.budget_max_start  = budget_max_start
+        self.budget_max_end    = budget_max_end
+        self.eviction_k_start  = eviction_k_start
+        self.eviction_k_end    = eviction_k_end
         self.curriculum_end_ts = int(total_timesteps * max(curriculum_fraction, 1e-6))
 
     def _on_rollout_start(self) -> None:
-        frac    = min(self.num_timesteps / self.curriculum_end_ts, 1.0)
+        frac = min(self.num_timesteps / self.curriculum_end_ts, 1.0)
+        env  = self.training_env.venv   # VecMonitor wraps the underlying env
+
         new_min = int(self.budget_min_start
                       + (self.budget_min_end - self.budget_min_start) * frac)
-        # VecMonitor wraps SharedKVVecEnv; .venv reaches the underlying env.
-        self.training_env.venv.budget_min = new_min
+        env.budget_min = new_min
+
+        if self.budget_max_start is not None and self.budget_max_end is not None:
+            new_max = int(self.budget_max_start
+                          + (self.budget_max_end - self.budget_max_start) * frac)
+            env.budget_max = new_max
+        else:
+            new_max = None
+
+        if self.eviction_k_start is not None and self.eviction_k_end is not None:
+            new_k = int(self.eviction_k_start
+                        + (self.eviction_k_end - self.eviction_k_start) * frac)
+            env._eviction_k = new_k
+        else:
+            new_k = None
+
         if self.verbose:
-            print(f"  [curriculum] budget_min={new_min}  (frac={frac:.2f})")
+            parts = [f"budget_min={new_min}"]
+            if new_max is not None: parts.append(f"budget_max={new_max}")
+            if new_k   is not None: parts.append(f"eviction_k={new_k}")
+            print(f"  [curriculum] {', '.join(parts)}  (frac={frac:.2f})")
 
     def _on_step(self) -> bool:
         return True
@@ -297,22 +322,27 @@ def main():
     n_parallel = cfg.get("n_parallel", 1)
 
     # Per-example budget calibration: optionally restrict training to examples
-    # with pre-computed budgets derived from the FreeGrowthCache.
-    per_example_budgets = None
+    # with pre-computed base budgets (T + cached_len) from the FreeGrowthCache.
+    # Effective budget at runtime = base_budget - eviction_k (annealed by curriculum).
+    per_example_base_budgets = None
     per_example_budgets_path = cfg.get("per_example_budgets_path", None)
     if per_example_budgets_path:
         with open(per_example_budgets_path) as f:
-            raw_budgets = json.load(f)           # {str(original_idx): budget}
+            raw_budgets = json.load(f)           # {str(original_idx): base_budget}
         calibrated_set = {int(k) for k in raw_budgets}
-        filtered_examples  = [ex for i, ex in enumerate(examples) if i in calibrated_set]
-        new_idx_map        = {old_i: new_i
-                              for new_i, old_i in enumerate(
-                                  i for i in range(len(examples)) if i in calibrated_set)}
-        per_example_budgets = {new_idx_map[int(k)]: v for k, v in raw_budgets.items()
-                               if int(k) in new_idx_map}
-        print(f"per_example_budgets: {len(filtered_examples)}/{len(examples)} calibrated examples "
-              f"(budget range=[{min(per_example_budgets.values())}, "
-              f"{max(per_example_budgets.values())}])")
+        filtered_examples    = [ex for i, ex in enumerate(examples) if i in calibrated_set]
+        new_idx_map          = {old_i: new_i
+                                for new_i, old_i in enumerate(
+                                    i for i in range(len(examples)) if i in calibrated_set)}
+        per_example_base_budgets = {new_idx_map[int(k)]: v for k, v in raw_budgets.items()
+                                    if int(k) in new_idx_map}
+        k_start = cfg.get("eviction_k_start", cfg.get("eviction_k", 100))
+        k_end   = cfg.get("eviction_k_end",   cfg.get("eviction_k", 100))
+        base_vals = list(per_example_base_budgets.values())
+        print(f"per_example_base_budgets: {len(filtered_examples)}/{len(examples)} calibrated "
+              f"examples  base_budget=[{min(base_vals)}, {max(base_vals)}]  "
+              f"effective_budget=[{min(base_vals)-k_start}, {max(base_vals)-k_end}] "
+              f"(eviction_k: {k_start}→{k_end})")
         examples = filtered_examples
 
     fg_cache = None
@@ -357,7 +387,8 @@ def main():
             kl_mode=cfg.get("kl_mode", "exact"),
             kl_weight=cfg.get("kl_weight", 0.0),
             kl_clip=cfg.get("kl_clip", 5.0),
-            per_example_budgets=per_example_budgets,
+            per_example_base_budgets=per_example_base_budgets,
+            eviction_k=cfg.get("eviction_k_start", cfg.get("eviction_k", 100)),
             **env_kwargs,
         )
     else:
@@ -375,19 +406,36 @@ def main():
         ),
     ]
 
-    budget_min_start = cfg.get("budget_min_start", None)
-    budget_min_end   = cfg.get("budget_min_end",   None)
-    if budget_min_start is not None and budget_min_end is not None:
-        total_ts           = cfg.get("total_timesteps", 500_000)
-        curriculum_frac    = cfg.get("curriculum_fraction", 1.0)
-        curriculum_end_ts  = int(total_ts * curriculum_frac)
-        print(f"budget curriculum: {budget_min_start} → {budget_min_end} "
+    budget_min_start  = cfg.get("budget_min_start",  None)
+    budget_min_end    = cfg.get("budget_min_end",    None)
+    budget_max_start  = cfg.get("budget_max_start",  None)
+    budget_max_end    = cfg.get("budget_max_end",    None)
+    eviction_k_start  = cfg.get("eviction_k_start",  None)
+    eviction_k_end    = cfg.get("eviction_k_end",    None)
+    has_curriculum = (budget_min_start is not None and budget_min_end is not None) or \
+                     (eviction_k_start is not None and eviction_k_end is not None)
+    if has_curriculum:
+        total_ts          = cfg.get("total_timesteps", 500_000)
+        curriculum_frac   = cfg.get("curriculum_fraction", 1.0)
+        curriculum_end_ts = int(total_ts * curriculum_frac)
+        parts = []
+        if budget_min_start is not None:
+            parts.append(f"budget_min: {budget_min_start}→{budget_min_end}")
+        if budget_max_start is not None:
+            parts.append(f"budget_max: {budget_max_start}→{budget_max_end}")
+        if eviction_k_start is not None:
+            parts.append(f"eviction_k: {eviction_k_start}→{eviction_k_end}")
+        print(f"curriculum: {', '.join(parts)} "
               f"over first {curriculum_frac:.0%} of training ({curriculum_end_ts:,} steps)")
         callback_list.append(BudgetCurriculumCallback(
-            budget_min_start=budget_min_start,
-            budget_min_end=budget_min_end,
+            budget_min_start=budget_min_start or cfg.get("budget_min", 256),
+            budget_min_end=budget_min_end or cfg.get("budget_min", 256),
             total_timesteps=total_ts,
             curriculum_fraction=curriculum_frac,
+            budget_max_start=budget_max_start,
+            budget_max_end=budget_max_end,
+            eviction_k_start=eviction_k_start,
+            eviction_k_end=eviction_k_end,
             verbose=1,
         ))
 

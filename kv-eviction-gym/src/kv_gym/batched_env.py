@@ -186,7 +186,8 @@ class BatchedSharedKVVecEnv(VecEnv):
         kl_mode:               str   = "exact",   # "exact" (KL-to-full) | "proxy" (self-entropy)
         kl_weight:             float = 0.0,
         kl_clip:               float = 5.0,
-        per_example_budgets:   dict[int, int] | None = None,
+        per_example_base_budgets: dict[int, int] | None = None,
+        eviction_k:               int = 100,
     ):
         self.model                 = model
         self.tokenizer             = tokenizer
@@ -214,8 +215,12 @@ class BatchedSharedKVVecEnv(VecEnv):
         self.kl_mode               = kl_mode
         self.kl_weight             = kl_weight
         self.kl_clip               = kl_clip
-        self._per_example_budgets  = per_example_budgets   # {example_idx → budget} or None
-        self._example_cursor: int  = 0   # tracks which example we're on for cache keys
+        # Per-example budget calibration. Values are base_budget = T + cached_len.
+        # Effective budget at runtime: base_budget - self._eviction_k.
+        # Updated by BudgetCurriculumCallback to anneal K from easy → hard.
+        self._per_example_base_budgets = per_example_base_budgets
+        self._eviction_k: int          = eviction_k
+        self._example_cursor: int      = 0   # tracks which example we're on for cache keys
 
         cfg             = model.config
         self.n_layers   = cfg.num_hidden_layers
@@ -518,9 +523,11 @@ class BatchedSharedKVVecEnv(VecEnv):
                 self._forced_example_idx[b] = None
                 continue
 
-            if (self._per_example_budgets is not None
-                    and example_idx in self._per_example_budgets):
-                ep.budget = max(self._per_example_budgets[example_idx], T)
+            if (self._per_example_base_budgets is not None
+                    and example_idx in self._per_example_base_budgets):
+                # base_budget = T + cached_len; subtract current K for effective budget.
+                base = self._per_example_base_budgets[example_idx]
+                ep.budget = max(base - self._eviction_k, T)
             else:
                 ep.budget = max(self._shared_budget, T)
             ep.prompt_len = T
