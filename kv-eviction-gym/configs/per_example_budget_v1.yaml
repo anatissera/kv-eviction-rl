@@ -1,0 +1,80 @@
+# Training config: per-example budget calibration from FreeGrowthCache.
+# Launch with:
+#   python scripts/train.py --config configs/per_example_budget_v1.yaml \
+#                           --run-name per_example_budget_v1
+#
+# Prerequisite — run ONCE on the VM to generate the budget file:
+#   python scripts/compute_per_example_budgets.py \
+#       --cache-dir ~/.kv_eviction_cache \
+#       --model-name qwen-1.5b \
+#       --n-examples 1000 \
+#       --eviction-steps 100 \
+#       --output per_example_budgets.json
+#
+# How it fixes the cold-start problem:
+#   Each cached example i has a calibrated budget[i] = T[i] + len(cached[i]) - K.
+#   This ensures:
+#     - Free-growth phase hits the cache exactly (no EOS → episode not skipped).
+#     - The RL agent must evict K≈100 tokens to reach the end of the answer.
+#     - With K small, EOS is nearby → episodes almost always complete → correctness fires.
+#
+# Only calibrated examples are used for training (filtered by train.py).
+
+model_name: qwen-1.5b
+device:     auto
+
+# Path to the JSON file produced by compute_per_example_budgets.py.
+# train.py will filter examples to only those in this file.
+per_example_budgets_path: per_example_budgets.json
+
+# n_examples must cover all original indices referenced in per_example_budgets.json.
+# Keep at 1000 (same as all other runs) so the index mapping is correct.
+n_examples: 1000
+seed: 0
+
+# These are used as fallback for any example NOT in per_example_budgets_path
+# (which should be none once filtering is applied). Also used for the probe.
+budget_min: 256
+budget_max: 600
+
+# No curriculum: budgets are fixed per-example from the calibration file.
+max_len:        620
+max_new_tokens: 800
+
+use_attention_shaping: false
+attention_weight:      0.0
+shaping_mode:          none
+
+hidden: 64
+
+probe_n:                 32
+probe_every_n_rollouts:  15
+probe_n_sinks:           4
+
+n_parallel:   2
+n_steps:      650
+batch_size:   512
+
+n_epochs:     4
+gamma:        1.0
+gae_lambda:   1.0
+clip_range:   0.2
+ent_coef:     0.01
+total_timesteps: 5000000
+
+n_sinks:  4
+n_recent: 32
+
+length_penalty_weight: 0.5
+truncation_penalty:    1.0
+
+# No entropy reward: correctness signal should fire naturally from iteration 1.
+entropy_reward_weight: 0.0
+
+# 5 repeats: policy gets 5 gradient updates on the same calibrated problems before
+# advancing. Since episodes now complete, later repeats benefit from earlier updates.
+repeats_per_problem: 5
+
+attn_implementation: sdpa
+
+free_growth_cache_dir: ~/.kv_eviction_cache

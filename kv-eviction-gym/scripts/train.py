@@ -296,6 +296,25 @@ def main():
 
     n_parallel = cfg.get("n_parallel", 1)
 
+    # Per-example budget calibration: optionally restrict training to examples
+    # with pre-computed budgets derived from the FreeGrowthCache.
+    per_example_budgets = None
+    per_example_budgets_path = cfg.get("per_example_budgets_path", None)
+    if per_example_budgets_path:
+        with open(per_example_budgets_path) as f:
+            raw_budgets = json.load(f)           # {str(original_idx): budget}
+        calibrated_set = {int(k) for k in raw_budgets}
+        filtered_examples  = [ex for i, ex in enumerate(examples) if i in calibrated_set]
+        new_idx_map        = {old_i: new_i
+                              for new_i, old_i in enumerate(
+                                  i for i in range(len(examples)) if i in calibrated_set)}
+        per_example_budgets = {new_idx_map[int(k)]: v for k, v in raw_budgets.items()
+                               if int(k) in new_idx_map}
+        print(f"per_example_budgets: {len(filtered_examples)}/{len(examples)} calibrated examples "
+              f"(budget range=[{min(per_example_budgets.values())}, "
+              f"{max(per_example_budgets.values())}])")
+        examples = filtered_examples
+
     fg_cache = None
     fg_cache_dir = cfg.get("free_growth_cache_dir", None)
     if fg_cache_dir:
@@ -338,6 +357,7 @@ def main():
             kl_mode=cfg.get("kl_mode", "exact"),
             kl_weight=cfg.get("kl_weight", 0.0),
             kl_clip=cfg.get("kl_clip", 5.0),
+            per_example_budgets=per_example_budgets,
             **env_kwargs,
         )
     else:
