@@ -1,0 +1,75 @@
+# S4-KL TREATMENT — chat_full_v1 (Alex's baseline) + S4-exact causal KL shaping.
+#
+# This is the TREATMENT arm of the A/B against Alex's chat_full_v1 CONTROL.
+# It is a byte-for-byte copy of chat_full_v1 EXCEPT for the kl_* block at the
+# bottom, so the ONLY difference between control and treatment is the per-step
+# causal KL signal:
+#   r_step[b] = -kl_weight * clip(KL(p_full[b] || p_evict[b]), 0, kl_clip)
+#
+# Comparability (must hold for the A/B to be valid):
+#   same n_examples=1000, same seed=0, same budget curriculum 200→120, same
+#   probe (probe_n=32), same 5M horizon, same penalties + entropy_reward_weight.
+# Headline metric: probe `correct_learned` / retention vs chat_full_v1 over steps.
+# H1: S4-exact separates from random earlier / higher than the control.
+#
+# PRE-REQ on the VM: rm -rf ~/.kv_eviction_cache/*  (stale raw-format tokens),
+# and SET kl_weight from the calibration smoke (chat_smoke_s4_kl) first.
+
+model_name: qwen-1.5b
+device:     auto
+
+n_examples: 1000
+seed: 0
+
+budget_min: 200
+budget_max: 200
+
+budget_min_start: 200
+budget_min_end:   120
+curriculum_fraction: 0.80
+
+max_len:        250
+max_new_tokens: 600
+
+use_attention_shaping: false
+attention_weight:      0.0
+shaping_mode:          none
+
+hidden: 64
+
+probe_n:                32
+probe_every_n_rollouts: 15
+probe_n_sinks:          4
+
+n_parallel:   2
+n_steps:      650
+batch_size:   512
+
+n_epochs:     4
+gamma:        1.0
+gae_lambda:   1.0
+clip_range:   0.2
+ent_coef:     0.01
+total_timesteps: 5000000
+
+n_sinks:  4
+n_recent: 32
+
+length_penalty_weight: 0.5
+truncation_penalty:    1.0
+
+entropy_reward_weight: 0.001    # identical to baseline — isolates the KL term
+
+repeats_per_problem: 5
+
+attn_implementation: sdpa
+
+free_growth_cache_dir: ~/.kv_eviction_cache
+
+protect_prompt: true
+
+# ── S4-exact causal KL shaping (the ONLY difference vs chat_full_v1) ──────────
+kl_shaping: true
+kl_mode:    exact
+kl_weight:  0.05      # SET from chat_smoke_s4_kl calibration before launching
+kl_clip:    5.0
