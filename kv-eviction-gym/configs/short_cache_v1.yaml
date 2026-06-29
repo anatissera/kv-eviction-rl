@@ -1,0 +1,85 @@
+# Training config: shortest cached examples only.
+#
+# Uses per_example_budgets_short.json — the 160 cached examples with
+# base_budget (T + cached_len) <= 450, i.e. cached_len <= ~359.
+#
+# Rationale: we don't know gen_len for cached examples (they were cached
+# because EOS didn't appear during free-growth). But shorter cached_len
+# examples are most likely to have gen_len close to cached_len, and thus
+# to complete within max_new_tokens during the RL phase.
+#
+# Budget math (same as per_example_budget_v1):
+#   ep.budget = base_budget - eviction_k
+#   n_fg = cached_len - eviction_k  (served from FreeGrowthCache)
+#   EOS does NOT appear in first n_fg tokens (cache construction guarantee)
+#   RL phase: agent evicts, model generates; episode ends when EOS appears
+#   or max_new_tokens hit.
+#   Episode completes iff gen_len <= max_new_tokens.
+#
+# With cached_len in [263, 359] and max_new_tokens=900:
+#   Any example with gen_len <= 900 will complete → correctness reward fires.
+#   Even if only 20-30% of 160 examples have gen_len <= 900, that's 30-50
+#   completing examples — enough signal to train.
+#
+# K-curriculum: eviction_k 20→100, constrained by min cached_len=263.
+#   At K=100: n_fg = cached_len - 100 >= 163 (still positive) ✓
+#   At K=20:  n_fg = cached_len - 20  >= 243  ✓
+#
+# max_len must be >= max(ep.budget) = max(base_budget) - eviction_k_start
+#           = 450 - 20 = 430. Set to 460 with slack.
+
+model_name: qwen-1.5b
+device:     auto
+
+per_example_budgets_path: per_example_budgets_short.json
+n_examples: 1000
+
+seed: 0
+
+budget_min: 200
+budget_max: 430
+
+eviction_k_start: 20
+eviction_k_end:   100
+curriculum_fraction: 0.80
+
+budget_min_start: 400
+budget_min_end:   200
+
+max_len:        460
+max_new_tokens: 900
+
+use_attention_shaping: false
+attention_weight:      0.0
+shaping_mode:          none
+
+hidden: 64
+
+probe_n:                32
+probe_every_n_rollouts: 15
+probe_n_sinks:          4
+
+n_parallel:   2
+n_steps:      650
+batch_size:   512
+
+n_epochs:     4
+gamma:        1.0
+gae_lambda:   1.0
+clip_range:   0.2
+ent_coef:     0.01
+total_timesteps: 5000000
+
+n_sinks:  4
+n_recent: 32
+
+length_penalty_weight: 0.5
+truncation_penalty:    1.0
+
+entropy_reward_weight: 0.001
+
+repeats_per_problem: 5
+
+attn_implementation: sdpa
+
+free_growth_cache_dir: ~/.kv_eviction_cache
