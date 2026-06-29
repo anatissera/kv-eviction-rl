@@ -51,7 +51,7 @@ from kv_gym.eval_core import valid_action_mask
 from kv_gym.free_growth_cache import FreeGrowthCache
 from kv_gym.rewards.attention_shaping import compute_token_importance
 from kv_gym.vendor.answer_extraction_gsm8k import flexible_extract
-from kv_gym.vendor.prompts import format_gsm8k
+from kv_gym.vendor.prompts import format_gsm8k_chat
 
 logger = logging.getLogger(__name__)
 
@@ -221,7 +221,7 @@ class SharedKVVecEnv(VecEnv):
         example      = self.examples[example_idx]
         self._example_cursor += 1
 
-        prompt_text, _ = format_gsm8k(example)
+        prompt_text, _ = format_gsm8k_chat(self.tokenizer, example)
         self.gold_answer = example["gold_answers"][0]
 
         inputs = self.tokenizer(prompt_text, return_tensors="pt").to(self.device)

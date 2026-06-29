@@ -11,12 +11,29 @@ Every run so far died against the **same wall**, regardless of the reward:
 | `corr_reward_v1` (Alex) | correctness + entropy | 100% trunc, retention=0, evict_generated_frac≈0.90 |
 | `s4_kl_v1` (ours) | correctness + KL-to-full (S4-exact) | 100% trunc, retention 0-5%, identical pattern |
 
-**Root cause (not the reward, it is structural):** the *free-growth skip*
-(`batched_env._reset_episode`: `if eos_id in fg_tokens: continue`) silently discards
-every example where EOS appears during free-growth → the training set is biased
-towards purely hard examples (gen_len ≫ max_new_tokens) → **every episode truncates →
-correctness=0% → EV=NaN → nothing is learned.** The `FreeGrowthCache` (694 entries) contains
-ONLY hard examples by construction.
+**REAL root cause (corrected 2026-06-29 — supersedes the HANDOFF diagnosis):** the pipeline
+passed the prompt **raw, with no chat template**. Qwen2.5-**Instruct** was fine-tuned to
+answer inside an `<|im_start|>assistant … <|im_end|>` frame and to emit its end-of-turn
+token (which IS `tokenizer.eos_token_id = 151645 = <|im_end|>`) to stop. With a raw prompt the
+model never enters that frame → **it never emits EOS → it generates up to the cap ALWAYS.** Hard
+evidence (same model, same examples): raw prompt = **0/300** terminate (gen_len=600 for all);
+chat template = **5/5** terminate (gen_len 206–302, EOS emitted). This explains everything at once:
+100% truncation, correctness=0%, EV=NaN, and the *free-growth skip* (`if eos_id in fg_tokens`)
+**never even fired** because EOS never appeared. The HANDOFF's "the skip discards easy examples"
+was a symptom, not the cause.
+
+**FIX (commit on main 2026-06-29):** `format_gsm8k_chat(tokenizer, example)` wraps the prompt
+with `apply_chat_template(..., add_generation_prompt=True)`. Applied at EVERY tokenization
+chokepoint: `capture.py` (eval+probe), `batched_env.py` + `env.py` (training), and the scripts
+`find_easy_examples.py` / `compute_per_example_budgets.py` / `measure_gen_lengths.py`. Answer
+extraction (`flexible_extract` = last number in the text) already handles the Instruct format
+(`\boxed{}`, `**$X**`) without needing `####`. Test: `tests/test_chat_template.py`.
+**Operational to-do:** clear `~/.kv_eviction_cache` on the VM (the cached tokens are in the old
+raw format) before the next run.
+
+Earlier diagnosis (from the HANDOFF, now reinterpreted as a symptom): the *free-growth skip*
+discarded examples where EOS appears in free-growth → bias towards hard ones. With EOS working,
+almost every example terminates in [150,400] on its own, so `find_easy` is barely needed.
 
 **Key handoff finding (rules out one route):** the attention signal is **useless for GSM8K**
 (`attn_oracle = 0.100 = random`, worse than `kv_norm = 0.133`). Warm-starting from attention is

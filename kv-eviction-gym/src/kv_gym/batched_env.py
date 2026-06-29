@@ -38,7 +38,7 @@ from kv_gym.features import feature_dim
 from kv_gym.eval_core import valid_action_mask
 from kv_gym.rewards.attention_shaping import compute_token_importance
 from kv_gym.vendor.answer_extraction_gsm8k import flexible_extract
-from kv_gym.vendor.prompts import format_gsm8k
+from kv_gym.vendor.prompts import format_gsm8k_chat
 from kv_gym.free_growth_cache import FreeGrowthCache
 from transformers import DynamicCache
 
@@ -536,7 +536,7 @@ class BatchedSharedKVVecEnv(VecEnv):
                 self._example_cursor += 1
             example = self.examples[example_idx]
 
-            prompt_txt, _ = format_gsm8k(example)
+            prompt_txt, _ = format_gsm8k_chat(self.tokenizer, example)
             ep.gold_answer = example["gold_answers"][0]
 
             inputs = self.tokenizer(prompt_txt, return_tensors="pt").to(self.device)
