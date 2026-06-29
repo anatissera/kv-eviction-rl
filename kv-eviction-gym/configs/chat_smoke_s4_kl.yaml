@@ -19,10 +19,12 @@ device:     auto
 n_examples: 1000
 seed: 0
 
-budget_min: 200
-budget_max: 200
+# Fixed budget=256 ≥ max chat prompt T (measured max=232) → no _replace_slice
+# crash (the bug that killed chat_full_v1). See chat_full_s4_kl.yaml header.
+budget_min: 256
+budget_max: 256
 
-max_len:        250
+max_len:        288     # > budget+1 (=257) and > max T (=232)
 max_new_tokens: 600
 
 use_attention_shaping: false

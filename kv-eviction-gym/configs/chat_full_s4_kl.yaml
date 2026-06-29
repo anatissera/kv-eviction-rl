@@ -21,14 +21,19 @@ device:     auto
 n_examples: 1000
 seed: 0
 
-budget_min: 200
-budget_max: 200
+# Fixed budget = 256 ≥ max chat-format prompt length (measured max T=232 over the
+# 1000 train examples). This is REQUIRED for correctness: with protect_prompt the
+# prompt can't be evicted, so budget must be ≥ T; and the batched env needs a
+# uniform cache size, so any example with T > shared_budget crashes _replace_slice
+# (the bug that killed chat_full_v1 at 309k). budget=256 (>232) makes max(256,T)=256
+# for every example → no crash, no env change needed. Compression still happens on
+# generated CoT (~110 of ~250 gen tokens evicted). NO curriculum: the old 200→120
+# floor was infeasible (40.6% of prompts exceed 120; you can't fit a 232-token
+# protected prompt in 120 slots).
+budget_min: 256
+budget_max: 256
 
-budget_min_start: 200
-budget_min_end:   120
-curriculum_fraction: 0.80
-
-max_len:        250
+max_len:        288     # > budget+1 (=257) and > max T (=232)
 max_new_tokens: 600
 
 use_attention_shaping: false
