@@ -1,36 +1,34 @@
-# PHASE 0c — validation SMOKE for the cold-start unblock.
+# PHASE 0c — validation SMOKE for the unblock (post chat-template fix).
 # The smoke also CALIBRATES: if truncation_rate stays high, adjust `budget_*`.
-# Goal: confirm H0 — with the easy set (gen_len∈[150,400]) + protection of the
-# The smoke also CALIBRATES: if truncation_rate stays high, adjust `budget_*`. prompt, correctness DISPARA en los primeros rollouts:
-#     truncation_rate < 1.0  Y  correct_learned > 0  (en learning_curve.csv / probe_curve.csv)
+# Context: the real root cause was the RAW prompt (no chat template) → the Instruct
+# model never emitted EOS → 100% truncation. Fix already on main (format_gsm8k_chat).
+# With EOS working the examples terminate on their own (gen_len ~200-300), so find_easy
+# and per-example budgets are NO longer needed. On top of that the batched env
+# (n_parallel=2) requires a UNIFORM budget (Alex, 2026-06-29), so we use a fixed
+# The smoke also CALIBRATES: if truncation_rate stays high, adjust `budget_*`.
 #
-# PREREQUISITE (run ONCE on the VM, ~30-60 min):
-# The smoke also CALIBRATES: if truncation_rate stays high, adjust `budget_*`.   python scripts/find_easy_examples.py --model-name qwen-1.5b --n-examples 1000 \
-#       --max-gen-len 400 --min-gen-len 150 --output per_example_budgets_easy.json
+# H0 goal: with a fixed budget + prompt protection, correctness FIRES:
+#     truncation_rate < 1.0  AND  correct_learned > 0   (in probe_curve.csv)
+# The smoke also CALIBRATES: if truncation_rate stays high, adjust `budget_*`.
 #
-# Diferencias vs easy_examples_v1 (de Alex): protect_prompt ON, eviction_k bajo y
-# CONSTANT (as easy as possible so EOS shows up fast), tiny run.
+#     rm -rf ~/.kv_eviction_cache/*
 
 model_name: qwen-1.5b
 device:     auto
 
-per_example_budgets_path: per_example_budgets_easy.json
-n_examples: 1000
-
+# No per-example budgets: we train over ALL the examples (EOS works now).
+# (per_example_budgets_path omitido a propósito.)
+n_examples: 200
 seed: 0
 
-budget_min: 200
-budget_max: 450
+# Budget fijo compartido. Razonamiento: T≈110, gen_len≈206-302 → T+gen_len∈[311,429].
+# Fixed shared budget. Reasoning: T≈110, gen_len≈206-302 → T+gen_len∈[311,429].
+# example is NOT discarded and correctness can fire. ~104 eviction steps.
+budget_min: 256
+budget_max: 256
+# No curriculum for the smoke (clean interpretation of H0). budget_*_start/end omitted.
 
-# K constant and low: few evictions before EOS → correctness fires right away.
-eviction_k_start: 20
-eviction_k_end:   20
-curriculum_fraction: 0.80
-
-budget_min_start: 400
-budget_min_end:   200
-
-max_len:        500
+max_len:        320     # > budget+1 (=257); cache nunca excede budget+1
 max_new_tokens: 600
 
 use_attention_shaping: false
@@ -40,7 +38,7 @@ shaping_mode:          none
 hidden: 64
 
 # Probe chico y frecuente para ver señal rápido.
-probe_n:                4
+probe_n:                8
 probe_every_n_rollouts: 2
 probe_n_sinks:          4
 
@@ -53,7 +51,6 @@ gamma:        1.0
 gae_lambda:   1.0
 clip_range:   0.2
 ent_coef:     0.01
-# Tiny run: ~a few rollouts, enough to see whether correctness fires.
 total_timesteps: 120000
 
 n_sinks:  4
@@ -70,5 +67,5 @@ attn_implementation: sdpa
 
 free_growth_cache_dir: ~/.kv_eviction_cache
 
-# ── EL DESBLOQUEO NUEVO ──────────────────────────────────────────────────────
+# ── Protección del prompt (Fase 0a) ──────────────────────────────────────────
 protect_prompt: true
