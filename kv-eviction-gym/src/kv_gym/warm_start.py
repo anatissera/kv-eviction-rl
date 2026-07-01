@@ -37,26 +37,32 @@ def behavior_clone_kv_norm(
     policy.set_training_mode(True)
     opt     = torch.optim.Adam(policy.parameters(), lr=lr)
     kv_half = n_kv_heads * head_dim
+    # column of kvz (the exact standardized ||K||+||V|| kv_norm signal) in the obs:
+    # after the kv_dim K||V block come the extra cols [kz_h(H), vz_h(H), kz_mean,
+    # vz_mean, kvz, ...]; kvz is at extra index 2H+2.
+    kvz_col = 2 * kv_half + 2 * n_kv_heads + 2
+    TARGET_SCALE = 3.0     # peak the cloned policy at kv_norm's choice (PPO sharpens further)
 
     obs  = env.reset()
     last_loss = float("nan")
     last_acc  = 0.0
     for step in range(n_bc_steps):
-        masks  = get_action_masks(env)                        # [B, max_len] bool
-        obs_t  = obs_as_tensor(obs, device).float()
-        B, Lmax, _ = obs_t.shape
-
-        # exact kv_norm score from the raw K||V columns of the obs
-        Kp = obs_t[..., :kv_half].reshape(B, Lmax, n_kv_heads, head_dim)
-        Vp = obs_t[..., kv_half:2 * kv_half].reshape(B, Lmax, n_kv_heads, head_dim)
-        score = Kp.norm(dim=-1).mean(-1) + Vp.norm(dim=-1).mean(-1)   # [B, max_len]
+        masks   = get_action_masks(env)                       # [B, max_len] bool
+        obs_t   = obs_as_tensor(obs, device).float()
         masks_t = torch.as_tensor(np.asarray(masks), device=device, dtype=torch.bool)
-        score  = score.masked_fill(~masks_t, float("inf"))
-        target = score.argmin(dim=-1)                         # [B] kv_norm's slot
 
-        dist   = policy.get_distribution(obs_t, action_masks=masks)
-        logits = dist.distribution.logits                     # [B, max_len] (masked)
-        loss   = F.cross_entropy(logits, target)
+        # DENSE target: regress the actor logits to -kvz on every valid slot, so
+        # argmax(logits) = argmin(kvz) = kv_norm's exact choice. Dense (all slots
+        # supervised) → stable/fast, unlike the noisy 220-way argmin cross-entropy.
+        kvz    = obs_t[..., kvz_col]                          # [B, max_len]
+        target = (-kvz * TARGET_SCALE)
+
+        features  = policy.extract_features(obs_t)
+        latent_pi = policy.mlp_extractor.forward_actor(features)
+        logits    = policy.action_net(latent_pi)             # [B, max_len] raw actor logits
+
+        diff = (logits - target) * masks_t.float()
+        loss = (diff.pow(2).sum(dim=-1) / masks_t.float().sum(dim=-1).clamp(min=1)).mean()
 
         opt.zero_grad()
         loss.backward()
@@ -65,13 +71,17 @@ def behavior_clone_kv_norm(
 
         last_loss = float(loss.item())
         with torch.no_grad():
-            last_acc = float((logits.argmax(-1) == target).float().mean().item())
+            # match = does the greedy (masked) action equal kv_norm's argmin(kvz)?
+            kvz_masked  = kvz.masked_fill(~masks_t, float("inf"))
+            kvn_choice  = kvz_masked.argmin(dim=-1)
+            pol_choice  = logits.masked_fill(~masks_t, float("-inf")).argmax(dim=-1)
+            last_acc    = float((pol_choice == kvn_choice).float().mean().item())
         if step % log_every == 0:
             print(f"  [BC] step {step}/{n_bc_steps} loss={last_loss:.4f} "
                   f"match_kv_norm={last_acc:.3f}", flush=True)
 
         # advance along kv_norm's own trajectory (finished episodes auto-reset)
-        obs, _, _, _ = env.step(target.detach().cpu().numpy())
+        obs, _, _, _ = env.step(kvn_choice.detach().cpu().numpy())
 
     policy.set_training_mode(False)
     print(f"  [BC] done: final loss={last_loss:.4f} match_kv_norm={last_acc:.3f}", flush=True)
