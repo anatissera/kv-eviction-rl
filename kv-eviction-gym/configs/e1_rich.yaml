@@ -65,3 +65,7 @@ free_growth_cache_dir: ~/.kv_eviction_cache
 protect_prompt: false
 
 rich_features: true          # E1: the only change vs chat_full_v2
+
+# Checkpoint every ~900 wall-steps ≈ 50k timesteps (save_freq counts on_step
+# calls = wall-steps; batched env = 56 timesteps/wall-step). Enables spot resume.
+checkpoint_freq: 900

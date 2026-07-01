@@ -70,3 +70,7 @@ rich_features: true          # E1: the only change vs chat_full_v2
 # lr 2e-3) after the screen's 300-step BC only reached match_kv_norm≈0.29.
 warm_start_bc: 2500
 warm_start_lr: 0.002
+
+# Checkpoint every ~900 wall-steps ≈ 50k timesteps (save_freq counts on_step
+# calls = wall-steps; batched env = 56 timesteps/wall-step). Enables spot resume.
+checkpoint_freq: 900
