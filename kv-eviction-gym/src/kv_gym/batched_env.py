@@ -34,7 +34,7 @@ from gymnasium import spaces
 from stable_baselines3.common.vec_env import VecEnv
 
 from kv_gym.env import _get_layer_kv, _evict_slot
-from kv_gym.features import feature_dim, build_extra_columns, N_EXTRA_RICH
+from kv_gym.features import feature_dim, build_extra_columns, extra_feature_dim
 from kv_gym.eval_core import valid_action_mask
 from kv_gym.rewards.attention_shaping import compute_token_importance
 from kv_gym.vendor.answer_extraction_gsm8k import flexible_extract
@@ -726,9 +726,13 @@ class BatchedSharedKVVecEnv(VecEnv):
                 obs[l, :S, :H*D]      = K_flat
                 obs[l, :S, H*D:2*H*D] = V_flat
                 if self.rich_features:
+                    # orig_pos for this layer's resident slots (env tracks slot_to_pos);
+                    # same source of truth as eval's PositionTracker → identical features.
+                    op   = np.asarray(ep.slot_to_pos[l], dtype=np.int64)[None, :]  # [1, S]
                     cols = build_extra_columns(K.unsqueeze(0), V.unsqueeze(0),
-                                               S, self.max_len)   # [1, S, N_EXTRA_RICH]
-                    obs[l, :S, 2*H*D:2*H*D + N_EXTRA_RICH] = cols[0]
+                                               S, self.max_len, orig_pos=op)  # [1, S, 2H+4]
+                    ne   = extra_feature_dim(True, H)
+                    obs[l, :S, 2*H*D:2*H*D + ne] = cols[0]
         return obs
 
     def _obs(self) -> np.ndarray:

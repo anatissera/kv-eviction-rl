@@ -148,6 +148,43 @@ destroyed at the input. This is the highest-value, cheapest fix.
 
 ## 4. Phase 2 — the experiments
 
+### E0 — capacity screen (THE centerpiece, run FIRST, cheap)
+
+Before spending GPU-days scaling anything, run every candidate on the SAME tiny
+fixed set (16 examples) and **probe on those same examples** (`probe_on_train`) —
+a pure overfit/capacity test: *can this variant beat kv_norm on data it was trained
+on?* This is the highest-information-per-GPU-hour experiment we have (~1h/variant),
+and it disambiguates which of the four deficiencies is the real bottleneck in ONE
+shot. Five variants, each changing ONE factor:
+
+| variant | what it adds | isolates |
+|---|---|---|
+| `e0_baseline` | nothing (K‖V, MLP) | reference — should NOT beat kv_norm |
+| `e0_rich` | rich features, MLP | representation (D1+D2) |
+| `e0_rich_s4` | rich + S4 KL shaping | reward on a capable policy |
+| `e0_rich_warm` | rich + BC warm-start from kv_norm | exploration (D4) |
+| `e0_attn` | rich + cross-token attention policy | per-token architecture ceiling (D3) |
+
+**Reading (the disambiguation):**
+- `e0_rich` beats kv_norm, `e0_baseline` doesn't → **representation** was the wall. Scale rich.
+- `e0_rich` ties but `e0_rich_warm` beats → **exploration** was the wall. Scale warm-start.
+- only `e0_attn` beats → **per-token architecture** was the ceiling. Scale attention.
+- nothing beats but rich variants tie → kv_norm ≈ optimal per-token; the *objective* is
+  the ceiling → rethink the reward before scaling.
+
+**Note on warm-start:** it is NOT an alternative to rich features — you cannot
+behavior-clone kv_norm if the policy can't see the norm (D1). So `e0_rich_warm` =
+rich features + a kv_norm initialization; the screen tests whether that init (fixing
+D4) buys anything beyond features alone. `screen_verdict.py` prints this verdict
+automatically; `warm_start.py` prints a `match_kv_norm` accuracy that must approach
+~1.0 for the clone to have taken.
+
+Only the screen winner(s) get scaled to the full 2M-step runs below.
+
+---
+
+### Scaled runs (only the screen winner)
+
 Goal: determine **which deficiency is binding**, get the learned policy to **beat `kv_norm`**, and
 re-test **whether S4 helps once the policy can act**. All runs: same data (n=1000, seed=0), same 32
 probe anchors, same budget=256, 2M steps, same VM/code family → directly comparable to §2.3.
@@ -201,20 +238,18 @@ cheap fixes are exhausted, so we only pay for it if needed.
 ## 5. Decision tree (what I run, autonomously, based on results)
 
 ```
-clean A/B (§2.3) finishes
-   ├─ delta ≈ 0 (predicted)  → confirms null. Proceed to Round 1.
-   └─ delta > 0.02            → S4 real even on norm-blind policy; still proceed (E1/E2 now
-                                separate "features" from "reward" cleanly).
+clean A/B (§2.3) finishes → confirms null (VM auto-stops).
 
-ROUND 1: E1 (features, correctness) ‖ E2 (features + S4)   [2 VMs, parallel, 2M each]
-   ├─ E1 learned > kv_norm     → FEATURES were the bottleneck (headline). 
-   │     ├─ E2 > E1            → S4 adds value on a capable policy → S4 contribution rescued. DONE-ish;
-   │     │                        then seeds (2–3) for error bars on both.
-   │     └─ E2 ≈ E1            → "good features beat clever reward". Report both. Then seeds.
-   ├─ E1 ≈ kv_norm             → features necessary but not sufficient → ROUND 2 = E3 (warm-start).
-   └─ E1 < kv_norm             → something structural (head/D3) → ROUND 2 = E4 (attention head).
+E0 SCREEN: {baseline, rich, rich+S4, rich+warm, attn} on 16 examples, probe_on_train.
+           Split across the 2 VMs. ~1h/variant. screen_verdict.py prints the winner.
+   ├─ rich beats kv_norm, baseline doesn't  → REPRESENTATION (D1/D2). Scale rich (+S4 if it adds).
+   ├─ rich ties, rich+warm beats            → EXPLORATION (D4). Scale warm-start.
+   ├─ only attn beats                       → ARCHITECTURE ceiling (D3). Scale attention.
+   └─ nothing beats, rich ties kv_norm      → OBJECTIVE is the ceiling → rethink reward, don't scale.
 
-ROUND 2 (only if needed): E3 warm-start and/or E4 attention head, same 2-VM parallel pattern.
+SCALE the winner to 2M (full 1000-example train, held-out probe) on 1–2 VMs.
+   + 2–3 seeds for error bars ONCE an effect is confirmed (don't pay for CI on a null).
+   + the losing hypotheses stay unscaled (compute saved).
 ```
 
 At every branch: no VM is ever left running idle (stopped = fine), results are downloaded and the
@@ -273,13 +308,26 @@ Implemented on branch `phase2-rich-features` (working tree, not committed — aw
 - **`experiments/phase2-capacity/run_phase2.sh`** — restart-safe VM-side driver (1 or 2 VMs).
 - **`experiments/phase2-capacity/compare.py`** — multi-arm compare on the PAIRED `learned − kv_norm`.
 
-**Launch playbook (I execute this autonomously once you approve + the VM frees):**
-1. SCP current `src/scripts/configs` to the VM (over the snapshot code) + run `pytest
-   tests/test_rich_features.py` there (unskips the PerTokenMLP forward test on GPU-less CPU — fast).
-2. 1 VM: `bash run_phase2.sh e1_rich:e1_rich e2_rich_s4:e2_rich_s4` (chained, ~4–7h).
-   2 VMs: E1 on one, E2 on the other (parallel).
-3. Preemption-aware watcher downloads `phase2/*/probe_curve.csv`, stops VMs, runs `compare.py`
-   against E1, E2, and the clean-A/B control/treatment on one axis.
+**Also staged for the screen (commit 2):**
+- `src/kv_gym/policy.py` — `PerTokenAttention` (E4): cross-token self-attention extractor,
+  permutation-equivariant, same I/O as PerTokenMLP (drop-in via `policy_arch: attention`).
+- `src/kv_gym/warm_start.py` — `behavior_clone_kv_norm` (E3): supervised BC pre-phase, kv_norm
+  target computed exactly from the obs's raw K‖V; prints `match_kv_norm` sanity accuracy.
+- `scripts/train.py` — `policy_arch` (mlp|attention) selection, `warm_start_bc` pre-phase,
+  `probe_on_train` (probe the training examples = overfit metric).
+- Full E1 feature set now 2H+4 = 8 columns: per-head + mean z-scored ‖K‖/‖V‖ + recency +
+  **original position** (D2). (is_prompt/is_numeric = `semantic_features` fast-follow, deferred:
+  they need signature-touching plumbing and the screen will say if they're worth it.)
+- `experiments/phase2-capacity/screen_configs/e0_*.yaml` (5 variants), `run_screen.sh`,
+  `screen_verdict.py`.
+
+**Launch playbook (executed autonomously):**
+1. SCP current `src/scripts/configs/experiments` to the VM + `pytest tests/test_rich_features.py`
+   there (unskips the PerTokenMLP/attention forward tests).
+2. E0 screen: split the 5 variants across the 2 VMs, `bash run_screen.sh <variants...>`
+   (~1h each). Preemption-aware watcher downloads `screen/*/probe_curve.csv`, stops VMs,
+   runs `screen_verdict.py`.
+3. Scale the winner to 2M (`e1_rich`/`e2_rich_s4` or the attn/warm equivalent) → `compare.py`.
 
 ## 8. Risks
 
