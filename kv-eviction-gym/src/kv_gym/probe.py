@@ -72,6 +72,7 @@ class EvalProbeCallback(BaseCallback):
         verbose:          int = 1,
         free_growth_cache = None,  # FreeGrowthCache | None
         protect_prompt:   bool = False,
+        rich_features:    bool = False,
     ):
         super().__init__(verbose)
         self.llm              = llm
@@ -89,6 +90,7 @@ class EvalProbeCallback(BaseCallback):
         self.ref_max_new_tokens = ref_max_new_tokens
         self.free_growth_cache  = free_growth_cache
         self.protect_prompt     = protect_prompt
+        self.rich_features      = rich_features
 
         self.L = llm.config.num_hidden_layers
 
@@ -227,7 +229,8 @@ class EvalProbeCallback(BaseCallback):
             return
 
         evict_fn = make_learned_evict_fn(self.model, self.L, self.max_len,
-                                         self.n_sinks, self.n_recent)
+                                         self.n_sinks, self.n_recent,
+                                         rich_features=self.rich_features)
         learned, corrs, evicted = [], [], []
         gen_flags: list[float] = []   # 1.0 if the evicted token was a generated token
         truncs = []

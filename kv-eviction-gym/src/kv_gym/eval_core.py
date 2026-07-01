@@ -263,15 +263,17 @@ def _valid_slots(cache_size: int, n_sinks: int, n_recent: int, n_prompt: int = 0
 
 # ── Strategy factories ────────────────────────────────────────────────────────
 
-def make_learned_evict_fn(policy, L: int, max_len: int, n_sinks: int = 0, n_recent: int = 0):
+def make_learned_evict_fn(policy, L: int, max_len: int, n_sinks: int = 0, n_recent: int = 0,
+                          rich_features: bool = False):
     """PPO policy: observe current K/V and predict one eviction slot per layer.
 
     The action mask protects the first `n_sinks` and last `n_recent` cache slots —
-    must match the env's action_masks() used during training.
+    must match the env's action_masks() used during training. `rich_features` must
+    match the training env so the eval observation is byte-identical.
     """
     def evict(K: Tensor, V: Tensor, tracker: PositionTracker, scores=None, n_prompt=0) -> list[int]:
         cache_size = K.shape[2]
-        obs   = build_obs(K, V, cache_size, max_len)          # [L, max_len, feat]
+        obs   = build_obs(K, V, cache_size, max_len, rich=rich_features)  # [L, max_len, feat]
         row   = valid_action_mask(cache_size, max_len, n_sinks, n_recent, n_prompt)
         masks = np.broadcast_to(row, (L, max_len)).copy()
         actions, _ = policy.predict(obs, action_masks=masks, deterministic=True)

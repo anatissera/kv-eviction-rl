@@ -39,14 +39,19 @@ class PerTokenMLP(BaseFeaturesExtractor):
         hidden:            Hidden dimension (default 64).
     """
 
-    def __init__(self, observation_space: spaces.Box, hidden: int = 64):
+    def __init__(self, observation_space: spaces.Box, hidden: int = 64, n_extra: int = 0):
         max_len, feature_dim = observation_space.shape
         super().__init__(observation_space, features_dim=max_len)
 
         self.max_len     = max_len
         self.feature_dim = feature_dim
         self.hidden      = hidden
-        self.kv_half     = feature_dim // 2  # size of K half = n_kv_heads * head_dim
+        # n_extra = rich scale/position columns appended AFTER K||V (Phase 2 E1).
+        # These deliberately BYPASS the K/V LayerNorm — they carry magnitude and
+        # position, the very signals LayerNorm would erase and that `kv_norm` uses.
+        self.n_extra     = n_extra
+        self.kv_dim      = feature_dim - n_extra   # width of the K||V block
+        self.kv_half     = self.kv_dim // 2        # size of K half = n_kv_heads * head_dim
 
         # Normalize K and V separately before the MLP.
         # K-norms vary 5–50× across layers (attention sinks, massive-activation
@@ -72,18 +77,21 @@ class PerTokenMLP(BaseFeaturesExtractor):
         x = observations.view(batch * self.max_len, self.feature_dim)
 
         # Padded positions (cache slots beyond current cache_size) are zero-filled.
-        # Detect them before LayerNorm — a real K/V vector is essentially never
-        # all-zero, so this is a reliable heuristic.
+        # Detect them on the K||V block (extra columns like pos_frac can be 0 for a
+        # real slot 0, so they must not participate in the real/pad decision).
         # We multiply the output by this mask rather than skipping the forward pass,
         # because (a) indexing into a ragged batch is slower, and (b) the mask zeros
         # the gradient for padded positions, preventing LayerNorm from updating its
         # parameters based on semantically empty inputs.
-        is_real = (x.abs().sum(dim=-1, keepdim=True) > 0).float()  # [batch*max_len, 1]
+        kv    = x[:, :self.kv_dim]
+        extra = x[:, self.kv_dim:]             # [batch*max_len, n_extra], raw (not normed)
+        is_real = (kv.abs().sum(dim=-1, keepdim=True) > 0).float()  # [batch*max_len, 1]
 
-        # Normalize K and V sub-vectors independently before projection
-        k = self.k_norm(x[:, :self.kv_half])
-        v = self.v_norm(x[:, self.kv_half:])
-        x = torch.cat([k, v], dim=-1)
+        # Normalize K and V sub-vectors independently before projection; the rich
+        # extra columns bypass normalization (they carry magnitude/position).
+        k = self.k_norm(kv[:, :self.kv_half])
+        v = self.v_norm(kv[:, self.kv_half:])
+        x = torch.cat([k, v, extra], dim=-1)
 
         x = self.mlp(x)                        # [batch*max_len, 1]
         x = x * is_real                        # zero padded positions, block gradient

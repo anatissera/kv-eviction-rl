@@ -1,0 +1,28 @@
+############################################################
+# S4 A/B RESULT — control vs S4-exact KL shaping
+############################################################
+
+== CONTROL  chat_full_v2 ==
+  probes=30  last_timestep=4899048  (averaging last 5 probes)
+  retention         0.6333
+  correct_learned   0.5875
+  correct_random    0.5625
+  correct_kv_norm   0.6250
+  correct_full      0.7500
+  evict_generated   0.7557
+  truncation_rate   0.1625
+
+== TREATMENT chat_full_s4_kl ==
+  probes=33  last_timestep=5000492  (averaging last 5 probes)
+  retention         0.8167
+  correct_learned   0.7125
+  correct_random    0.7500
+  correct_kv_norm   0.7500
+  correct_full      0.7500
+  evict_generated   0.7795
+  truncation_rate   0.0250
+
+VERDICT: retention(treatment) - retention(control) = +0.1833
+  → S4-exact IMPROVES retention (H1 supported)
+
+plot → /home/anatissera/Documents/UDESA/4th-year/1er-Semestre/RL/tp-final-rl-kv-eviction/kv-eviction-gym/ab_results/ab_retention.png

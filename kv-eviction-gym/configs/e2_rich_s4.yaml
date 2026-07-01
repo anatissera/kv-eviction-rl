@@ -1,0 +1,72 @@
+# Phase 2 · E2 — RICH FEATURES + S4-exact KL shaping.
+#
+# Byte-identical to e1_rich.yaml EXCEPT for the kl_* block at the bottom (the same
+# S4-exact causal shaping as chat_full_s4_kl). This is the CROSSED factor: it tests
+# whether the per-step causal reward adds value ONCE the policy has the features to
+# act on it. The clean A/B tested S4 on a norm-blind policy (which can't act on any
+# signal); E2 tests it on a policy that can (see PLAN.md §4, H-E2).
+#
+#   E1 (e1_rich):    rich features, correctness only
+#   E2 (this):       rich features, correctness + S4-exact KL
+#   → E2 − E1 isolates the S4 contribution on a capable policy.
+#
+# Hypothesis H-E2: if E2 > E1, S4 helps a capable policy (rescues the S4
+# contribution). If E2 ≈ E1, good features subsume clever reward (also a clean
+# finding). Comparable to E1 and the clean A/B: same data/seed/anchors/budget/2M.
+
+model_name: qwen-1.5b
+device:     auto
+
+n_examples: 1000
+seed: 0
+
+budget_min: 256
+budget_max: 256
+
+max_len:        288
+max_new_tokens: 600
+
+use_attention_shaping: false
+attention_weight:      0.0
+shaping_mode:          none
+
+hidden: 64
+
+probe_n:                32
+probe_every_n_rollouts: 15
+probe_n_sinks:          4
+
+n_parallel:   2
+n_steps:      650
+batch_size:   512
+
+n_epochs:     4
+gamma:        1.0
+gae_lambda:   1.0
+clip_range:   0.2
+ent_coef:     0.01
+total_timesteps: 2000000
+
+n_sinks:  4
+n_recent: 32
+
+length_penalty_weight: 0.5
+truncation_penalty:    1.0
+
+entropy_reward_weight: 0.001
+
+repeats_per_problem: 5
+
+attn_implementation: sdpa
+
+free_growth_cache_dir: ~/.kv_eviction_cache
+
+protect_prompt: false
+
+rich_features: true          # E1+E2 share rich features
+
+# ── S4-exact causal KL shaping (the ONLY difference vs e1_rich) ───────────────
+kl_shaping: true
+kl_mode:    exact
+kl_weight:  0.05
+kl_clip:    5.0
