@@ -110,10 +110,16 @@ class EvalProbeCallback(BaseCallback):
     def _on_training_start(self) -> None:
         self.run_dir.mkdir(parents=True, exist_ok=True)
         csv_path = self.run_dir / "probe_curve.csv"
-        file_exists = csv_path.exists()
-        self._csv_file = open(csv_path, "a" if file_exists else "w", newline="")
+        # Write the header unless the file already has a VALID one (resume append).
+        # Guards the case where a preempted run created/append-opened the file but
+        # never wrote a header → parsers saw a headerless CSV (the warm-start bug).
+        has_valid_header = False
+        if csv_path.exists() and csv_path.stat().st_size > 0:
+            with open(csv_path) as _f:
+                has_valid_header = _f.readline().startswith("timestep")
+        self._csv_file = open(csv_path, "a", newline="")
         self._csv_writer = csv.writer(self._csv_file)
-        if not file_exists:
+        if not has_valid_header:
             self._csv_writer.writerow([
             "timestep",
             "correct_full", "correct_random", "correct_kv_norm",

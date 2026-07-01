@@ -20,6 +20,9 @@ fi
 
 for v in "$@"; do
   if [ ! -f ~/screen/$v.done ]; then
+    # fresh start (screen has no checkpoint-resume): wipe any partial run_dir from a
+    # preempted attempt so the probe CSV starts clean (no concatenated timesteps).
+    rm -rf ~/repo/runs/$v
     echo "START $v $(date -u)" >> "$DL"
     python scripts/train.py --config $CFGDIR/$v.yaml --run-name $v \
         > ~/screen/$v.log 2>&1 && touch ~/screen/$v.done
