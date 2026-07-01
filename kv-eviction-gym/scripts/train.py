@@ -27,6 +27,7 @@ from sb3_contrib import MaskablePPO
 from kv_gym.env import SharedKVVecEnv
 from kv_gym.batched_env import BatchedSharedKVVecEnv
 from kv_gym.policy import PerTokenMLP
+from kv_gym.features import extra_feature_dim
 from kv_gym.buffer import FP16ObsMaskableRolloutBuffer
 from kv_gym.episode_ppo import EpisodeMaskablePPO
 from kv_gym.free_growth_cache import FreeGrowthCache
@@ -373,6 +374,7 @@ def main():
         truncation_penalty=cfg.get("truncation_penalty", 0.0),
         entropy_reward_weight=cfg.get("entropy_reward_weight", 0.0),
         seed=cfg.get("seed", 0),
+        rich_features=cfg.get("rich_features", False),
     )
     if n_parallel > 1:
         kl_shaping = cfg.get("kl_shaping", False)
@@ -463,6 +465,7 @@ def main():
             verbose=1,
             free_growth_cache=fg_cache,
             protect_prompt=cfg.get("protect_prompt", False),
+            rich_features=cfg.get("rich_features", False),
         ))
 
     callbacks = CallbackList(callback_list)
@@ -484,7 +487,10 @@ def main():
             env,
             policy_kwargs={
                 "features_extractor_class": PerTokenMLP,
-                "features_extractor_kwargs": {"hidden": cfg.get("hidden", 64)},
+                "features_extractor_kwargs": {
+                    "hidden": cfg.get("hidden", 64),
+                    "n_extra": extra_feature_dim(cfg.get("rich_features", False)),
+                },
             },
             n_steps=cfg.get("n_steps", 524),
             batch_size=cfg.get("batch_size", 1024),

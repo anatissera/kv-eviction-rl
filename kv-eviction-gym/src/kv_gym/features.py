@@ -24,9 +24,56 @@ import torch
 from torch import Tensor
 
 
-def feature_dim(n_kv_heads: int, head_dim: int) -> int:
-    """Total features per token: K and V halves, all KV-heads concatenated."""
-    return 2 * n_kv_heads * head_dim
+# ── Rich features (Phase 2, experiment E1) ──────────────────────────────────────
+# The baseline per-token feature is just K||V, which the PerTokenMLP then LayerNorms
+# — erasing magnitude, the exact signal `kv_norm` evicts on (see policy.py). Rich
+# features append scale/position columns that BYPASS the LayerNorm so the policy can
+# represent (and beat) the norm heuristic:
+#   [0] kz  = within-observation standardized ||K|| (z-score over resident slots)
+#   [1] vz  = within-observation standardized ||V||
+#   [2] pos = slot / cache_size            (absolute position, 0=oldest)
+#   [3] rec = (cache_size-1-slot)/max_len  (recency, 0=most recent)
+# Standardized (not raw) norms give a scale-free "is this token's norm unusually
+# small vs its neighbours" signal — directly what kv_norm's argmin needs — and are
+# stable across the 5–50× per-layer norm variation.
+N_EXTRA_RICH = 4
+
+
+def extra_feature_dim(rich: bool) -> int:
+    return N_EXTRA_RICH if rich else 0
+
+
+def feature_dim(n_kv_heads: int, head_dim: int, rich: bool = False) -> int:
+    """Total features per token: K and V halves (all KV-heads concatenated),
+    plus the rich scale/position columns when `rich` is True."""
+    return 2 * n_kv_heads * head_dim + extra_feature_dim(rich)
+
+
+def build_extra_columns(
+    K: Tensor,          # [B, H, S, D]  (B = n_envs in eval, or 1 per-layer in training)
+    V: Tensor,          # [B, H, S, D]
+    cache_size: int,
+    max_len: int,
+) -> np.ndarray:        # [B, S, N_EXTRA_RICH] float32
+    """Compute the rich extra columns for the S resident slots. SINGLE source of
+    truth used by BOTH training (`batched_env._obs_episode`) and eval
+    (`build_obs`) so the two paths are byte-identical (no train/eval confound)."""
+    kmean = K.float().norm(dim=-1).mean(dim=1)   # [B, S]  mean over heads of ||K||
+    vmean = V.float().norm(dim=-1).mean(dim=1)   # [B, S]
+    B, S = kmean.shape
+
+    def _z(x: Tensor) -> Tensor:
+        mu = x.mean(dim=1, keepdim=True)
+        sd = x.std(dim=1, keepdim=True)
+        return (x - mu) / (sd + 1e-6)
+
+    kz  = _z(kmean)                                        # [B, S]
+    vz  = _z(vmean)
+    slot = torch.arange(S, dtype=torch.float32).unsqueeze(0).expand(B, S)
+    pos = slot / max(cache_size, 1)
+    rec = (cache_size - 1 - slot).clamp(min=0) / max(max_len, 1)
+    cols = torch.stack([kz, vz, pos, rec], dim=-1)         # [B, S, 4]
+    return cols.cpu().numpy().astype(np.float32)
 
 
 def build_obs(
@@ -35,15 +82,18 @@ def build_obs(
     prompt_len:    int,
     max_len:       int,
     resident_mask: Tensor | None = None,  # [n_envs, T] bool — False = already evicted
-) -> np.ndarray:                     # [n_envs, max_len, 2*n_kv_heads*head_dim]
+    rich:          bool = False,
+) -> np.ndarray:                     # [n_envs, max_len, 2*n_kv_heads*head_dim (+N_EXTRA_RICH)]
     """Build the observation array for all environments at once.
 
     Heads are concatenated along the feature axis: [K_h0 | K_h1 | V_h0 | V_h1].
-    Evicted positions (resident_mask==False) are zeroed.
+    When `rich`, N_EXTRA_RICH scale/position columns are appended (see
+    build_extra_columns). Evicted positions (resident_mask==False) are zeroed.
     """
     n_envs, H, _, head_dim = K.shape
-    fdim  = 2 * H * head_dim
-    obs   = np.zeros((n_envs, max_len, fdim), dtype=np.float32)
+    kv_dim = 2 * H * head_dim
+    fdim   = kv_dim + extra_feature_dim(rich)
+    obs    = np.zeros((n_envs, max_len, fdim), dtype=np.float32)
 
     # [n_envs, H, T, D] → [n_envs, T, H*D]
     K_flat = K[:, :, :prompt_len, :].permute(0, 2, 1, 3).reshape(n_envs, prompt_len, H * head_dim)
@@ -51,6 +101,11 @@ def build_obs(
 
     obs[:, :prompt_len, :H*head_dim]           = K_flat.cpu().numpy()
     obs[:, :prompt_len, H*head_dim:2*H*head_dim] = V_flat.cpu().numpy()
+
+    if rich:
+        cols = build_extra_columns(K[:, :, :prompt_len, :], V[:, :, :prompt_len, :],
+                                   prompt_len, max_len)          # [n_envs, prompt_len, 4]
+        obs[:, :prompt_len, kv_dim:kv_dim + N_EXTRA_RICH] = cols
 
     if resident_mask is not None:
         evicted = ~resident_mask[:, :prompt_len].cpu().numpy()  # [n_envs, T]

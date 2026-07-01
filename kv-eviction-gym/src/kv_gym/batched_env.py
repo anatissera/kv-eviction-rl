@@ -34,7 +34,7 @@ from gymnasium import spaces
 from stable_baselines3.common.vec_env import VecEnv
 
 from kv_gym.env import _get_layer_kv, _evict_slot
-from kv_gym.features import feature_dim
+from kv_gym.features import feature_dim, build_extra_columns, N_EXTRA_RICH
 from kv_gym.eval_core import valid_action_mask
 from kv_gym.rewards.attention_shaping import compute_token_importance
 from kv_gym.vendor.answer_extraction_gsm8k import flexible_extract
@@ -189,6 +189,7 @@ class BatchedSharedKVVecEnv(VecEnv):
         per_example_base_budgets: dict[int, int] | None = None,
         eviction_k:               int = 100,
         protect_prompt:           bool = False,
+        rich_features:            bool = False,
     ):
         self.model                 = model
         self.tokenizer             = tokenizer
@@ -241,7 +242,8 @@ class BatchedSharedKVVecEnv(VecEnv):
         self.n_kv_heads = getattr(cfg, "num_key_value_heads", cfg.num_attention_heads)
         self.head_dim   = cfg.hidden_size // cfg.num_attention_heads
 
-        fdim      = feature_dim(self.n_kv_heads, self.head_dim)
+        self.rich_features = rich_features
+        fdim      = feature_dim(self.n_kv_heads, self.head_dim, rich=rich_features)
         obs_space = spaces.Box(low=-np.inf, high=np.inf,
                                shape=(max_len, fdim), dtype=np.float32)
         act_space = spaces.Discrete(max_len)
@@ -400,7 +402,8 @@ class BatchedSharedKVVecEnv(VecEnv):
 
         # 4. Collect outputs; handle done episodes
         all_obs     = np.zeros((self.N * self.n_layers, self.max_len,
-                                2 * self.n_kv_heads * self.head_dim), dtype=np.float32)
+                                feature_dim(self.n_kv_heads, self.head_dim,
+                                            rich=self.rich_features)), dtype=np.float32)
         all_rewards = np.zeros(self.N * self.n_layers, dtype=np.float32)
         all_dones   = np.zeros(self.N * self.n_layers, dtype=bool)
         all_infos   = [{} for _ in range(self.N * self.n_layers)]
@@ -702,12 +705,17 @@ class BatchedSharedKVVecEnv(VecEnv):
         return False
 
     def _obs_episode(self, b: int) -> np.ndarray:
-        """[n_layers, max_len, feature_dim] observation for episode b from batch KV."""
-        ep  = self.episodes[b]
-        S   = ep.cache_size
-        H   = self.n_kv_heads
-        D   = self.head_dim
-        obs = np.zeros((self.n_layers, self.max_len, 2 * H * D), dtype=np.float32)
+        """[n_layers, max_len, feature_dim] observation for episode b from batch KV.
+
+        When rich_features is on, appends the same N_EXTRA_RICH scale/position
+        columns as eval's build_obs (via the shared build_extra_columns) so the
+        training and eval observations are byte-identical."""
+        ep   = self.episodes[b]
+        S    = ep.cache_size
+        H    = self.n_kv_heads
+        D    = self.head_dim
+        fdim = feature_dim(H, D, rich=self.rich_features)
+        obs  = np.zeros((self.n_layers, self.max_len, fdim), dtype=np.float32)
         if self._batch_kv is not None and S > 0:
             for l in range(self.n_layers):
                 K_bat, V_bat = _get_kv_bat(self._batch_kv, l)   # [N, H, S, D]
@@ -717,6 +725,10 @@ class BatchedSharedKVVecEnv(VecEnv):
                 V_flat = V.transpose(0, 1).reshape(S, H * D).numpy()
                 obs[l, :S, :H*D]      = K_flat
                 obs[l, :S, H*D:2*H*D] = V_flat
+                if self.rich_features:
+                    cols = build_extra_columns(K.unsqueeze(0), V.unsqueeze(0),
+                                               S, self.max_len)   # [1, S, N_EXTRA_RICH]
+                    obs[l, :S, 2*H*D:2*H*D + N_EXTRA_RICH] = cols[0]
         return obs
 
     def _obs(self) -> np.ndarray:
