@@ -18,9 +18,9 @@ from kv_gym.features import (
 
 H, D = 2, 64          # Qwen2.5-1.5B: 2 KV-heads × 64 dim
 KVDIM = 2 * H * D     # 256
-NEXTRA = 2 * H + 4    # per-head kz(H)+vz(H) + kz_mean + vz_mean + rec + pos_orig = 8
+NEXTRA = 2 * H + 5    # per-head kz(H)+vz(H) + kz_mean + vz_mean + kvz + rec + pos_orig = 9
 # column indices within the extra block
-IKZ_MEAN, IVZ_MEAN, IREC, IPOS = 2*H, 2*H + 1, 2*H + 2, 2*H + 3
+IKZ_MEAN, IVZ_MEAN, IKVZ, IREC, IPOS = 2*H, 2*H + 1, 2*H + 2, 2*H + 3, 2*H + 4
 
 
 def _rand_kv(L, S, seed=0):
@@ -43,7 +43,7 @@ def test_feature_dim_math():
     assert extra_feature_dim(False, H) == 0
     assert extra_feature_dim(True, H) == NEXTRA
     # H-dependence
-    assert extra_feature_dim(True, 4) == 2*4 + 4
+    assert extra_feature_dim(True, 4) == 2*4 + 5
 
 
 def test_extra_columns_standardized_and_ranges():
@@ -69,16 +69,27 @@ def test_extra_columns_standardized_and_ranges():
 
 
 def test_kz_recovers_kv_norm_ordering():
-    """The whole point of E1: kz_mean must rank slots by mean-over-heads ||K|| so the
-    policy can represent kv_norm's argmin. (kv_norm uses ||K||+||V|| mean over heads.)"""
+    """The whole point of E1: kz_mean ranks slots by mean-over-heads ||K||."""
     L, S, max_len = 1, 15, 32
     K, V = _rand_kv(L, S, seed=7)
     kmean = K.norm(dim=-1).mean(dim=1)[0]                 # [S] true mean-over-heads ||K||
     cols = build_extra_columns(K, V, S, max_len, orig_pos=_orig_pos(L, S))
     kz = cols[0, :, IKZ_MEAN]
     assert int(kz.argmin()) == int(kmean.argmin())
-    assert int(kz.argmax()) == int(kmean.argmax())
     assert np.array_equal(np.argsort(kz), np.argsort(kmean.numpy()))
+
+
+def test_kvz_recovers_exact_kv_norm():
+    """kvz must rank slots by (||K||+||V||) mean-over-heads — kv_norm's EXACT signal,
+    so argmin(kvz) == the slot kv_norm evicts. This is what lets the policy represent
+    (and warm-start-clone) kv_norm; kz_mean/vz_mean standardized separately cannot."""
+    L, S, max_len = 1, 15, 32
+    K, V = _rand_kv(L, S, seed=7)
+    kvnorm = (K.norm(dim=-1).mean(dim=1) + V.norm(dim=-1).mean(dim=1))[0]   # [S] kv_norm score
+    cols = build_extra_columns(K, V, S, max_len, orig_pos=_orig_pos(L, S))
+    kvz = cols[0, :, IKVZ]
+    assert int(kvz.argmin()) == int(kvnorm.argmin())     # exact kv_norm choice
+    assert np.array_equal(np.argsort(kvz), np.argsort(kvnorm.numpy()))
 
 
 def _obs_episode_like(K_all, V_all, cache_size, max_len, rich, orig):

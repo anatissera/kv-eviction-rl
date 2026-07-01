@@ -30,27 +30,30 @@ from torch import Tensor
 # (see policy.py). Rich features append scale/position columns that BYPASS the
 # LayerNorm so the policy can represent (and beat) the norm heuristic.
 #
-# Column layout (2*H + 4 columns, H = n_kv_heads):
+# Column layout (2*H + 5 columns, H = n_kv_heads):
 #   [0    : H  ]  kz_h    per-head standardized ||K||  (z-score over resident slots)
 #   [H    : 2H ]  vz_h    per-head standardized ||V||
-#   [2H       ]  kz_mean  standardized mean-over-heads ||K||  (exactly kv_norm's signal)
+#   [2H       ]  kz_mean  standardized mean-over-heads ||K||
 #   [2H+1     ]  vz_mean  standardized mean-over-heads ||V||
-#   [2H+2     ]  rec      (cache_size-1-slot)/max_len   (recency, 0 = most recent)
-#   [2H+3     ]  pos_orig original token position / POS_SCALE  (D2: prompt-vs-generated)
+#   [2H+2     ]  kvz      standardized mean-over-heads (||K||+||V||)  ← EXACT kv_norm signal
+#   [2H+3     ]  rec      (cache_size-1-slot)/max_len   (recency, 0 = most recent)
+#   [2H+4     ]  pos_orig original token position / POS_SCALE  (D2: prompt-vs-generated)
 #
-# WHY standardized (not raw) norms: scale-free "is this token's norm unusually small
-# vs its neighbours" — directly what kv_norm's argmin needs — and stable across the
-# 5–50× per-layer norm variation (the policy is LAYER-SHARED, so a raw high-norm
-# layer would dominate). WHY per-head AND mean: heads encode different aspects; the
-# mean is given explicitly so the policy can replicate kv_norm exactly. WHY pos_orig
-# (original position, not slot index): slot index is post-compaction and loses the
-# prompt/generated distinction; original position (0..T = prompt, >T = generated)
-# recovers it. Normalized by a fixed POS_SCALE so train/eval need no prompt_len.
+# WHY kvz (the raw K+V norm sum, standardized): kv_norm evicts argmin(||K||+||V||).
+# kz_mean and vz_mean are standardized SEPARATELY (different σ), so the policy cannot
+# reconstruct argmin(||K||+||V||) from them — cloning/representing kv_norm plateaued at
+# ~29% match without this. kvz makes kv_norm EXACTLY representable (logit = −kvz), so
+# the policy can match it and then improve; kz_mean/vz_mean stay so it can also
+# re-weight K vs V to BEAT kv_norm.
+# WHY standardized (not raw): scale-free "is this norm unusually small vs neighbours" —
+# stable across the 5–50× per-layer norm variation (the policy is LAYER-SHARED). WHY
+# pos_orig (original position, not slot index): slot index is post-compaction; original
+# position (0..T = prompt, >T = generated) recovers the prompt/generated distinction.
 POS_SCALE = 1024.0   # > max T (232) + max_new_tokens (600); keeps pos_orig in [0,1)
 
 
 def extra_feature_dim(rich: bool, n_kv_heads: int = 2) -> int:
-    return (2 * n_kv_heads + 4) if rich else 0
+    return (2 * n_kv_heads + 5) if rich else 0
 
 
 def feature_dim(n_kv_heads: int, head_dim: int, rich: bool = False) -> int:
@@ -84,8 +87,11 @@ def build_extra_columns(
 
     kz_h    = _z(Knorm).permute(0, 2, 1)         # [B, S, H]  per-head z
     vz_h    = _z(Vnorm).permute(0, 2, 1)         # [B, S, H]
-    kz_mean = _z(Knorm.mean(dim=1)).unsqueeze(-1)  # [B, S, 1]  z of mean-over-heads
-    vz_mean = _z(Vnorm.mean(dim=1)).unsqueeze(-1)
+    kmean   = Knorm.mean(dim=1)                   # [B, S]  mean-over-heads ||K||
+    vmean   = Vnorm.mean(dim=1)
+    kz_mean = _z(kmean).unsqueeze(-1)             # [B, S, 1]
+    vz_mean = _z(vmean).unsqueeze(-1)
+    kvz     = _z(kmean + vmean).unsqueeze(-1)     # [B, S, 1]  EXACT kv_norm signal
 
     slot = torch.arange(S, dtype=torch.float32).unsqueeze(0).expand(B, S)
     rec  = ((cache_size - 1 - slot).clamp(min=0) / max(max_len, 1)).unsqueeze(-1)
@@ -95,7 +101,7 @@ def build_extra_columns(
     else:
         pos = (slot / max(cache_size, 1)).unsqueeze(-1)
 
-    cols = torch.cat([kz_h, vz_h, kz_mean, vz_mean, rec, pos], dim=-1)  # [B, S, 2H+4]
+    cols = torch.cat([kz_h, vz_h, kz_mean, vz_mean, kvz, rec, pos], dim=-1)  # [B, S, 2H+5]
     return cols.cpu().numpy().astype(np.float32)
 
 
