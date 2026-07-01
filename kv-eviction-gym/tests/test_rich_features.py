@@ -128,18 +128,20 @@ def test_padding_is_zero():
     __import__("importlib").util.find_spec("stable_baselines3") is None,
     reason="stable_baselines3 not installed (runs on the VM)",
 )
-def test_pertokenmlp_extra_columns_influence_output():
-    """The extra columns must actually reach the MLP (not be dropped/zeroed), and
-    padded slots must be masked to zero."""
+@pytest.mark.parametrize("cls_name", ["PerTokenMLP", "PerTokenAttention"])
+def test_extra_columns_influence_output(cls_name):
+    """The extra columns must actually reach the network (not be dropped/zeroed by
+    the LayerNorm bypass), and padded slots must be masked to zero. Covers both the
+    per-token MLP (E1) and the cross-token attention extractor (E4)."""
     from gymnasium import spaces
-    from kv_gym.policy import PerTokenMLP
+    import kv_gym.policy as P
 
     L, S, max_len = 1, 12, 32
     K, V = _rand_kv(L, S, seed=11)
-    obs = build_obs(K, V, S, max_len, rich=True)           # [1, max_len, KVDIM+4]
+    obs = build_obs(K, V, S, max_len, rich=True, orig_pos=_orig_pos(L, S))  # [1, max_len, KVDIM+NEXTRA]
     space = spaces.Box(low=-np.inf, high=np.inf, shape=obs.shape[1:], dtype=np.float32)
     torch.manual_seed(0)
-    net = PerTokenMLP(space, hidden=64, n_extra=N_EXTRA_RICH)
+    net = getattr(P, cls_name)(space, hidden=64, n_extra=NEXTRA)
     net.eval()
 
     x = torch.tensor(obs)
