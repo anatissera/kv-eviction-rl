@@ -1,0 +1,47 @@
+model_name: qwen-1.5b
+device:     auto
+
+# ── E0 capacity screen — OVERFIT a tiny fixed set, probe on the SAME examples ──
+# Question each variant answers: can it beat kv_norm on data it was trained on?
+# (pure capacity ceiling; generalization is tested only for the winner at scale).
+n_examples: 16
+seed: 0
+probe_on_train: true          # probe the 16 TRAINING examples (overfit metric)
+probe_n:                16
+probe_every_n_rollouts: 8
+probe_n_sinks:          4
+
+budget_min: 256
+budget_max: 256
+max_len:        288
+max_new_tokens: 600
+
+use_attention_shaping: false
+attention_weight:      0.0
+shaping_mode:          none
+
+hidden: 64
+n_parallel:   2
+n_steps:      650
+batch_size:   512
+n_epochs:     4
+gamma:        1.0
+gae_lambda:   1.0
+clip_range:   0.2
+ent_coef:     0.01
+total_timesteps: 400000
+
+n_sinks:  4
+n_recent: 32
+length_penalty_weight: 0.5
+truncation_penalty:    1.0
+entropy_reward_weight: 0.001
+repeats_per_problem: 5
+attn_implementation: sdpa
+free_growth_cache_dir: ~/.kv_eviction_cache
+protect_prompt: false
+
+rich_features: true
+policy_arch: attention
+attn_policy_heads: 4
+attn_policy_layers: 2

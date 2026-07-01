@@ -26,7 +26,7 @@ from sb3_contrib import MaskablePPO
 
 from kv_gym.env import SharedKVVecEnv
 from kv_gym.batched_env import BatchedSharedKVVecEnv
-from kv_gym.policy import PerTokenMLP
+from kv_gym.policy import PerTokenMLP, PerTokenAttention
 from kv_gym.features import extra_feature_dim
 from kv_gym.buffer import FP16ObsMaskableRolloutBuffer
 from kv_gym.episode_ppo import EpisodeMaskablePPO
@@ -313,7 +313,14 @@ def main():
     # uses left-out training examples with guaranteed no overlap.
     all_examples = load_gsm8k(n=n_examples + probe_n, seed=cfg.get("seed", 0), split="train")
     examples       = all_examples[:n_examples]
-    probe_examples = all_examples[n_examples:]
+    # Phase 2 · E0 screen — probe_on_train makes the probe evaluate the TRAINING
+    # examples themselves (pure overfit/capacity check: can the policy beat kv_norm
+    # on data it was trained on?). Default keeps the held-out left-out tail.
+    if cfg.get("probe_on_train", False):
+        probe_examples = examples[:probe_n]
+        print(f"probe_on_train=ON → probing the first {len(probe_examples)} TRAINING examples")
+    else:
+        probe_examples = all_examples[n_examples:]
 
     print(f"train examples: {len(examples)}  probe examples: {len(probe_examples)} "
           f"(left-out train split, seed={cfg.get('seed', 0)})")
@@ -482,15 +489,29 @@ def main():
         # Point to the correct tensorboard directory
         ppo.tensorboard_log = str(tb_dir)
     else:
+        _n_extra = extra_feature_dim(
+            cfg.get("rich_features", False),
+            getattr(model.config, "num_key_value_heads", model.config.num_attention_heads),
+        )
+        _arch = cfg.get("policy_arch", "mlp")
+        if _arch == "attention":
+            _extractor_cls = PerTokenAttention
+            _extractor_kwargs = {
+                "hidden":   cfg.get("hidden", 64),
+                "n_extra":  _n_extra,
+                "n_heads":  cfg.get("attn_policy_heads", 4),
+                "n_layers": cfg.get("attn_policy_layers", 2),
+            }
+        else:
+            _extractor_cls = PerTokenMLP
+            _extractor_kwargs = {"hidden": cfg.get("hidden", 64), "n_extra": _n_extra}
+        print(f"policy_arch: {_arch}  (extractor={_extractor_cls.__name__}, n_extra={_n_extra})")
         ppo = ppo_class(
             "MlpPolicy",
             env,
             policy_kwargs={
-                "features_extractor_class": PerTokenMLP,
-                "features_extractor_kwargs": {
-                    "hidden": cfg.get("hidden", 64),
-                    "n_extra": extra_feature_dim(cfg.get("rich_features", False)),
-                },
+                "features_extractor_class": _extractor_cls,
+                "features_extractor_kwargs": _extractor_kwargs,
             },
             n_steps=cfg.get("n_steps", 524),
             batch_size=cfg.get("batch_size", 1024),
@@ -524,6 +545,18 @@ def main():
         )
         print(f"rollout buffer: FP16ObsMaskableRolloutBuffer "
               f"(n_steps={ppo.n_steps}, n_envs={ppo.n_envs})")
+
+    # Phase 2 · E3 — optional warm-start: behavior-clone kv_norm before PPO so the
+    # policy STARTS at the best heuristic (isolates exploration D4). Needs rich
+    # features to succeed (the printed match_kv_norm should approach ~1.0).
+    n_bc = int(cfg.get("warm_start_bc", 0))
+    if n_bc > 0 and not args.resume_from:
+        from kv_gym.warm_start import behavior_clone_kv_norm
+        n_kv_heads = getattr(model.config, "num_key_value_heads", model.config.num_attention_heads)
+        head_dim   = model.config.hidden_size // model.config.num_attention_heads
+        print(f"warm_start_bc: cloning kv_norm for {n_bc} steps before PPO")
+        behavior_clone_kv_norm(ppo, env, n_bc, n_kv_heads, head_dim, device,
+                               lr=cfg.get("warm_start_lr", 1e-3))
 
     ppo.learn(
         total_timesteps=cfg.get("total_timesteps", 500_000),

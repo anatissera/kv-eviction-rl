@@ -273,7 +273,11 @@ def make_learned_evict_fn(policy, L: int, max_len: int, n_sinks: int = 0, n_rece
     """
     def evict(K: Tensor, V: Tensor, tracker: PositionTracker, scores=None, n_prompt=0) -> list[int]:
         cache_size = K.shape[2]
-        obs   = build_obs(K, V, cache_size, max_len, rich=rich_features)  # [L, max_len, feat]
+        # original position of each resident slot, per layer — SAME source of truth
+        # as training's env.slot_to_pos, so the rich features are byte-identical.
+        op = (np.asarray(tracker._pos, dtype=np.int64) if rich_features else None)  # [L, S]
+        obs   = build_obs(K, V, cache_size, max_len, rich=rich_features,
+                          orig_pos=op)                            # [L, max_len, feat]
         row   = valid_action_mask(cache_size, max_len, n_sinks, n_recent, n_prompt)
         masks = np.broadcast_to(row, (L, max_len)).copy()
         actions, _ = policy.predict(obs, action_masks=masks, deterministic=True)

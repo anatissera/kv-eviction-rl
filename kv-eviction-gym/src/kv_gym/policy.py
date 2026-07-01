@@ -97,3 +97,62 @@ class PerTokenMLP(BaseFeaturesExtractor):
         x = x * is_real                        # zero padded positions, block gradient
         x = x.view(batch, self.max_len)        # [batch, max_len] — one score per token
         return x
+
+
+class PerTokenAttention(BaseFeaturesExtractor):
+    """Phase 2 · E4 — cross-token attention feature extractor.
+
+    Drop-in replacement for PerTokenMLP (same I/O: [batch, max_len, feat] →
+    [batch, max_len]) that adds what the per-token MLP structurally lacks: each
+    slot's keep-score depends on the OTHER resident slots via self-attention. This
+    enables REDUNDANCY reasoning ("evict A because B already carries its info"),
+    which a per-token method cannot express — the hypothesized ceiling of kv_norm
+    and PerTokenMLP (both per-token) is what this is meant to break (see PLAN.md D3).
+
+    Permutation-equivariant over slots: no positional encoding is added here because
+    position is already an explicit input feature (rich pos_orig/rec), so the encoder
+    can use it without breaking equivariance. Padded slots are masked out of attention
+    and zeroed at the output (same is_real convention as PerTokenMLP). Same K/V
+    LayerNorm + rich-column bypass as PerTokenMLP.
+    """
+
+    def __init__(self, observation_space: spaces.Box, hidden: int = 64, n_extra: int = 0,
+                 n_heads: int = 4, n_layers: int = 2):
+        max_len, feature_dim = observation_space.shape
+        super().__init__(observation_space, features_dim=max_len)
+        self.max_len     = max_len
+        self.feature_dim = feature_dim
+        self.n_extra     = n_extra
+        self.kv_dim      = feature_dim - n_extra
+        self.kv_half     = self.kv_dim // 2
+
+        self.k_norm = nn.LayerNorm(self.kv_half)
+        self.v_norm = nn.LayerNorm(self.kv_half)
+        self.input_proj = nn.Linear(feature_dim, hidden)
+        enc = nn.TransformerEncoderLayer(
+            d_model=hidden, nhead=n_heads, dim_feedforward=hidden * 2,
+            batch_first=True, activation="gelu", norm_first=True,
+        )
+        self.encoder = nn.TransformerEncoder(enc, num_layers=n_layers)
+        self.out = nn.Linear(hidden, 1)
+
+    def forward(self, observations: torch.Tensor) -> torch.Tensor:
+        observations = observations.float()
+        B = observations.shape[0]
+        kv    = observations[..., :self.kv_dim]                # [B, max_len, kv_dim]
+        extra = observations[..., self.kv_dim:]                # [B, max_len, n_extra]
+        is_real = (kv.abs().sum(dim=-1) > 0)                   # [B, max_len] bool
+
+        k = self.k_norm(kv[..., :self.kv_half])
+        v = self.v_norm(kv[..., self.kv_half:])
+        x = torch.cat([k, v, extra], dim=-1)                  # [B, max_len, feat]
+        h = self.input_proj(x)                                # [B, max_len, hidden]
+
+        # Attend only over resident slots. A fully-padded row can't occur during
+        # eviction (cache_size > budget ⇒ ≥1 resident), but guard nan just in case.
+        pad_mask = ~is_real                                    # True = ignore
+        h = self.encoder(h, src_key_padding_mask=pad_mask)
+        h = torch.nan_to_num(h)
+        s = self.out(h).squeeze(-1)                           # [B, max_len]
+        s = s * is_real.float()                               # zero padded slots
+        return s
