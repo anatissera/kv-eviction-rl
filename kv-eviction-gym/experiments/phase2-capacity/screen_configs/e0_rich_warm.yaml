@@ -43,5 +43,5 @@ protect_prompt: false
 
 rich_features: true
 policy_arch: mlp
-warm_start_bc: 300
-warm_start_lr: 0.001
+warm_start_bc: 2500
+warm_start_lr: 0.002

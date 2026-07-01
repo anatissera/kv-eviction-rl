@@ -1,0 +1,13 @@
+################################################################
+# E0 CAPACITY SCREEN — best overfit gap (learned − kv_norm) per variant
+################################################################
+
+  baseline (no rich)      best learned−kv_norm = +0.000  (learned=0.062 kv_norm=0.062 @ 145k)  ≈ ties
+  rich features           best learned−kv_norm = +0.188  (learned=0.250 kv_norm=0.062 @ 202k)  ✓ BEATS
+  rich + S4               best learned−kv_norm = +0.062  (learned=0.125 kv_norm=0.062 @ 71k)  ✓ BEATS
+  rich + warm-start       NO DATA
+  rich + attention        best learned−kv_norm = +0.188  (learned=0.250 kv_norm=0.062 @ 400k)  ✓ BEATS
+
+VERDICT:
+  → REPRESENTATION was the bottleneck (D1/D2). Rich features unlock beating
+    kv_norm; baseline cannot. SCALE e0_rich (+ e0_rich_s4 if it adds).

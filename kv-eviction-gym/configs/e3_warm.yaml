@@ -1,0 +1,72 @@
+# Phase 2 · E1 — RICH FEATURES (correctness only, no S4).
+#
+# Byte-identical to chat_full_v2 (the clean-A/B CONTROL) EXCEPT:
+#   - rich_features: true  → append 4 scale/position columns per token (kz, vz,
+#     pos, recency) that BYPASS the PerTokenMLP's K/V LayerNorm. This gives the
+#     policy the magnitude signal `kv_norm` evicts on — which the baseline policy
+#     structurally cannot see (see experiments/phase2-capacity/PLAN.md §3, D1/D2).
+#   - total_timesteps: 2,000,000 (curves plateau from 0.15M; 2M is past steady
+#     state, cheaper, fits a spot window).
+#
+# Hypothesis H-E1: a norm+position-aware policy MATCHES or BEATS kv_norm. If so,
+# the bottleneck was representation, not reward and not algorithm.
+#
+# Comparable to the clean A/B: same data (n=1000, seed=0), same 32 probe anchors,
+# same budget=256 → the probe's kv_norm/random columns are IDENTICAL across all
+# arms, so learned−kv_norm is a paired comparison on one axis.
+
+model_name: qwen-1.5b
+device:     auto
+
+n_examples: 1000
+seed: 0
+
+budget_min: 256
+budget_max: 256
+
+max_len:        288
+max_new_tokens: 600
+
+use_attention_shaping: false
+attention_weight:      0.0
+shaping_mode:          none
+
+hidden: 64
+
+probe_n:                32
+probe_every_n_rollouts: 15
+probe_n_sinks:          4
+
+n_parallel:   2
+n_steps:      650
+batch_size:   512
+
+n_epochs:     4
+gamma:        1.0
+gae_lambda:   1.0
+clip_range:   0.2
+ent_coef:     0.01
+total_timesteps: 2000000
+
+n_sinks:  4
+n_recent: 32
+
+length_penalty_weight: 0.5
+truncation_penalty:    1.0
+
+entropy_reward_weight: 0.001
+
+repeats_per_problem: 5
+
+attn_implementation: sdpa
+
+free_growth_cache_dir: ~/.kv_eviction_cache
+
+protect_prompt: false
+
+rich_features: true          # E1: the only change vs chat_full_v2
+
+# Phase 2 · E3 — warm-start from kv_norm (BC) then RL. Fixed BC budget (2500 steps,
+# lr 2e-3) after the screen's 300-step BC only reached match_kv_norm≈0.29.
+warm_start_bc: 2500
+warm_start_lr: 0.002
