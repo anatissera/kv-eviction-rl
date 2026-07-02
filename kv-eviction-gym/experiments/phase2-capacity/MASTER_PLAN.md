@@ -122,11 +122,18 @@ Sources: [KVP](https://arxiv.org/abs/2602.10238) ·
 ## 6. Autonomous execution log (tonight)
 
 - 03:41 UTC — `s_attn` (e4_attn.yaml: rich+kvz+PerTokenAttention 2L/4H, 2M, seed=0,
-  mismos anchors) lanzado en `kv-chat-v1` (proyecto de Alex, L4 on-demand → sin
-  preemption). Venv de Alex reutilizado read-only + `PYTHONPATH` a nuestro código
-  SCPeado (verificado: `kv_gym` resuelve a `~/repo/src`, GPU 45%, curvas escribiendo).
-- 03:45 UTC — watcher_attn armado (baja curvas + apaga VM al terminar + compare.py).
-- 03:50 UTC — `s_rich` asegurado: curvas + final/best checkpoints descargados a
-  `ab_results/` (la VM spot podría no volver a arrancar). Stats finales:
-  **mean −0.044 / last5 −0.050** sobre 31 probes → paridad/apenas-abajo, no supera.
-- (se completa al llegar cada resultado)
+  same anchors) launched on `kv-chat-v1` (Alex's project, on-demand L4 → no
+  preemption). Alex's venv reused read-only + `PYTHONPATH` pointing at our SCPed
+  code (verified: `kv_gym` resolves to `~/repo/src`, GPU 45%, curves writing).
+- 03:45 UTC — watcher_attn armed (pulls curves + shuts the VM down on finish + compare.py).
+- 03:50 UTC — `s_rich` secured: curves + final/best checkpoints downloaded to
+  `ab_results/` (the spot VM might not come back). Final stats:
+  **mean −0.044 / last5 −0.050** over 31 probes → parity/barely-below, does not beat it.
+- 07:00-07:30 UTC — `kvp-ab` took TWO preemptions (~06:00 and ~06:5x); the watcher
+  revived it and `s_warm` resumed from checkpoint ✓ (the checkpoint_freq=900 fix paid off).
+  But we found a **resume bug**: SB3 ADDS `num_timesteps` to the budget passed in
+  when `reset_num_timesteps=False` → every resume gifted 2M more (s_warm was heading
+  to 4.1M). **Fix (8decafd):** pass only the REMAINING budget. Patched on both
+  VMs; s_warm was already at 2.1M ≥ 2M → it closes now (slight ~5% overtrain,
+  comparable anyway: the ~2M probes are on the curve).
+- (filled in as each result lands)
