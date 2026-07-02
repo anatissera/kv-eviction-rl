@@ -188,7 +188,41 @@ training/probe data; identical anchors for every row; VM auto-stopped after).
   where eviction actually hurts. Future work: redesign the env to allow prompt
   compression (SnapKV-style prefill selection) or move to long-generation tasks.
 
-## 11. Current state / open questions / next
+## 11. ORACLE-GAP experiment — the learnable margin EXISTS (+7pp) and is FUTURE information
+
+Completed 2026-07-02 18:27 UTC (`scripts/oracle_eval.py`, 128 wide examples, all
+arms paired per example under ONE eager-attention model instance; 0 errors).
+
+| arm | acc | paired vs kv_norm |
+|---|---|---|
+| **oracle_fut** (golden eviction: min MAX-FUTURE attention from full trace) | **0.516** | **+0.070 ± 0.025 (2.8σ; 10W-1L, McNemar p≈0.01)** |
+| full (no eviction) | 0.492 | +0.047 |
+| attn_cur (H2O-family: min CURRENT accumulated attention) | 0.461 | +0.016 (0.5σ, 8W-6L — noise) |
+| kv_norm | 0.445 | — |
+
+Three findings:
+1. **The learnable margin exists: ≈ +7pp — and it is specifically FUTURE
+   information.** Present-attention (attn_cur) does NOT beat kv_norm. This
+   coherently explains ALL of Phase 2: no online policy (learned or heuristic)
+   can see the future → they all tie at the kv_norm level. kv_norm ≈ the online
+   ceiling; the future-supervised ceiling is +7pp above it.
+2. **The oracle beats even full-cache** (0.516 > 0.492): good eviction is not
+   just harmless — dropping the right tokens *improves* reasoning (beneficial
+   trajectory steering). "full" was never a true ceiling.
+3. **Third environment shift, root-caused:** full = 0.49 under eager vs 0.74
+   under sdpa on the SAME examples. Cause (loader.py): in bf16, eager computes
+   QK^T in bf16 while sdpa accumulates in fp32 → eager inference is genuinely
+   worse. Paired within-run gaps remain valid; the +7pp may shrink somewhat in
+   the healthier sdpa regime. (Caveat for the report.)
+
+**Decision (per GRAN_PLAN tree):** margin exists → **E5 Golden-BC launched**:
+distill future-attention rankings into the online policy (ForesightKV recipe):
+trace generation (~400 train examples) → dense-BC of actor logits to the
+future-attention score → short RL → wide_eval. Target: capture a fraction of
+the +7pp; how much is capturable by a policy that must PREDICT the future from
+present features is exactly E5's question.
+
+## 12. Current state / open questions / next
 
 - **ALL THREE SCALED ARMS DONE:** s_rich −0.044 (§7), s_warm −0.019 (§8),
   s_attn −0.111 (§9). Answer to the headline question: **no, nothing beats
