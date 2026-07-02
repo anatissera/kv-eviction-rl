@@ -5,6 +5,12 @@ end. Nothing in Phase 2 is launched yet — code is being staged so approval →
 
 ---
 
+> **NOTE (2026-07-01):** this file is the up-front DESIGN + root-cause analysis.
+> For the actual RESULTS and the chronological "what we tried → what it gave → why
+> we changed course" narrative (screen results, the kvz fix, the checkpoint bug, the
+> s_rich parity finding), see **[FINDINGS.md](FINDINGS.md)** — it supersedes the
+> "Results so far" section below, which predates the experiments.
+
 ## 0. TL;DR (read this first)
 
 - The overnight A/B **looked** like S4 won (+0.183 retention). **It's invalid** — the two arms ran
