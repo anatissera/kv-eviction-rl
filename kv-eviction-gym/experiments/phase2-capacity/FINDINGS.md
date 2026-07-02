@@ -102,6 +102,9 @@ The clean, less-noisy setting. Here `kv_norm`=0.625 is a STRONG baseline (not 0.
 ```
 - `full`=0.75, `kv_norm`=0.625, `random`=0.562. Learned oscillates AROUND kv_norm,
   mean ≈ **−0.02** (peaks +0.062, troughs −0.156).
+- **FINAL (run completed 2026-07-02, 31 probes):** paired mean **−0.044**, last-5
+  **−0.050**, max +0.094. Curves + final/best checkpoints downloaded to
+  `ab_results/`. Definitive: s_rich = parity-to-slightly-below, does NOT beat.
 - **Reading: PARITY, not a beat.** rich+kvz moved the policy from ~random (the old
   norm-blind level) UP TO kv_norm — real progress (representation closed the gap) —
   but it does not reliably EXCEED the heuristic. With kvz as a feature the easiest
@@ -118,9 +121,15 @@ The clean, less-noisy setting. Here `kv_norm`=0.625 is a STRONG baseline (not 0.
 - **RUNNING:** `s_warm` (warm-start: BC-clone kv_norm then RL) — does starting AT
   kv_norm + RL push past it? Then done.
 - **Open:** does ANY method beat kv_norm? Per-token (rich, warm) look like parity.
-- **Likely next:** scale the **attention** policy (E4, cross-token redundancy
-  reasoning) — the only candidate with a ceiling above a per-token heuristic. If
-  warm-start also plateaus at parity, this is the principled next experiment.
+- **LAUNCHED (2026-07-02 03:41 UTC):** `s_attn` (E4: rich+kvz+PerTokenAttention,
+  2M, same seed/anchors) on `kv-chat-v1` (Alex's project, on-demand L4) — running
+  in PARALLEL with s_warm. Cross-token redundancy reasoning is the only candidate
+  with a ceiling above a per-token heuristic. Watcher auto-downloads + stops VM.
+- **Literature check (2026):** KVP (arXiv 2602.10238) and ForesightKV (2602.03203)
+  DO beat H2O/SnapKV with learned eviction — but via OFFLINE supervision from
+  future-attention oracle labels (+ attention features), not online PPO from the
+  terminal reward. Our parity result replicates the failure mode that motivated
+  their design. Full synthesis + decision tree: **MASTER_PLAN.md**.
 - **Honest headline for the report so far:** "rich, scale-aware features bring an
   RL KV-eviction policy from random-level up to parity with the strongest per-token
   heuristic (kv_norm); reward shaping (S4) does not help; beating the heuristic
