@@ -110,6 +110,11 @@ The clean, less-noisy setting. Here `kv_norm`=0.625 is a STRONG baseline (not 0.
 
 ## 8. Current state / open questions / next
 
+- **PROGRESS (2026-07-02 03:07 UTC):** `s_rich` (rich+kvz, 2M) **completed** at
+  2,000,488 steps. `s_warm` (warm-start: BC-clone kv_norm then RL) **running**,
+  ~695k/2M steps (started 01:18 UTC, ~370k steps/h → ETA ~3.5h). Watcher relaunched
+  after it had died silently ~00:44 UTC; on `s_warm` finish it auto-downloads both
+  arms' curves, STOPS the VM, and runs compare.py (rich vs warm_start vs screen base).
 - **RUNNING:** `s_warm` (warm-start: BC-clone kv_norm then RL) — does starting AT
   kv_norm + RL push past it? Then done.
 - **Open:** does ANY method beat kv_norm? Per-token (rich, warm) look like parity.
