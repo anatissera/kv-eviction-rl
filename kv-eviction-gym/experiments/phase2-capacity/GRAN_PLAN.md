@@ -135,6 +135,14 @@ Fuentes: [KVP](https://arxiv.org/abs/2602.10238) ·
   a 4.1M). **Fix (8decafd):** pasar solo el budget RESTANTE. Parcheado en ambas
   VMs; s_warm ya tenía 2.1M ≥ 2M → se cierra ahora (leve overtrain de ~5%,
   comparable igual: los probes de ~2M están en la curva).
+- 09:50 UTC — **s_attn TERMINADO: DEBAJO de kv_norm** (mean −0.111, last5 −0.125,
+  nunca ≥ kv_norm; en su probe queda incluso debajo de random). D3 cerrado
+  negativo — el pico +0.19 del screen (overfit 16) NO transfirió a escala.
+  Caveat: baselines de kv-chat-v1 ≠ kvp-ab (stack torch/transformers distinto →
+  otra vez environment shift; solo vale el paired within-arm). Rama del árbol:
+  paridad/peor en TODAS las ramas → wide eval n=128 en UNA VM (misma numérica
+  para los 3 checkpoints) + E5 staged. kv-chat-v1 en STOCKOUT al restart →
+  retry-loop armado (~2h); driver run_wide_eval.sh listo.
 - 07:30 UTC — **s_warm TERMINADO: PARIDAD** (mean −0.022, last5 −0.019, max
   +0.031; el BC arrancó ≥ kv_norm en el primer probe → el clone funcionó, el RL
   no lo superó nunca). Rama del árbol: |paired| ≤ 0.03 → **kvp-ab APAGADA, sin
