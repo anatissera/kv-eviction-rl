@@ -136,6 +136,14 @@ Sources: [KVP](https://arxiv.org/abs/2602.10238) ·
   to 4.1M). **Fix (8decafd):** pass only the REMAINING budget. Patched on both
   VMs; s_warm was already at 2.1M ≥ 2M → it closes now (slight ~5% overtrain,
   comparable anyway: the ~2M probes are on the curve).
+- 09:50 UTC — **s_attn FINISHED: BELOW kv_norm** (mean −0.111, last5 −0.125,
+  never ≥ kv_norm; on its probe it even sits below random). D3 closed
+  negative — the screen's +0.19 peak (overfit 16) did NOT transfer to scale.
+  Caveat: kv-chat-v1's baselines ≠ kvp-ab's (different torch/transformers stack →
+  environment shift again; only the paired within-arm comparison counts). Tree
+  branch: parity/worse on ALL branches → wide eval n=128 on ONE VM (same numerics
+  for the 3 checkpoints) + E5 staged. kv-chat-v1 hit STOCKOUT on restart →
+  retry-loop armed (~2h); run_wide_eval.sh driver ready.
 - 07:30 UTC — **s_warm FINISHED: PARITY** (mean −0.022, last5 −0.019, max
   +0.031; BC started ≥ kv_norm on the first probe → the clone worked, RL never
   beat it). Tree branch: |paired| ≤ 0.03 → **kvp-ab OFF, no seed replication**

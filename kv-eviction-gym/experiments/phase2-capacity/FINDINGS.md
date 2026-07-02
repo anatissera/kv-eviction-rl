@@ -131,16 +131,39 @@ gap: +.031 +.031 -.031 -.062 -.094 +.000 -.031 +.031 -.031 -.062
   (KVP/ForesightKV): online RL from terminal correctness can't beat the
   heuristic; their wins come from offline future-attention oracle supervision.
 
-## 9. Current state / open questions / next
+## 9. Scaled run s_attn (rich + cross-token attention, 2M) — RESULT: BELOW kv_norm, D3 closed negative
 
-- **DONE:** s_rich (§7, parity −0.044) and s_warm (§8, parity −0.019). kvp-ab
-  STOPPED (artifacts rescued to ab_results/: curves + final/best checkpoints).
-- **Open:** does ANY method beat kv_norm? Per-token (rich, warm) = parity,
-  CONFIRMED both. The only open branch is cross-token architecture (s_attn).
-- **LAUNCHED (2026-07-02 03:41 UTC):** `s_attn` (E4: rich+kvz+PerTokenAttention,
-  2M, same seed/anchors) on `kv-chat-v1` (Alex's project, on-demand L4) — running
-  in PARALLEL with s_warm. Cross-token redundancy reasoning is the only candidate
-  with a ceiling above a per-token heuristic. Watcher auto-downloads + stops VM.
+Completed 2026-07-02 09:50 UTC on `kv-chat-v1` (Alex's project, on-demand L4, no
+preemptions). 13 probes, within-arm paired gap:
+
+```
+ts:   149k  327k  474k  621k  762k  914k 1087k 1232k 1383k 1512k 1666k 1796k 1944k
+gap: -.062 -.156 -.094 -.094 -.062 -.094 -.125 -.125 -.094 -.062 -.156 -.188 -.125
+```
+- **Never at or above kv_norm** (best probe −0.062). Mean **−0.111**, last-5 −0.125.
+- **Environment-shift caveat (again!):** this VM's baselines are kv_norm=random=
+  full=**0.750** vs kvp-ab's 0.625/0.562/0.750 — same seed, same 32 examples, but a
+  different torch/transformers stack changes generations. Two consequences:
+  (a) cross-arm comparisons of RAW numbers between s_attn and s_rich/s_warm are
+  NOT valid — only within-arm paired gaps are; (b) on this stack eviction barely
+  hurts the heuristics (random ties full → ceiling effect, little headroom), yet
+  the learned attention policy still lands BELOW random — it evicts actively worse.
+- **Verdict (D3):** the cross-token architecture does not rescue online PPO either;
+  at scale it is the worst of the three arms on its own probe. The screen's +0.19
+  peak did not transfer (overfit-16 capacity ≠ generalization at 1000-train).
+- All three deficiency-fix branches (D1/D2 rich, D4 warm, D3 attention) now
+  closed: **online PPO from terminal correctness ⇒ parity with kv_norm at best.**
+  The decisive cross-arm number comes from the wide eval (§10): n=128 fresh
+  examples, all three checkpoints evaluated on ONE VM (one software stack).
+
+## 10. Current state / open questions / next
+
+- **ALL THREE SCALED ARMS DONE:** s_rich −0.044 (§7), s_warm −0.019 (§8),
+  s_attn −0.111 (§9). Answer to the headline question: **no, nothing beats
+  kv_norm under online PPO from terminal correctness.** Both VMs stopped.
+- **IN FLIGHT:** wide eval (n=128 fresh disjoint examples, `scripts/wide_eval.py`,
+  all three final checkpoints + s_attn best, ONE VM/stack → the report's decisive
+  paired table). Blocked on a kv-chat-v1 restart STOCKOUT; retry loop armed.
 - **Literature check (2026):** KVP (arXiv 2602.10238) and ForesightKV (2602.03203)
   DO beat H2O/SnapKV with learned eviction — but via OFFLINE supervision from
   future-attention oracle labels (+ attention features), not online PPO from the
