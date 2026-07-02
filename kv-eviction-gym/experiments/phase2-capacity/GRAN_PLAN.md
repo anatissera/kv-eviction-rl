@@ -128,4 +128,11 @@ Fuentes: [KVP](https://arxiv.org/abs/2602.10238) ·
 - 03:50 UTC — `s_rich` asegurado: curvas + final/best checkpoints descargados a
   `ab_results/` (la VM spot podría no volver a arrancar). Stats finales:
   **mean −0.044 / last5 −0.050** sobre 31 probes → paridad/apenas-abajo, no supera.
+- 07:00-07:30 UTC — `kvp-ab` sufrió DOS preemptions (~06:00 y ~06:5x); el watcher
+  la revivió y `s_warm` resumió de checkpoint ✓ (el fix checkpoint_freq=900 pagó).
+  Pero detectamos un **bug de resume**: SB3 SUMA `num_timesteps` al budget pasado
+  cuando `reset_num_timesteps=False` → cada resume regalaba 2M nuevos (s_warm iba
+  a 4.1M). **Fix (8decafd):** pasar solo el budget RESTANTE. Parcheado en ambas
+  VMs; s_warm ya tenía 2.1M ≥ 2M → se cierra ahora (leve overtrain de ~5%,
+  comparable igual: los probes de ~2M están en la curva).
 - (se completa al llegar cada resultado)
