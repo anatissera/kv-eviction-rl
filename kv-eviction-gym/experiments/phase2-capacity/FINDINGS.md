@@ -156,20 +156,60 @@ gap: -.062 -.156 -.094 -.094 -.062 -.094 -.125 -.125 -.094 -.062 -.156 -.188 -.1
   The decisive cross-arm number comes from the wide eval (§10): n=128 fresh
   examples, all three checkpoints evaluated on ONE VM (one software stack).
 
-## 10. Current state / open questions / next
+## 10. WIDE EVAL (n=128 fresh, one VM/stack) — the decisive table + a regime insight
+
+Completed 2026-07-02 ~13:30 UTC (`scripts/wide_eval.py` on kv-chat-v1; 128 GSM8K
+examples from the same seeded shuffle, slice [1032:1160] → disjoint from all
+training/probe data; identical anchors for every row; VM auto-stopped after).
+
+| arm | learned | paired vs kv_norm | trunc |
+|---|---|---|---|
+| s_rich_final | 0.695 | **−0.016** (≈2 ex.) | 0.03 |
+| s_warm_final | 0.688 | **−0.023** (≈3 ex.) | 0.21 |
+| s_attn_final | 0.648 | **−0.063** | 0.01 |
+| s_attn_best  | 0.633 | **−0.078** | 0.02 |
+| *kv_norm* | *0.711* | — | |
+| *random*  | *0.703* | *−0.008 vs kv_norm* | |
+| *full*    | *0.742* | *ceiling* | |
+
+- **Per-token arms (rich, warm) = parity within noise** (1 example = 0.0078; they
+  sit 2-3 examples below kv_norm). **Attention is genuinely worse** (8-10 ex.
+  below, also below random) — the D3 negative replicates out-of-probe.
+- **THE REGIME INSIGHT (new, load-bearing):** `full − random = 0.039` — at
+  budget=256 with these prompt lengths, random eviction only costs ~4pp vs no
+  eviction, and kv_norm captures ~20% of that sliver (+0.008 over random). There
+  is almost NOTHING for a learned policy to win in this regime: the terminal
+  reward is nearly flat in the policy → PPO has ~no gradient signal, and even a
+  perfect oracle could gain at most ~3pp over kv_norm. This is bounded by the
+  ENV ARCHITECTURE: the batched env pre-allocates budget+1 slots and skips any
+  example with T_prompt > budget → budget can never go below max prompt length
+  (~232), i.e. the env cannot express aggressive compression. The literature's
+  learned-eviction wins (KVP, ForesightKV) live at 50% budgets / 128K contexts
+  where eviction actually hurts. Future work: redesign the env to allow prompt
+  compression (SnapKV-style prefill selection) or move to long-generation tasks.
+
+## 11. Current state / open questions / next
 
 - **ALL THREE SCALED ARMS DONE:** s_rich −0.044 (§7), s_warm −0.019 (§8),
   s_attn −0.111 (§9). Answer to the headline question: **no, nothing beats
   kv_norm under online PPO from terminal correctness.** Both VMs stopped.
-- **IN FLIGHT:** wide eval (n=128 fresh disjoint examples, `scripts/wide_eval.py`,
-  all three final checkpoints + s_attn best, ONE VM/stack → the report's decisive
-  paired table). Blocked on a kv-chat-v1 restart STOCKOUT; retry loop armed.
+- **Wide eval DONE (§10):** parity confirmed for per-token arms, attention worse,
+  and the regime-headroom insight (full−random ≈ 4pp). Both VMs STOPPED.
+- **Nothing left running.** No new trainings pass the decision-tree bar: E5
+  (Golden-BC) in THIS regime could gain ≤3pp by construction — the env redesign
+  (prompt compression / harsher budgets) has to come first. Morning discussion.
 - **Literature check (2026):** KVP (arXiv 2602.10238) and ForesightKV (2602.03203)
   DO beat H2O/SnapKV with learned eviction — but via OFFLINE supervision from
   future-attention oracle labels (+ attention features), not online PPO from the
   terminal reward. Our parity result replicates the failure mode that motivated
   their design. Full synthesis + decision tree: **GRAN_PLAN.md**.
-- **Honest headline for the report so far:** "rich, scale-aware features bring an
-  RL KV-eviction policy from random-level up to parity with the strongest per-token
-  heuristic (kv_norm); reward shaping (S4) does not help; beating the heuristic
-  appears to require cross-token reasoning (in progress)."
+- **Honest headline for the report (final):** "Rich, scale-aware features bring an
+  RL KV-eviction policy from random-level to parity with the strongest per-token
+  heuristic (kv_norm); reward shaping (S4), warm-starting AT the heuristic, and a
+  cross-token attention policy all fail to exceed it. The wide eval explains why:
+  in this env's regime (budget ≥ prompt length) the total headroom between random
+  eviction and the full cache is ~4pp — the terminal reward is nearly flat, so
+  online PPO has no signal to beat a good heuristic, and even an oracle is capped
+  at ~3pp. Learned-eviction wins in the literature (KVP, ForesightKV 2026) come
+  from offline future-attention supervision at aggressive budgets — both are
+  future work here (env redesign first)."
