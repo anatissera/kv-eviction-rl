@@ -56,10 +56,13 @@ def summarize(label, rows, n=5):
     return dict(label=label, rows=rows, gap=gap, ret=ret, learned=learned, kvn=kvn)
 
 def main():
-    args = [a for a in sys.argv[1:] if not a.startswith('--')]
     out = None
-    if '--out' in sys.argv:
-        out = sys.argv[sys.argv.index('--out') + 1]
+    argv = sys.argv[1:]
+    if '--out' in argv:
+        i = argv.index('--out')
+        out = argv[i + 1]
+        argv = argv[:i] + argv[i + 2:]   # drop --out AND its value
+    args = [a for a in argv if not a.startswith('--')]
     print("#" * 64)
     print("# PHASE 2 — capacity experiments: does the policy beat kv_norm?")
     print("#" * 64 + "\n")

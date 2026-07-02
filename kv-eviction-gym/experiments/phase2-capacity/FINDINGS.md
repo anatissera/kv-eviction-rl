@@ -111,16 +111,32 @@ The clean, less-noisy setting. Here `kv_norm`=0.625 is a STRONG baseline (not 0.
   thing to learn is "be kv_norm"; beating it needs something more (re-weight K/V,
   position, cross-token) that per-token PPO isn't finding.
 
-## 8. Current state / open questions / next
+## 8. Scaled run s_warm (BC→kv_norm + RL, 2M) — RESULT: PARITY, exploration was NOT the wall
 
-- **PROGRESS (2026-07-02 03:07 UTC):** `s_rich` (rich+kvz, 2M) **completed** at
-  2,000,488 steps. `s_warm` (warm-start: BC-clone kv_norm then RL) **running**,
-  ~695k/2M steps (started 01:18 UTC, ~370k steps/h → ETA ~3.5h). Watcher relaunched
-  after it had died silently ~00:44 UTC; on `s_warm` finish it auto-downloads both
-  arms' curves, STOPS the VM, and runs compare.py (rich vs warm_start vs screen base).
-- **RUNNING:** `s_warm` (warm-start: BC-clone kv_norm then RL) — does starting AT
-  kv_norm + RL push past it? Then done.
-- **Open:** does ANY method beat kv_norm? Per-token (rich, warm) look like parity.
+Completed 2026-07-02 ~07:25 UTC (survived two spot preemptions via checkpoint
+resume; exposed + fixed a resume-budget bug, commit 8decafd). 10 probes:
+
+```
+ts:   162k  329k  525k  701k  932k  1086k 1283k 1416k 1624k 1959k
+gap: +.031 +.031 -.031 -.062 -.094 +.000 -.031 +.031 -.031 -.062
+```
+- **The BC took:** first probe (162k) has learned=0.656 ≥ kv_norm=0.625 — the
+  policy STARTS at/above the heuristic (screen's BC failure is fixed).
+- **RL does not push past it:** mean −0.022, avg-last-5 −0.019, max +0.031.
+  If anything RL *degrades* the clone mid-run (932k: −0.094) then recovers to
+  parity. Same online-PPO ceiling as s_rich (−0.050 last-5), slightly closer.
+- **Verdict (D4):** exploration/cold-start was NOT the binding constraint.
+  Starting AT kv_norm + 2M of PPO does not find anything better than kv_norm.
+  Per-token policies = parity ceiling, warm or cold. Matches the 2026 literature
+  (KVP/ForesightKV): online RL from terminal correctness can't beat the
+  heuristic; their wins come from offline future-attention oracle supervision.
+
+## 9. Current state / open questions / next
+
+- **DONE:** s_rich (§7, parity −0.044) and s_warm (§8, parity −0.019). kvp-ab
+  STOPPED (artifacts rescued to ab_results/: curves + final/best checkpoints).
+- **Open:** does ANY method beat kv_norm? Per-token (rich, warm) = parity,
+  CONFIRMED both. The only open branch is cross-token architecture (s_attn).
 - **LAUNCHED (2026-07-02 03:41 UTC):** `s_attn` (E4: rich+kvz+PerTokenAttention,
   2M, same seed/anchors) on `kv-chat-v1` (Alex's project, on-demand L4) — running
   in PARALLEL with s_warm. Cross-token redundancy reasoning is the only candidate

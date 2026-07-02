@@ -136,4 +136,9 @@ Sources: [KVP](https://arxiv.org/abs/2602.10238) ·
   to 4.1M). **Fix (8decafd):** pass only the REMAINING budget. Patched on both
   VMs; s_warm was already at 2.1M ≥ 2M → it closes now (slight ~5% overtrain,
   comparable anyway: the ~2M probes are on the curve).
-- (filled in as each result lands)
+- 07:30 UTC — **s_warm FINISHED: PARITY** (mean −0.022, last5 −0.019, max
+  +0.031; BC started ≥ kv_norm on the first probe → the clone worked, RL never
+  beat it). Tree branch: |paired| ≤ 0.03 → **kvp-ab OFF, no seed replication**
+  (we do not pay for a CI on a null). D4 closed. compare.py fixed
+  (--out parsing) and run: warm −0.019 vs rich −0.050. ONE branch left open:
+  s_attn (~09:40 UTC). If it is parity too → wide eval n=128 + staging E5.
