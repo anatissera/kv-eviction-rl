@@ -558,6 +558,18 @@ def main():
         behavior_clone_kv_norm(ppo, env, n_bc, n_kv_heads, head_dim, device,
                                lr=cfg.get("warm_start_lr", 1e-3))
 
+    # Phase 2 · E5 — Golden-BC: clone the FUTURE-attention oracle (traces from
+    # scripts/trace_gen.py). The oracle beats kv_norm by +7pp (FINDINGS §11);
+    # this pre-phase distills its ranking into the policy before PPO.
+    n_gbc = int(cfg.get("golden_bc", 0))
+    if n_gbc > 0 and not args.resume_from:
+        from kv_gym.warm_start import behavior_clone_golden
+        traces_dir = cfg.get("golden_traces_dir", "traces")
+        print(f"golden_bc: cloning the future-attention oracle for {n_gbc} steps "
+              f"(traces: {traces_dir})")
+        behavior_clone_golden(ppo, env, n_gbc, traces_dir, device,
+                              lr=cfg.get("warm_start_lr", 1e-3))
+
     # On resume, SB3's _setup_learn ADDS num_timesteps to the passed budget when
     # reset_num_timesteps=False → passing the full total again would grant a fresh
     # 2M PER RESUME (s_warm ran past 2M after two spot preemptions). Pass only the
