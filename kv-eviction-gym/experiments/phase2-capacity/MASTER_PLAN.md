@@ -136,6 +136,15 @@ Sources: [KVP](https://arxiv.org/abs/2602.10238) ·
   to 4.1M). **Fix (8decafd):** pass only the REMAINING budget. Patched on both
   VMs; s_warm was already at 2.1M ≥ 2M → it closes now (slight ~5% overtrain,
   comparable anyway: the ~2M probes are on the curve).
+- 13:30 UTC — **WIDE EVAL FINISHED (n=128, a single stack): definitive table.**
+  rich −0.016 / warm −0.023 (parity within noise, 1 ex = 0.0078) / attn
+  −0.063 and −0.078 (worse than random, replicates the negative). **Regime insight:**
+  full−random = 0.039 → the TOTAL headroom of any policy is ~4pp because the env
+  cannot express aggressive compression (budget ≥ prompt length by architectural
+  design). The terminal reward is nearly flat → PPO with no signal. E5 in this
+  regime would win ≤3pp by construction → NOT launched; env redesign first
+  (SnapKV-style prompt compression / harder budgets / long-generation tasks).
+  Both VMs OFF. FINDINGS §10 has the full table.
 - 09:50 UTC — **s_attn FINISHED: BELOW kv_norm** (mean −0.111, last5 −0.125,
   never ≥ kv_norm; on its probe it even sits below random). D3 closed
   negative — the screen's +0.19 peak (overfit 16) did NOT transfer to scale.

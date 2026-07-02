@@ -1,0 +1,5 @@
+label,model,num_timesteps,n_wide
+s_rich_final,ckpts_s_rich_final.zip,2000488,128
+s_warm_final,ckpts_s_warm_final.zip,2103472,128
+s_attn_final,runs/s_attn/final_model.zip,2004716,128
+s_attn_best,runs/s_attn/best_probe_model.zip,148540,128
