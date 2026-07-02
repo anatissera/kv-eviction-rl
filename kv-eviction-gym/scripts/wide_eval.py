@@ -48,6 +48,10 @@ def main():
     p.add_argument("--label", required=True, help="Run label (recorded in labels.csv)")
     p.add_argument("--n", type=int, default=128, help="Wide-eval example count")
     p.add_argument("--out-dir", default="runs/wide_eval")
+    p.add_argument("--slice-start", type=int, default=None,
+                   help="Override the wide-slice start (default: n_examples+probe_n "
+                        "from the config). Use 1032 to evaluate arms trained with a "
+                        "different n_examples on the SHARED [1032:1160] slice.")
     args = p.parse_args()
 
     cfg = yaml.safe_load(open(args.config))
@@ -66,10 +70,11 @@ def main():
     seed       = cfg.get("seed", 0)
     # Same seeded shuffle as train.py, extended: the wide slice starts after
     # the train+probe prefix → disjoint from anything the checkpoint saw.
-    all_examples = load_gsm8k(n=n_examples + probe_n + args.n, seed=seed, split="train")
-    wide = all_examples[n_examples + probe_n:]
+    start = args.slice_start if args.slice_start is not None else n_examples + probe_n
+    all_examples = load_gsm8k(n=start + args.n, seed=seed, split="train")
+    wide = all_examples[start:]
     print(f"wide eval: {len(wide)} fresh examples "
-          f"(slice [{n_examples + probe_n}:{n_examples + probe_n + args.n}], seed={seed})")
+          f"(slice [{start}:{start + args.n}], seed={seed})")
 
     # Load the policy (custom extractor classes resolve via kv_gym.policy imports
     # inside the pickled policy_kwargs). env=None: we only use the policy.
