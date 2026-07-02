@@ -1,0 +1,2 @@
+timestep,ep_rew_mean,ep_len_mean,correctness_rate,alignment_mean,episode_seconds_mean,episodes,truncation_rate,context_size_mean,examples_seen,dataset_pass,kl_step_mean
+2118732,0.468649,136.9,1.0000,nan,6.763,4,0.0000,290.2,0,0,0.00000
