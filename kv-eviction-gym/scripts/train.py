@@ -558,11 +558,21 @@ def main():
         behavior_clone_kv_norm(ppo, env, n_bc, n_kv_heads, head_dim, device,
                                lr=cfg.get("warm_start_lr", 1e-3))
 
-    ppo.learn(
-        total_timesteps=cfg.get("total_timesteps", 500_000),
-        callback=callbacks,
-        reset_num_timesteps=False if args.resume_from else True,
-    )
+    # On resume, SB3's _setup_learn ADDS num_timesteps to the passed budget when
+    # reset_num_timesteps=False → passing the full total again would grant a fresh
+    # 2M PER RESUME (s_warm ran past 2M after two spot preemptions). Pass only the
+    # REMAINING budget so the cumulative cap is honored across any number of resumes.
+    _total = cfg.get("total_timesteps", 500_000)
+    _budget = _total - ppo.num_timesteps if args.resume_from else _total
+    if _budget > 0:
+        ppo.learn(
+            total_timesteps=_budget,
+            callback=callbacks,
+            reset_num_timesteps=False if args.resume_from else True,
+        )
+    else:
+        print(f"resume: num_timesteps={ppo.num_timesteps} >= total_timesteps={_total} "
+              f"— nothing left to train, saving final model.")
 
     final_path = run_dir / "final_model"
     ppo.save(str(final_path))
