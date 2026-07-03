@@ -71,7 +71,8 @@ def main():
     # Same seeded shuffle as train.py, extended: the wide slice starts after
     # the train+probe prefix → disjoint from anything the checkpoint saw.
     start = args.slice_start if args.slice_start is not None else n_examples + probe_n
-    all_examples = load_gsm8k(n=start + args.n, seed=seed, split="train")
+    all_examples = load_gsm8k(n=start + args.n, seed=seed, split="train",
+                              min_answer_words=cfg.get("min_answer_words", 0))
     wide = all_examples[start:]
     print(f"wide eval: {len(wide)} fresh examples "
           f"(slice [{start}:{start + args.n}], seed={seed})")

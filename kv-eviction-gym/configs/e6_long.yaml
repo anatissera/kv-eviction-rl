@@ -1,0 +1,75 @@
+# Phase A · E6 — "ALGO QUE ANDE": the same rich policy, in a regime where
+# eviction actually matters. No env code changes — two config-level levers,
+# both validated on the oracle-gap data (FINDINGS §11-§13):
+#
+#   1. min_answer_words: 60 — keep only long-reasoning examples (2208 survive;
+#      proxy corr 0.44 with generation length; mean gen 285 vs 234 tokens).
+#      Damage (full − kv_norm) is ZERO for gen<150 and +0.11 for gen 400-600.
+#   2. budget 160 (was 256) — eviction count = T + gen − budget is the best
+#      damage predictor: 100-250 evictions → dmg +0.07; 250-450 → +0.167 with
+#      the oracle recovering 2× kv_norm. At budget=160 the mean example runs
+#      ~245 evictions/layer. T≥160 examples are skipped by the env (~3%).
+#
+# Hypothesis H-E6: in this regime the learned rich policy BEATS kv_norm on
+# held-out examples (3 prior sightings: E0 screen +0.19 overfit; s_golden's
+# hostile probe +0.074 held-out; oracle bucket analysis). If E6 fails →
+# Phase B: env redesign for SnapKV-style prompt compression.
+#
+# Everything else identical to e1_rich.yaml. The probe ([1000:1032]) and wide
+# slice ([1032:1160]) live in the SAME filtered universe (min_answer_words is
+# applied inside load_gsm8k, prefix-stable), so anchors are consistent.
+
+model_name: qwen-1.5b
+device:     auto
+
+n_examples: 1000
+seed: 0
+
+min_answer_words: 60   # E6 lever 1 — long-generation regime
+
+budget_min: 160        # E6 lever 2 — real cache pressure (was 256)
+budget_max: 160
+
+max_len:        288
+max_new_tokens: 600
+
+use_attention_shaping: false
+attention_weight:      0.0
+shaping_mode:          none
+
+hidden: 64
+
+probe_n:                32
+probe_every_n_rollouts: 15
+probe_n_sinks:          4
+
+n_parallel:   2
+n_steps:      650
+batch_size:   512
+
+n_epochs:     4
+gamma:        1.0
+gae_lambda:   1.0
+clip_range:   0.2
+ent_coef:     0.01
+total_timesteps: 2000000
+
+n_sinks:  4
+n_recent: 32
+
+length_penalty_weight: 0.5
+truncation_penalty:    1.0
+
+entropy_reward_weight: 0.001
+
+repeats_per_problem: 5
+
+attn_implementation: sdpa
+
+free_growth_cache_dir: ~/.kv_eviction_cache
+
+protect_prompt: false
+
+rich_features: true
+
+checkpoint_freq: 900

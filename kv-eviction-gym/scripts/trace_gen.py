@@ -59,7 +59,8 @@ def main():
     budget  = cfg.get("budget_min", 256)
 
     # TRAIN examples = prefix of the same seeded shuffle used by train.py.
-    examples = load_gsm8k(n=args.n, seed=seed, split="train")
+    examples = load_gsm8k(n=args.n, seed=seed, split="train",
+                          min_answer_words=cfg.get("min_answer_words", 0))
     out_dir = Path(args.out_dir); out_dir.mkdir(parents=True, exist_ok=True)
     print(f"trace gen: {len(examples)} train examples → {out_dir} (eager)")
 

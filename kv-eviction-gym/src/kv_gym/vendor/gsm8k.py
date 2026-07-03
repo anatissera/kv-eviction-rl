@@ -31,6 +31,7 @@ def load_gsm8k(
     seed: int = 0,
     streaming: bool = False,
     split: str = "test",
+    min_answer_words: int = 0,
 ) -> list[dict]:
     """Load ``n`` examples from a GSM8K split.
 
@@ -48,6 +49,14 @@ def load_gsm8k(
         split:     Which split to load ("train" or "test"). Use "train" for
                    training to avoid overlap with held-out evaluation data.
                    GSM8K has 7,473 train and 1,319 test examples.
+        min_answer_words: Phase-A regime filter — keep only examples whose GOLD
+                   reasoning (answer text before "####") has at least this many
+                   words, a free proxy for CoT/generation length. The oracle-gap
+                   analysis (FINDINGS §11-§13) showed eviction damage — ALL the
+                   learnable headroom — concentrates in long generations
+                   (gen<150 → zero damage; gen 400-600 → full−kv_norm=+0.11,
+                   oracle recovers 100%). Applied AFTER the seeded shuffle →
+                   deterministic and prefix-stable for any n.
 
     Returns:
         List of example dicts following the project-wide schema (see the
@@ -62,10 +71,16 @@ def load_gsm8k(
     ds = load_dataset("openai/gsm8k", "main", split=split)
     ds = ds.shuffle(seed=seed)
 
+    if min_answer_words > 0:
+        keep = [i for i, a in enumerate(ds["answer"])
+                if len(a.split("####")[0].split()) >= min_answer_words]
+        ds = ds.select(keep)
+
     if n > len(ds):
         warnings.warn(
-            f"load_gsm8k: requested n={n} but dataset only has {len(ds)} examples. "
-            f"Returning all {len(ds)}."
+            f"load_gsm8k: requested n={n} but dataset only has {len(ds)} examples"
+            + (f" after min_answer_words={min_answer_words}" if min_answer_words else "")
+            + f". Returning all {len(ds)}."
         )
         n = len(ds)
 

@@ -155,7 +155,8 @@ def main():
     n_sinks    = cfg.get("n_sinks", 4)
     n_recent   = cfg.get("n_recent", 32)
 
-    all_examples = load_gsm8k(n=n_examples + probe_n + args.n, seed=seed, split="train")
+    all_examples = load_gsm8k(n=n_examples + probe_n + args.n, seed=seed, split="train",
+                              min_answer_words=cfg.get("min_answer_words", 0))
     wide = all_examples[n_examples + probe_n:]
     print(f"oracle eval: {len(wide)} examples, budget={budget}, "
           f"sinks={n_sinks} recent={n_recent} (eager)")
