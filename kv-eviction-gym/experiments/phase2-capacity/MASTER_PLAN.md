@@ -100,6 +100,34 @@ E5 (contingency, the "right next step" per the literature — NOT launched tonig
 **Cost rule (in force):** no VM on without an active run; seeds only to confirm an
 EFFECT (never for a null); 2M steps max per run.
 
+## 4b. PHASE A — "something that works" (E6, launched 2026-07-03)
+
+The user asked for a POSITIVE result. The accumulated evidence says where it is:
+eviction damage (= learnable headroom) concentrates in (a) long generations and
+(b) high cache pressure. Analysis over the oracle data:
+
+| evictions (T+gen−budget) | n | full−kv_norm | reading |
+|---|---|---|---|
+| < 100 | 77 | +0.026 | evicting is almost free |
+| 100-250 | 42 | +0.071 | real damage |
+| 250-450 | 6 | **+0.167** | the oracle doubles kv_norm |
+
+**E6 (`configs/e6_long.yaml`) = same env, same rich policy, hard regime:**
+`min_answer_words: 60` (prefix-stable filter in load_gsm8k; 2208 examples,
+mean gen 285) + `budget 160` (~245 evictions/layer in the average episode).
+H-E6 prediction: learned > kv_norm on held-out (3 prior sightings: screen +0.19,
+s_golden hostile probe +0.074 held-out, oracle buckets).
+Running as `s_long` on kvp-ab, chained after wide2 (watcher_e6.sh).
+**If E6 fails → Phase B: redesign the env for prompt compression
+(SnapKV-style, budget < T) and/or Phase C: attention-history features
+under eager (the ForesightKV input that sdpa does not expose).**
+
+Additional decisions from the E5/debug analysis (2026-07-03):
+- Do NOT train the existing runs longer: the curves plateau from 0.15M; the
+  ceiling is informational/regime-bound, not compute-bound.
+- The heterogeneity of GSM8K slices (kv_norm 0.06 on [400:432] vs 0.625 on
+  [1000:1032]) is both a methodological trap AND the clue that motivated E6.
+
 ## 5. Closing the report (independent of tonight's results)
 
 The story is already publishable as a TP with what we have:
