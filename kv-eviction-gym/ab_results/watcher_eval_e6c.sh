@@ -15,10 +15,24 @@ sshc(){ G compute ssh "$VM" --project="$PROJ" --zone="$ZONE" --tunnel-through-ia
 vmstatus(){ G compute instances describe "$VM" --project="$PROJ" --zone="$ZONE" \
   --format="value(status)" 2>/dev/null; }
 echo "================ eval_e6c watcher start $(date -u) ================" >> "$LOG"
+# initial (re)launch with retries — SSH may flap; keep trying until it lands
+for i in 1 2 3 4 5 6; do
+  R=$(sshc "ps -eo args | grep -c 'scripts/wide_eva[l]'; ")
+  if [ -n "$R" ]; then
+    if [ "$(echo "$R" | head -1)" = "0" ]; then
+      sshc "tmux kill-session -t evale6c 2>/dev/null; tmux new-session -d -s evale6c 'bash ~/run_eval_e6c.sh'"
+      echo "$(date -u) [eval_e6c] initial relaunch attempt $i" >> "$LOG"
+    else
+      echo "$(date -u) [eval_e6c] already running at watcher start" >> "$LOG"
+    fi
+    break
+  fi
+  sleep 60
+done
 while true; do
   sleep 300
   R=$(sshc "echo SSHOK; test -f ~/scaled/EVAL_E6C_DONE && echo DONE || echo RUNNING; \
-    pgrep -fc 'wide_eval' || true; tail -1 ~/scaled/eval_e6c.log 2>/dev/null | head -c 120")
+    ps -eo args | grep -c 'scripts/wide_eva[l]' || true; tail -1 ~/scaled/eval_e6c.log 2>/dev/null | head -c 120")
   if echo "$R" | grep -q SSHOK; then
     ST=$(echo "$R" | sed -n 2p); NP=$(echo "$R" | sed -n 3p)
     echo "$(date -u) [eval_e6c] $ST procs=$NP :: $(echo "$R" | sed -n 4p)" >> "$LOG"
