@@ -297,7 +297,24 @@ bring SE≈0.10. (Credit: Alex's suggestion to raise repetitions.)
 Queued behind eval_e6c on kvp-ab (watcher_e7.sh chains automatically; curves
 live-download to ab_results/ every 5 min). ETA ~20-24h of GPU.
 
-## 15. Current state / open questions / next
+## 15. eval_e6c — the long-gen regime is THE arena (45pp headroom) but s_rich doesn't win it
+
+128 fresh filtered long-gen examples, budget 256, kvp-ab stack (2026-07-04):
+full=0.680, **random=0.227, kv_norm=0.211**, s_rich=0.195 (paired −0.016).
+
+- **full−random = 0.45**: in the long-gen regime the learnable margin is HUGE,
+  the task remains solvable, and bad eviction is catastrophic — the
+  discriminative arena we were looking for (vs 0.04 on the unfiltered slice).
+- **kv_norm ≤ random here**: the per-token norm heuristic doesn't even beat
+  chance on long generations. The bar E7 must clear is LOW and any real
+  learning should be unmistakable.
+- s_rich (trained on the general distribution, 5 exposures/example) does NOT
+  transfer a win: parity again. Consistent with §14's exposure analysis.
+- E7 (s_e7) auto-launched into exactly this arena with the statistical fix
+  (50 reps/example + per-example regret baseline). Anchors for its final
+  wide eval are these very numbers (reused, zero cost).
+
+## 16. Current state / open questions / next
 
 - **ALL THREE SCALED ARMS DONE:** s_rich −0.044 (§7), s_warm −0.019 (§8),
   s_attn −0.111 (§9). Answer to the headline question: **no, nothing beats
