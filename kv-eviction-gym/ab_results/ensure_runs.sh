@@ -60,8 +60,12 @@ dl_orclg(){
   G compute scp --project=proyecto-final-425415 --zone=us-west1-a --tunnel-through-iap \
     kv-chat-v1:'~/repo/runs/oracle_longgen/oracle_results.jsonl' "$OUT/oracle_longgen_results.jsonl" 2>/dev/null
 }
+dl_poolscreen(){
+  G compute scp --project=proyecto-final-425415 --zone=us-west1-a --tunnel-through-iap \
+    kv-chat-v1:'~/repo/runs/pool_screen/pool_screen.jsonl' "$OUT/pool_screen.jsonl" 2>/dev/null
+}
 
 ensure kvp-ab tp-final-rl-kv-eviction asia-southeast1-a '~/scaled/ALL_DONE' e7 \
   "bash ~/run_scaled.sh configs/e7_repeat.yaml:s_e7" 'scripts/train.p[y]' e7.finished
-ensure kv-chat-v1 proyecto-final-425415 us-west1-a '~/scaled/ORACLE_LG_DONE' orclg \
-  "bash ~/run_oracle_longgen.sh" 'scripts/oracle_eva[l]' orclg.finished
+ensure kv-chat-v1 proyecto-final-425415 us-west1-a '~/scaled/POOL_SCREEN_DONE' poolscreen \
+  "bash ~/run_screen_pool.sh" 'scripts/screen_poo[l]' poolscreen.finished
