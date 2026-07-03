@@ -99,6 +99,34 @@ E5 (contingencia, el "siguiente paso correcto" según la literatura — NO se la
 **Regla de costos (vigente):** ninguna VM prendida sin un run activo; seeds solo
 para confirmar un EFECTO (nunca para un null); 2M pasos máx por run.
 
+## 4b. PHASE A — "algo que ande" (E6, lanzado 2026-07-03)
+
+El usuario pidió un resultado POSITIVO. La evidencia acumulada dice dónde está:
+el daño de evicción (= headroom aprendible) se concentra en (a) generaciones
+largas y (b) presión de cache alta. Análisis sobre los datos del oráculo:
+
+| evicciones (T+gen−budget) | n | full−kv_norm | lectura |
+|---|---|---|---|
+| < 100 | 77 | +0.026 | evictar es casi gratis |
+| 100-250 | 42 | +0.071 | daño real |
+| 250-450 | 6 | **+0.167** | el oráculo dobla a kv_norm |
+
+**E6 (`configs/e6_long.yaml`) = mismo env, mismo policy rich, régimen duro:**
+`min_answer_words: 60` (filtro prefix-stable en load_gsm8k; 2208 ejemplos,
+mean gen 285) + `budget 160` (~245 evicciones/capa por episodio medio).
+Predicción H-E6: learned > kv_norm en held-out (3 avistamientos previos:
+screen +0.19, s_golden hostile probe +0.074 held-out, buckets del oráculo).
+Corriendo como `s_long` en kvp-ab, encadenado tras wide2 (watcher_e6.sh).
+**Si E6 falla → Phase B: rediseño del env para compresión de prompt
+(SnapKV-style, budget < T) y/o Phase C: features de historia de atención
+bajo eager (insumo de ForesightKV que sdpa no expone).**
+
+Decisiones adicionales del análisis E5/debug (2026-07-03):
+- NO entrenar más largo los runs existentes: curvas plateau desde 0.15M; el
+  techo es informacional/de régimen, no de compute.
+- La heterogeneidad de slices de GSM8K (kv_norm 0.06 en [400:432] vs 0.625 en
+  [1000:1032]) es una trampa metodológica Y la pista que motivó E6.
+
 ## 5. Cierre del informe (independiente de los resultados de esta noche)
 
 La historia ya es publicable como TP con lo que hay:
