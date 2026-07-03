@@ -401,6 +401,7 @@ def main():
             per_example_base_budgets=per_example_base_budgets,
             eviction_k=cfg.get("eviction_k_start", cfg.get("eviction_k", 100)),
             protect_prompt=cfg.get("protect_prompt", False),
+            per_example_baseline=cfg.get("per_example_baseline", False),
             **env_kwargs,
         )
     else:

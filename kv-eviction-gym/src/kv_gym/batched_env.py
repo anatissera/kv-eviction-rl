@@ -190,6 +190,7 @@ class BatchedSharedKVVecEnv(VecEnv):
         eviction_k:               int = 100,
         protect_prompt:           bool = False,
         rich_features:            bool = False,
+        per_example_baseline:     bool = False,
     ):
         self.model                 = model
         self.tokenizer             = tokenizer
@@ -211,6 +212,13 @@ class BatchedSharedKVVecEnv(VecEnv):
         self.truncation_penalty    = truncation_penalty
         self.entropy_reward_weight = entropy_reward_weight
         self.n_examples            = len(examples)
+        # E7 — per-example regret baseline: center the terminal reward by the
+        # running mean score of the SAME example (high repeats_per_problem make
+        # that mean estimable). Removes example-difficulty variance (~±0.45)
+        # that swamps the eviction effect (~±0.03-0.07) in the terminal signal.
+        self.per_example_baseline  = per_example_baseline
+        self._ex_score_sum: dict[int, float] = {}
+        self._ex_score_cnt: dict[int, int]   = {}
         self._rng                  = np.random.default_rng(seed)
         self.eos_id                = tokenizer.eos_token_id
         self._cache                = free_growth_cache
@@ -767,5 +775,15 @@ class BatchedSharedKVVecEnv(VecEnv):
             score -= self.length_penalty_weight * (ep.step_count / self.max_new_tokens)
         if self.truncation_penalty > 0.0 and truncated:
             score -= self.truncation_penalty
+
+        if self.per_example_baseline:
+            ex = self._current_example_indices[b]
+            n  = self._ex_score_cnt.get(ex, 0)
+            mean_prev = (self._ex_score_sum.get(ex, 0.0) / n) if n else 0.0
+            self._ex_score_sum[ex] = self._ex_score_sum.get(ex, 0.0) + score
+            self._ex_score_cnt[ex] = n + 1
+            # First visit: no baseline yet → centered = raw score. From the 2nd
+            # repeat on, reward = deviation from this example's own mean.
+            score = score - mean_prev
 
         return np.full(self.n_layers, score, dtype=np.float32), bool(correct), align
