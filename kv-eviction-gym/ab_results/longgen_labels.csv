@@ -1,0 +1,2 @@
+label,model,num_timesteps,n_wide
+s_rich_on_longgen,runs/s_rich/final_model.zip,2000488,128
