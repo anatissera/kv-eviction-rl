@@ -314,7 +314,39 @@ full=0.680, **random=0.227, kv_norm=0.211**, s_rich=0.195 (paired −0.016).
   (50 reps/example + per-example regret baseline). Anchors for its final
   wide eval are these very numbers (reused, zero cost).
 
-## 16. Current state / open questions / next
+## 16. Long-gen oracle bound — UNMEASURABLE under eager (5th regime shift), oracle=parity there
+
+Stopped at n=79/128 (conclusion locked, 2026-07-03 ~22:30 UTC): full=0.371,
+kv_norm=0.371, attn_cur=0.214, oracle_fut gap **+0.013±0.038** (parity).
+
+- **The eager stack has NO eviction damage on long-gen** (full−kv_norm = 0.000
+  there, vs 0.47 on sdpa/eval_e6c — same slice, same seed). bf16-eager numerics
+  change the generations enough to flip the regime itself (5th shift sighting).
+- Consequence, methodological: **the golden-eviction bound cannot be measured
+  for the sdpa regime at all** — capturing attention requires eager, and eager
+  destroys the very damage we want the oracle to recover. Any oracle number is
+  regime-relative. (attn_cur collapsing to 0.214 << kv_norm on long-gen also
+  kills the "present attention" heuristic in this arena.)
+- E7's premise is unaffected (an ONLINE policy adapts on-policy; it does not
+  need trace labels), but no oracle upper bound exists for its arena.
+
+## 17. E7 first probe — the arena's bar is ZERO; screening the pool (E7b prep)
+
+First s_e7 probe (ts=1.48M): probe [32:48] filtered, budget 256 → full=0.875,
+**kv_norm=0.000, random=0.000**, learned=0.000, trunc 0.19.
+- The arena is maximally discriminative: ANY probe point > 0 = real learned
+  eviction skill (bar at zero, headroom 0.875).
+- But it is also a sparse-reward cliff: train corr=0 through 54 rollouts is
+  partly group design (repeats=50 × n_parallel=2 → only examples 0-3 seen),
+  partly the cliff (if no eviction policy reaches correctness, reward gradient
+  toward correctness never appears — classic exploration chicken-and-egg).
+- **Mitigation launched (kv-chat-v1, repurposed): pool screening** — full-cache
+  sdpa correctness for filtered train [0:96] (`scripts/screen_pool.py`). If
+  s_e7 shows no probe signal by ~4M, restart as **E7b** with the pool = first
+  32 FULL-SOLVABLE examples (every group informative; ForesightKV-style
+  trace filtering). Decision pending s_e7's next probes.
+
+## 18. Current state / open questions / next
 
 - **ALL THREE SCALED ARMS DONE:** s_rich −0.044 (§7), s_warm −0.019 (§8),
   s_attn −0.111 (§9). Answer to the headline question: **no, nothing beats
