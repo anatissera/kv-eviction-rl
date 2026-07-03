@@ -1,0 +1,3 @@
+label,model,num_timesteps,n_wide
+s_golden_final,runs/s_golden/final_model.zip,2000992,128
+s_rich_final,runs/s_rich/final_model.zip,2000488,128
