@@ -222,7 +222,32 @@ future-attention score → short RL → wide_eval. Target: capture a fraction of
 the +7pp; how much is capturable by a policy that must PREDICT the future from
 present features is exactly E5's question.
 
-## 12. Current state / open questions / next
+## 12. E5 Golden-BC — RESULT: future attention is UNPREDICTABLE from present features
+
+Ran 2026-07-03 on kvp-ab (traces: 400 train examples, ~35 min; BC 3000 steps;
+PPO 2M). Three findings:
+
+1. **The BC never converged: `match_oracle` stuck at 0.018–0.036** for all 3000
+   steps (loss 9.0→8.4, flat; vs match≈1.0 when cloning kv_norm with the same
+   dense-MSE recipe). A per-token policy seeing raw K‖V + rich features CANNOT
+   predict which slot the future-attention oracle evicts — barely 8× above
+   chance (1/220). **This is the cleanest statement of the whole Phase-2 story:
+   the +7pp oracle margin (§11) is made of information that does not exist in
+   the present observation.** (ForesightKV gets around this with attention-
+   history features — inputs our sdpa env doesn't expose — and even then needs
+   pairwise-ranking, per-head scorers.)
+2. **s_golden ≈ rich policy with a failed init:** train correctness DECLINED
+   0.60→0.54 with truncation rising 0.10→0.40 (reward drift). On its own probe
+   it posts mean **+0.074 over kv_norm** — but see the caveat below.
+3. **Probe-slice heterogeneity (methodological trap, 2nd sighting):** e5's probe
+   ([400:432], its n_examples=400 config) has kv_norm=0.06, random=0.09,
+   full=0.78 — eviction is CATASTROPHIC there, unlike [1000:1032] (kv_norm
+   0.625) or the wide slice (0.71), same stack. GSM8K slices differ wildly in
+   eviction sensitivity. s_golden's +0.074 is "beats a floor-level kv_norm on a
+   hostile slice" (like the E0 screen), NOT oracle distillation. The decisive
+   number is the shared wide slice [1032:1160] → §13.
+
+## 13. Current state / open questions / next
 
 - **ALL THREE SCALED ARMS DONE:** s_rich −0.044 (§7), s_warm −0.019 (§8),
   s_attn −0.111 (§9). Answer to the headline question: **no, nothing beats
