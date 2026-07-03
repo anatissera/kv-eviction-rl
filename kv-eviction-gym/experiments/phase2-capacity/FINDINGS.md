@@ -271,7 +271,33 @@ PPO 2M). Three findings:
 (the oracle-data zone where kv_norm≈0.31 / full≈0.38), probes every 8 rollouts,
 watcher with 45-min AUTO-ABORT if train correctness stays all-zero.
 
-## 14. Current state / open questions / next
+## 14. The exposure analysis — why online PPO was ALSO sample-starved (E7 design)
+
+Computed from the training curves (2026-07-03): each episode costs ~4,900
+timesteps (≈174 decode-steps × 28 layers), so a "2M-step" run completes only
+**~287 episodes ≈ 57 distinct examples × 5 gradient passes** — 94% of the
+"1000-example train set" was never touched. Statistically, with a terminal 0/1
+reward, 5 samples per example give SE≈0.32 on the eviction effect (~0.05):
+**the signal is 6× below the per-example noise floor.** ~50 samples/example
+bring SE≈0.10. (Credit: Alex's suggestion to raise repetitions.)
+
+**E7 (`configs/e7_repeat.yaml`, s_e7)** — three multiplying levers:
+1. Pool of 32 long-gen examples (min_answer_words 60, budget 256 — the
+   validated live band); `repeats_per_problem: 50`; 8M timesteps → every
+   example seen ~50×.
+2. **Per-example regret baseline** (`per_example_baseline: true`, implemented
+   in `batched_env._terminal_reward`): terminal reward centered by the running
+   mean score of the same example. High repeats make the mean estimable; the
+   centering removes the ±0.45 example-difficulty variance. Together they turn
+   the terminal reward into a per-example paired contrast.
+3. Probe: held-out filtered [32:48] (n=16, long-gen probes cost ~20 min).
+   Final verdict: wide_eval on the shared filtered [1032:1160] slice, reusing
+   eval_e6c's anchors.
+
+Queued behind eval_e6c on kvp-ab (watcher_e7.sh chains automatically; curves
+live-download to ab_results/ every 5 min). ETA ~20-24h of GPU.
+
+## 15. Current state / open questions / next
 
 - **ALL THREE SCALED ARMS DONE:** s_rich −0.044 (§7), s_warm −0.019 (§8),
   s_attn −0.111 (§9). Answer to the headline question: **no, nothing beats
