@@ -145,7 +145,38 @@ class EvalProbeCallback(BaseCallback):
         rng = np.random.default_rng(0)   # fixed → random anchor is reproducible
         full_vals, rand_vals, kvn_vals = [], [], []
 
-        for ex in self.probe_examples:
+        # Partial-anchor checkpointing: anchors on a wide/long probe take ~2h and
+        # were only cached when COMPLETE, so on churny spot capacity a preemption
+        # mid-anchors restarted the whole phase (observed 3× on 2026-07-03).
+        # Persist progress every 8 examples; a restart loses minutes, not hours.
+        partial_path = self.run_dir / "probe_anchors_partial.pkl"
+        start_idx = 0
+        if partial_path.exists():
+            try:
+                with open(partial_path, "rb") as f:
+                    part = pickle.load(f)
+                start_idx = part["done_idx"]
+                self._probes = part["probes"]
+                full_vals, rand_vals, kvn_vals = part["full_vals"], part["rand_vals"], part["kvn_vals"]
+                self._attn_available = part["attn_available"]
+                rng.bit_generator.state = part["rng_state"]
+                logger.info(f"Resuming anchor build from example {start_idx} "
+                            f"({len(self._probes)} anchors so far)")
+            except Exception as _e:
+                logger.warning(f"partial anchors unreadable ({_e}); rebuilding from 0")
+                start_idx = 0
+                self._probes, full_vals, rand_vals, kvn_vals = [], [], [], []
+
+        for ex_i, ex in enumerate(self.probe_examples):
+            if ex_i < start_idx:
+                continue
+            if ex_i > start_idx and (ex_i - start_idx) % 8 == 0:
+                with open(partial_path, "wb") as f:
+                    pickle.dump({"done_idx": ex_i, "probes": self._probes,
+                                 "full_vals": full_vals, "rand_vals": rand_vals,
+                                 "kvn_vals": kvn_vals,
+                                 "attn_available": self._attn_available,
+                                 "rng_state": rng.bit_generator.state}, f)
             try:
                 cap = capture(self.llm, self.tokenizer, ex, self.device)
                 T = cap.prompt_len
@@ -219,6 +250,7 @@ class EvalProbeCallback(BaseCallback):
                 "kvnorm_mean": self._correct_kvnorm_mean,
                 "attn_available": self._attn_available
             }, f)
+        partial_path.unlink(missing_ok=True)
 
 
         if self.verbose:
