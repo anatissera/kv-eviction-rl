@@ -247,7 +247,31 @@ PPO 2M). Three findings:
    hostile slice" (like the E0 screen), NOT oracle distillation. The decisive
    number is the shared wide slice [1032:1160] → §13.
 
-## 13. Current state / open questions / next
+## 13. wide2 + E6 v1 — s_golden confirmed artifact; hard regime OVERSHOT; E6b launched
+
+**wide2 (2026-07-03, shared slice [1032:1160], kvp-ab stack, paired anchors):**
+- `s_rich_final` **−0.008** — parity, replicated on a 2nd stack.
+- `s_golden_final` **−0.070**, trunc 0.29 — WORSE than kv_norm on the benign
+  slice. Confirms §12: its hostile-probe edge was regime, not oracle knowledge;
+  its truncation drift actively hurts.
+- Stack note: on kvp-ab, full=0.742 / kv_norm=0.570 / random=0.586 — this stack
+  has **15.6pp** of full−random headroom on the same examples where kv-chat-v1
+  showed 3.9pp (4th environment-shift sighting), and rich STILL ties kv_norm →
+  further evidence the ceiling is informational, not headroom-only.
+
+**E6 v1 (s_long, budget 160 + min_answer_words 60) — regime OVERSHOT:**
+- Train correctness **0.000 on every rollout**, truncation 0.8→1.0: under this
+  much cache pressure the model solves NOTHING → constant reward → zero signal
+  (the mirror image of the benign regime's failure). Probe: kv_norm=0.037,
+  random=0.000, full=0.778; learned 0.074-0.111 (+1-2 examples of noise).
+- Lesson: the regime knob has a narrow discriminative band — task must remain
+  SOLVABLE under eviction while eviction still hurts.
+
+**E6b (s_long192) launched 2026-07-03 10:21 UTC:** budget 192 → ~215 evictions
+(the oracle-data zone where kv_norm≈0.31 / full≈0.38), probes every 8 rollouts,
+watcher with 45-min AUTO-ABORT if train correctness stays all-zero.
+
+## 14. Current state / open questions / next
 
 - **ALL THREE SCALED ARMS DONE:** s_rich −0.044 (§7), s_warm −0.019 (§8),
   s_attn −0.111 (§9). Answer to the headline question: **no, nothing beats
