@@ -311,7 +311,8 @@ def main():
 
     # Load training + probe examples together from the train split so the probe
     # uses left-out training examples with guaranteed no overlap.
-    all_examples = load_gsm8k(n=n_examples + probe_n, seed=cfg.get("seed", 0), split="train")
+    all_examples = load_gsm8k(n=n_examples + probe_n, seed=cfg.get("seed", 0), split="train",
+                              min_answer_words=cfg.get("min_answer_words", 0))
     examples       = all_examples[:n_examples]
     # Phase 2 · E0 screen — probe_on_train makes the probe evaluate the TRAINING
     # examples themselves (pure overfit/capacity check: can the policy beat kv_norm
