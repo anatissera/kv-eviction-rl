@@ -1,0 +1,88 @@
+# Phase A · E7 — HIGH-REPETITION + PER-EXAMPLE REGRET BASELINE (long-gen regime).
+#
+# Statistical rationale (FINDINGS §14): a 2M run completes only ~287 episodes →
+# ~57 distinct examples × 5 gradient passes. With a terminal 0/1 reward, 5
+# samples per example give SE≈0.32 on the eviction effect (~0.05) — the signal
+# is 6× below the noise. ~50 samples/example bring SE≈0.10.
+#
+# Three levers together:
+#   1. n_examples: 32 long-gen examples (min_answer_words 60, budget 256 — the
+#      validated live band where eviction hurts but the task is solvable).
+#      With repeats_per_problem=50, one pool pass = 16 groups × 50 rollouts
+#      ≈ 800 rollouts ≈ 8M timesteps → EVERY example seen ~50 times.
+#   2. repeats_per_problem: 50 (the same n_parallel=2 group trains 50
+#      consecutive rollouts before the cursor advances).
+#   3. per_example_baseline: true — terminal reward centered by the running
+#      mean score of the SAME example (regret form). High repeats make that
+#      mean estimable; centering removes the ±0.45 example-difficulty variance
+#      that swamped every previous run.
+#
+# Probe: held-out filtered [32:48] (probe_n=16, long-gen probes are expensive:
+# ~1.2 min/episode → 16 examples ≈ 20 min/probe; every 60 rollouts ≈ 13 probes).
+# FINAL verdict: wide_eval on the shared filtered slice [1032:1160] reusing the
+# anchors already computed by eval_e6c (zero extra anchor cost).
+
+model_name: qwen-1.5b
+device:     auto
+
+n_examples: 32
+seed: 0
+
+min_answer_words: 60
+
+budget_min: 256
+budget_max: 256
+
+max_len:        288
+max_new_tokens: 600
+
+use_attention_shaping: false
+attention_weight:      0.0
+shaping_mode:          none
+
+hidden: 64
+
+probe_n:                16
+probe_every_n_rollouts: 999
+probe_n_sinks:          4
+
+n_parallel:   2
+n_steps:      650
+batch_size:   512
+
+n_epochs:     4
+gamma:        1.0
+gae_lambda:   1.0
+clip_range:   0.2
+ent_coef:     0.01
+total_timesteps: 120000
+
+n_sinks:  4
+n_recent: 32
+
+length_penalty_weight: 0.5
+truncation_penalty:    1.0
+
+entropy_reward_weight: 0.001
+
+repeats_per_problem: 50
+
+attn_implementation: sdpa
+
+free_growth_cache_dir: ~/.kv_eviction_cache
+
+protect_prompt: false
+
+rich_features: true
+
+per_example_baseline: true   # E7 — regret reward (see header)
+
+checkpoint_freq: 900
+
+# E8 smoke — S4 "distill-to-full" dense KL reward. Placeholder kl_weight; this
+# run only MEASURES kl_step_mean (raw KL nats, weight-independent) in the
+# long-gen regime so the full E8 sets kl_weight = target/(ep_len*kl_step_mean).
+kl_shaping: true
+kl_mode:    exact
+kl_weight:  0.02
+kl_clip:    5.0

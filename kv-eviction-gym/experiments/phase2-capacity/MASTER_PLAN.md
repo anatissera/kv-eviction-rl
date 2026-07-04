@@ -128,6 +128,30 @@ Additional decisions from the E5/debug analysis (2026-07-03):
 - The heterogeneity of GSM8K slices (kv_norm 0.06 on [400:432] vs 0.625 on
   [1000:1032]) is both a methodological trap AND the clue that motivated E6.
 
+## 4c. PHASE B — design (pending approval, drafted 2026-07-04)
+
+Phase A closed on the exploration cliff: in the long-gen arena the policy found
+correct episodes by chance (3 in 235 rollouts) but PPO did not turn them into
+behaviour (probes 0/0/0/0). The action space
+(~220 slots × ~550 evictions/episode × 28 layers) is unexplorable online.
+Three candidate redesigns, in order of return/effort:
+
+- **B1 — Block eviction (action-space shrink):** evict blocks of K contiguous
+  tokens (K=8/16) instead of single tokens → the per-step space drops ~K×, the
+  horizon drops ~K× (one decision every K steps), and the credit per decision
+  rises ~K×. A contained change in batched_env (action → block) + eval_core. It
+  is the knob with the best ratio: it attacks the cliff head-on.
+- **B2 — SnapKV-style prompt compression (prefill selection):** a single
+  structured decision at the end of prefill (choose what survives from the
+  prompt), and streaming for the rest. Turns the infinite-sequential problem into
+  a selection decision — the format where the literature does win. More eng.
+- **B3 — Attention-history features (eager train):** the ForesightKV input. Only
+  direction/representation — it does NOT solve the exploration cliff on its own;
+  combinable with B1.
+
+Recommendation: B1 first (a week of knob vs the cliff), with B3 as an add-on if
+B1 shows signs of life.
+
 ## 5. Closing the report (independent of tonight's results)
 
 The story is already publishable as a TP with what we have:
