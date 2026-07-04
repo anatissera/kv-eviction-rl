@@ -127,6 +127,30 @@ Decisiones adicionales del análisis E5/debug (2026-07-03):
 - La heterogeneidad de slices de GSM8K (kv_norm 0.06 en [400:432] vs 0.625 en
   [1000:1032]) es una trampa metodológica Y la pista que motivó E6.
 
+## 4c. PHASE B — diseño (pendiente de aprobación, redactado 2026-07-04)
+
+Phase A cerró con el acantilado de exploración: en la arena long-gen el policy
+encontró episodios correctos por azar (3 en 235 rollouts) pero PPO no los
+convirtió en comportamiento (probes 0/0/0/0). El espacio de acciones
+(~220 slots × ~550 evicciones/episodio × 28 capas) es inexplorable online.
+Tres rediseños candidatos, en orden de retorno/esfuerzo:
+
+- **B1 — Evicción por bloques (action-space shrink):** evictar bloques de K
+  tokens contiguos (K=8/16) en vez de tokens sueltos → el espacio por paso baja
+  ~K×, el horizonte baja ~K× (una decisión cada K pasos), y el crédito por
+  decisión sube ~K×. Cambio contenido en batched_env (acción → bloque) +
+  eval_core. Es el knob con mejor ratio: ataca directamente el acantilado.
+- **B2 — Compresión de prompt estilo SnapKV (prefill selection):** una única
+  decisión estructurada al final del prefill (elegir qué del prompt sobrevive),
+  y el resto streaming. Convierte el problema secuencial-infinito en una
+  decisión de selección — el formato donde la literatura sí gana. Más eng.
+- **B3 — Features de historia de atención (eager train):** el insumo de
+  ForesightKV. Solo dirección/representación — NO resuelve el acantilado de
+  exploración por sí solo; combinable con B1.
+
+Recomendación: B1 primero (una semana de knob vs el acantilado), con B3 como
+add-on si B1 muestra vida.
+
 ## 5. Cierre del informe (independiente de los resultados de esta noche)
 
 La historia ya es publicable como TP con lo que hay:

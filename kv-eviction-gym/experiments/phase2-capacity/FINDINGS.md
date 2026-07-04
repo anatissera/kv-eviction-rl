@@ -346,7 +346,38 @@ First s_e7 probe (ts=1.48M): probe [32:48] filtered, budget 256 → full=0.875,
   32 FULL-SOLVABLE examples (every group informative; ForesightKV-style
   trace filtering). Decision pending s_e7's next probes.
 
-## 18. Current state / open questions / next
+## 18. E7 (high-rep + regret, long-gen arena) — RESULT: exploration cliff, PARITY-at-zero
+
+s_e7 ran to ~4.5M/8M (spot-preempted, then repurposed). 3 held-out probes, all
+**learned=0.000 = kv_norm=0.000** (full=0.875). Training found correct episodes
+only by chance (~4 in 235 rollouts, no acceleration) and PPO never converted
+them into policy. Verdict: **the sparse terminal reward cannot cross the
+exploration cliff** — even with 50 exposures/example and the per-example regret
+baseline, discovering a ~350-eviction sequence that preserves the answer (among
+~220 choices/step) is not reachable by online exploration from scratch.
+
+This is the load-bearing negative for the report: across THREE regimes
+(benign=no headroom, hard=unsolvable, calibrated=solvable-but-cliff) online PPO
+from the terminal reward never beats kv_norm. The bottleneck is not
+representation (rich features), exploration-init (warm-start), architecture
+(attention), sample count (50×), or difficulty variance (regret) — it is the
+**density/informativeness of the reward signal itself.**
+
+## 19. E8 — S4 "distill-to-full" DENSE reward (Alex's idea) in the long-gen arena
+
+The exact fix the cliff calls for, and the first REAL test of S4: a per-step
+reward = −kl_weight·clip(KL(p_full ‖ p_evict), 0, 5), where p_full is a shadow
+never-evicted cache (batched_env kl_shaping=exact). The old S4 A/B was null
+because the policy was norm-blind AND the regime had no headroom — both now
+fixed (rich features + long-gen 45pp). S4 gives per-step credit so the policy
+no longer needs to stumble onto a fully-correct episode; it is rewarded for
+every eviction that keeps the next-token distribution close to full-cache.
+= Alex's "destilar al full caché". Calibrating kl_weight via smoke
+(target Σ≈1.0 = comparable to terminal), then E8 (mlp) on kvp-ab + E8-attn
+(Alex's attention-classifier idea, in the now-dense-reward regime) on
+kv-chat-v1. Launched autonomously overnight 2026-07-04.
+
+## 20. Current state / open questions / next
 
 - **ALL THREE SCALED ARMS DONE:** s_rich −0.044 (§7), s_warm −0.019 (§8),
   s_attn −0.111 (§9). Answer to the headline question: **no, nothing beats
