@@ -464,7 +464,42 @@ Both: long-gen arena (min_answer_words 60, budget 256), 50 reps, regret baseline
 live-download. Verification: the smoke printed the 28 per-layer rewards to confirm
 they DIFFER (proof the fix is live), the old broadcast made them identical.
 
-## 22. Current state / open questions / next
+## 22. E9 RESULT: per-layer reward = PARITY too (fix works mechanically, second wall found)
+
+Cut at 50% (2M/4M) once the verdict was locked, 2026-07-04; both VMs stopped.
+- s_e9 (per-layer reward, MLP): 6 probes, paired gap mean **+0.021 ± 0.035** (n.s.).
+  Trajectory [+0.06, 0, +0.19, -0.06, -0.06, 0]: the +0.19 was a single-probe
+  outlier that reverted, not a sustained climb.
+- s_e9attn (per-layer reward, attention): 5 probes, **+0.038 ± 0.022** (n.s.).
+
+**What we learned (two nested walls, now both located):**
+1. Layer credit assignment WAS a real wall: the fix changed the mechanism (the 28
+   per-layer rewards now DIFFER, verified by the [E9] print, vs the old identical
+   broadcast; per-layer damage is now an optimizable per-env signal).
+2. But fixing it does NOT reach correctness. The per-layer distributional damage
+   is optimized loosely (and not even cleanly: s_e9 damage went 0.00084, 0.00078,
+   0.00097 by third, drifting back up), while the probe stays at parity. So there
+   is a SECOND wall: every distributional proxy we can compute online (joint
+   output-KL in S4, per-layer hidden-state divergence in E9) is DECOUPLED from
+   task correctness under the truncation cliff (evicting reasoning tokens makes
+   the model ramble past EOS, `evict_generated_frac` 0.5-0.99, `trunc` ~0.45).
+
+**Consolidated conclusion of the whole series:** online PPO for KV eviction plateaus
+at kv_norm because (a) the reward could not attribute credit per layer (fixed in
+E9), and underneath (b) no online-computable proxy for "this eviction preserves
+the answer" is tight enough, and the terminal correctness signal is too sparse to
+learn from directly (the truncation cliff). This is exactly why the 2026 literature
+(KVP, ForesightKV) uses OFFLINE future-attention/loss oracle labels, not online RL.
+
+**Next step (Phase B, the principled attack on wall #2):** stop trying to make a
+distributional proxy stand in for correctness. Options in GRAN_PLAN §4c, now
+re-prioritized: (B1) block eviction (evict K contiguous tokens at once) to shrink
+the horizon and let the sparse correctness reward carry; (B2) SnapKV-style
+one-shot prompt-compression (turns the sequential-infinite problem into one
+selection decision, the format where the literature wins); or per-layer CORRECTNESS
+attribution (offline, ForesightKV recipe). Not launched; awaiting decision.
+
+## 23. Current state / open questions / next
 
 - **ALL THREE SCALED ARMS DONE:** s_rich −0.044 (§7), s_warm −0.019 (§8),
   s_attn −0.111 (§9). Answer to the headline question: **no, nothing beats
