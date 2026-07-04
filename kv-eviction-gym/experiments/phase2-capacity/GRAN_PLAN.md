@@ -1,4 +1,4 @@
-# GRAN PLAN — síntesis de todo + qué corremos con el cómputo restante
+# GRAN PLAN: síntesis de todo + qué corremos con el cómputo restante
 
 Escrito 2026-07-02 (madrugada, ejecución autónoma). Sintetiza TODOS los resultados
 (FINDINGS.md), el diseño original (PLAN.md), y la literatura 2026 sobre evicción
@@ -7,16 +7,16 @@ intervención, y el plan de cierre para el informe.
 
 ---
 
-## 1. Dónde estamos — el mapa completo de resultados
+## 1. Dónde estamos: el mapa completo de resultados
 
 | experimento | qué aisla | resultado (paired learned−kv_norm) | veredicto |
 |---|---|---|---|
 | A/B overnight 5M (S4 vs control) | reward shaping | ctrl −0.038 / S4 −0.037 (el +0.183 fue artefacto de probe-set) | **S4 nulo**; lección metodológica |
-| E0 screen `baseline` | — | +0.00 (empata) | policy norm-blind ≈ random |
+| E0 screen `baseline` | (nada) | +0.00 (empata) | policy norm-blind ≈ random |
 | E0 screen `rich` | representación D1/D2 | **+0.19 peak** (overfit 16 ej.) | representación ERA el cuello |
 | E0 screen `rich+S4` | reward en policy capaz | +0.06 < rich solo | **S4 no ayuda ni con features** |
 | E0 screen `attn` | arquitectura D3 | **+0.19 peak**, subiendo al corte | candidato con techo mayor |
-| `s_rich` 2M @ escala (1000 train, 32 held-out) | D1/D2 a escala | **mean −0.044, last5 −0.050** (31 probes) | **PARIDAD/apenas-abajo — no le gana** |
+| `s_rich` 2M @ escala (1000 train, 32 held-out) | D1/D2 a escala | **mean −0.044, last5 −0.050** (31 probes) | **PARIDAD/apenas-abajo, no le gana** |
 | `s_warm` 2M (BC→kv_norm + RL) | exploración D4 | CORRIENDO (ETA ~06:40 UTC) | ¿arrancar EN kv_norm empuja más allá? |
 | `s_attn` 2M (rich + cross-token attention) | arquitectura D3 | CORRIENDO en kv-chat-v1 (ETA ~09:30 UTC) | ¿razonar cross-token supera la heurística? |
 
@@ -25,16 +25,16 @@ representación), pero el PPO online per-token no encuentra nada MEJOR que la
 heurística. Con `kvz` como feature, "ser kv_norm" es lo más fácil de aprender y ahí
 se queda.
 
-## 2. Qué dice la literatura (2026) — y cómo posiciona nuestro resultado
+## 2. Qué dice la literatura (2026): y cómo posiciona nuestro resultado
 
 Tres papers directamente sobre nuestro problema:
 
-- **KVP — "Learning to Evict from Key-Value Cache"** (arXiv 2602.10238): formula
+- **KVP: "Learning to Evict from Key-Value Cache"** (arXiv 2602.10238): formula
   eviction como *learning-to-rank* de tokens por utilidad futura. Agentes RL
   livianos per-head, **entrenados OFFLINE sobre traces de generación precomputados**,
   con un reward holístico derivado de la utilidad futura del token a través de
   todos los budgets. Le gana a los baselines fuertes en RULER/OASST2.
-- **ForesightKV** (arXiv 2602.03203): dos etapas — (1) supervisado con labels de
+- **ForesightKV** (arXiv 2602.03203): dos etapas, (1) supervisado con labels de
   **"Golden Eviction"**: para cada paso, computa la atención futura real sobre el
   trace completo y marca como evictable el KV con menor atención futura máxima;
   ranking loss. (2) RL (GRPO) con reward denso = spike de loss post-evicción en
@@ -48,10 +48,10 @@ Tres papers directamente sobre nuestro problema:
 1. **Supervisión desde utilidad futura** (atención futura / loss-spike causal),
    no reward terminal de correctness con credit assignment débil.
 2. **Pretraining supervisado con labels de oráculo** derivados de traces completos
-   (nuestro warm-start clona kv_norm — el oráculo de ellos es MEJOR que kv_norm).
+   (nuestro warm-start clona kv_norm: el oráculo de ellos es MEJOR que kv_norm).
 3. **Features de atención** (scores recientes/acumulados, el señal de H2O) en la
    observación. Nuestras rich features son norm+posición; no vemos atención
-   (sdpa no la expone — ForesightKV la captura en la generación del trace offline).
+   (sdpa no la expone: ForesightKV la captura en la generación del trace offline).
 
 **Posicionamiento honesto de nuestro resultado:** nuestra paridad con kv_norm bajo
 PPO online desde el reward terminal es exactamente el *failure mode* que motivó a
@@ -67,7 +67,7 @@ ForesightKV, con diagnóstico causal propio (D1-D4 + screen de capacidad).
 - **H-E4 (s_attn):** si el techo per-token ES kv_norm (nada per-token puede superar
   una heurística per-token casi óptima), el cross-token attention es la única vía.
   El screen lo apoya (+0.19 subiendo al corte). La literatura es ambigua: ForesightKV
-  usa MLP per-token pero con features de atención — o sea "cross-token por features"
+  usa MLP per-token pero con features de atención, o sea "cross-token por features"
   en vez de "cross-token por arquitectura". s_attn testea la segunda vía.
 
 ## 4. Árbol de decisión (se ejecuta autónomamente al llegar cada resultado)
@@ -87,7 +87,7 @@ s_attn termina (~09:30 UTC; watcher baja curvas y APAGA kv-chat-v1)
                                         el número definitivo del informe;
                                     (b) staging de E5 (abajo) para discusión de mañana.
 
-E5 (contingencia, el "siguiente paso correcto" según la literatura — NO se lanza
+E5 (contingencia, el "siguiente paso correcto" según la literatura, NO se lanza
     esta noche sin revisión, solo se deja diseñado):
     Golden-BC: generar traces full-cache offline (eager attention para capturar
     scores), computar labels de Golden Eviction (mín atención futura máx), BC del
@@ -99,7 +99,7 @@ E5 (contingencia, el "siguiente paso correcto" según la literatura — NO se la
 **Regla de costos (vigente):** ninguna VM prendida sin un run activo; seeds solo
 para confirmar un EFECTO (nunca para un null); 2M pasos máx por run.
 
-## 4b. PHASE A — "algo que ande" (E6, lanzado 2026-07-03)
+## 4b. PHASE A: "algo que ande" (E6, lanzado 2026-07-03)
 
 El usuario pidió un resultado POSITIVO. La evidencia acumulada dice dónde está:
 el daño de evicción (= headroom aprendible) se concentra en (a) generaciones
@@ -127,7 +127,7 @@ Decisiones adicionales del análisis E5/debug (2026-07-03):
 - La heterogeneidad de slices de GSM8K (kv_norm 0.06 en [400:432] vs 0.625 en
   [1000:1032]) es una trampa metodológica Y la pista que motivó E6.
 
-## 4c. PHASE B — diseño (pendiente de aprobación, redactado 2026-07-04)
+## 4c. PHASE B: diseño (pendiente de aprobación, redactado 2026-07-04)
 
 Phase A cerró con el acantilado de exploración: en la arena long-gen el policy
 encontró episodios correctos por azar (3 en 235 rollouts) pero PPO no los
@@ -135,17 +135,17 @@ convirtió en comportamiento (probes 0/0/0/0). El espacio de acciones
 (~220 slots × ~550 evicciones/episodio × 28 capas) es inexplorable online.
 Tres rediseños candidatos, en orden de retorno/esfuerzo:
 
-- **B1 — Evicción por bloques (action-space shrink):** evictar bloques de K
+- **B1: Evicción por bloques (action-space shrink):** evictar bloques de K
   tokens contiguos (K=8/16) en vez de tokens sueltos → el espacio por paso baja
   ~K×, el horizonte baja ~K× (una decisión cada K pasos), y el crédito por
   decisión sube ~K×. Cambio contenido en batched_env (acción → bloque) +
   eval_core. Es el knob con mejor ratio: ataca directamente el acantilado.
-- **B2 — Compresión de prompt estilo SnapKV (prefill selection):** una única
+- **B2: Compresión de prompt estilo SnapKV (prefill selection):** una única
   decisión estructurada al final del prefill (elegir qué del prompt sobrevive),
   y el resto streaming. Convierte el problema secuencial-infinito en una
-  decisión de selección — el formato donde la literatura sí gana. Más eng.
-- **B3 — Features de historia de atención (eager train):** el insumo de
-  ForesightKV. Solo dirección/representación — NO resuelve el acantilado de
+  decisión de selección: el formato donde la literatura sí gana. Más eng.
+- **B3: Features de historia de atención (eager train):** el insumo de
+  ForesightKV. Solo dirección/representación: NO resuelve el acantilado de
   exploración por sí solo; combinable con B1.
 
 Recomendación: B1 primero (una semana de knob vs el acantilado), con B3 como
@@ -172,22 +172,22 @@ Fuentes: [KVP](https://arxiv.org/abs/2602.10238) ·
 
 ## 6. Log de ejecución autónoma (esta noche)
 
-- 03:41 UTC — `s_attn` (e4_attn.yaml: rich+kvz+PerTokenAttention 2L/4H, 2M, seed=0,
+- 03:41 UTC: `s_attn` (e4_attn.yaml: rich+kvz+PerTokenAttention 2L/4H, 2M, seed=0,
   mismos anchors) lanzado en `kv-chat-v1` (proyecto de Alex, L4 on-demand → sin
   preemption). Venv de Alex reutilizado read-only + `PYTHONPATH` a nuestro código
   SCPeado (verificado: `kv_gym` resuelve a `~/repo/src`, GPU 45%, curvas escribiendo).
-- 03:45 UTC — watcher_attn armado (baja curvas + apaga VM al terminar + compare.py).
-- 03:50 UTC — `s_rich` asegurado: curvas + final/best checkpoints descargados a
+- 03:45 UTC: watcher_attn armado (baja curvas + apaga VM al terminar + compare.py).
+- 03:50 UTC: `s_rich` asegurado: curvas + final/best checkpoints descargados a
   `ab_results/` (la VM spot podría no volver a arrancar). Stats finales:
   **mean −0.044 / last5 −0.050** sobre 31 probes → paridad/apenas-abajo, no supera.
-- 07:00-07:30 UTC — `kvp-ab` sufrió DOS preemptions (~06:00 y ~06:5x); el watcher
+- 07:00-07:30 UTC: `kvp-ab` sufrió DOS preemptions (~06:00 y ~06:5x); el watcher
   la revivió y `s_warm` resumió de checkpoint ✓ (el fix checkpoint_freq=900 pagó).
   Pero detectamos un **bug de resume**: SB3 SUMA `num_timesteps` al budget pasado
   cuando `reset_num_timesteps=False` → cada resume regalaba 2M nuevos (s_warm iba
   a 4.1M). **Fix (8decafd):** pasar solo el budget RESTANTE. Parcheado en ambas
   VMs; s_warm ya tenía 2.1M ≥ 2M → se cierra ahora (leve overtrain de ~5%,
   comparable igual: los probes de ~2M están en la curva).
-- 13:30 UTC — **WIDE EVAL TERMINADA (n=128, un solo stack): tabla definitiva.**
+- 13:30 UTC: **WIDE EVAL TERMINADA (n=128, un solo stack): tabla definitiva.**
   rich −0.016 / warm −0.023 (paridad dentro del ruido, 1 ej = 0.0078) / attn
   −0.063 y −0.078 (peor que random, replica el negativo). **Insight de régimen:**
   full−random = 0.039 → el headroom TOTAL de cualquier política es ~4pp porque el
@@ -196,15 +196,15 @@ Fuentes: [KVP](https://arxiv.org/abs/2602.10238) ·
   régimen ganaría ≤3pp por construcción → NO se lanza; primero rediseño del env
   (compresión de prompt estilo SnapKV / budgets más duros / tareas de generación
   larga). VMs ambas APAGADAS. FINDINGS §10 tiene la tabla completa.
-- 09:50 UTC — **s_attn TERMINADO: DEBAJO de kv_norm** (mean −0.111, last5 −0.125,
+- 09:50 UTC: **s_attn TERMINADO: DEBAJO de kv_norm** (mean −0.111, last5 −0.125,
   nunca ≥ kv_norm; en su probe queda incluso debajo de random). D3 cerrado
-  negativo — el pico +0.19 del screen (overfit 16) NO transfirió a escala.
+  negativo: el pico +0.19 del screen (overfit 16) NO transfirió a escala.
   Caveat: baselines de kv-chat-v1 ≠ kvp-ab (stack torch/transformers distinto →
   otra vez environment shift; solo vale el paired within-arm). Rama del árbol:
   paridad/peor en TODAS las ramas → wide eval n=128 en UNA VM (misma numérica
   para los 3 checkpoints) + E5 staged. kv-chat-v1 en STOCKOUT al restart →
   retry-loop armado (~2h); driver run_wide_eval.sh listo.
-- 07:30 UTC — **s_warm TERMINADO: PARIDAD** (mean −0.022, last5 −0.019, max
+- 07:30 UTC: **s_warm TERMINADO: PARIDAD** (mean −0.022, last5 −0.019, max
   +0.031; el BC arrancó ≥ kv_norm en el primer probe → el clone funcionó, el RL
   no lo superó nunca). Rama del árbol: |paired| ≤ 0.03 → **kvp-ab APAGADA, sin
   seed replication** (no se paga CI de un null). D4 cerrado. compare.py arreglado
