@@ -94,4 +94,4 @@ kl_clip:    5.0
 # causes vs the never-evicted shadow cache. Fixes the layer-credit-assignment
 # root cause that pinned every prior run at parity with kv_norm. See PLAN E9.
 per_layer_reward:    true
-layer_reward_weight: LRW_PLACEHOLDER   # calibrated from e9 smoke kl_step_mean
+layer_reward_weight: 5.0   # calibrated: kl_step_mean=0.00094, ep_len=280 -> per-layer return ~1.3
