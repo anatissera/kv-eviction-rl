@@ -191,6 +191,8 @@ class BatchedSharedKVVecEnv(VecEnv):
         protect_prompt:           bool = False,
         rich_features:            bool = False,
         per_example_baseline:     bool = False,
+        per_layer_reward:         bool = False,
+        layer_reward_weight:      float = 0.0,
     ):
         self.model                 = model
         self.tokenizer             = tokenizer
@@ -219,6 +221,13 @@ class BatchedSharedKVVecEnv(VecEnv):
         self.per_example_baseline  = per_example_baseline
         self._ex_score_sum: dict[int, float] = {}
         self._ex_score_cnt: dict[int, int]   = {}
+        # E9 — per-layer credit assignment. Instead of one scalar reward broadcast
+        # to all n_layers layer-envs (which makes the 28 per-layer eviction actions
+        # unattributable), give each layer its OWN dense reward = the marginal
+        # hidden-state divergence it causes vs a never-evicted shadow cache. Reuses
+        # the exact-mode shadow machinery (ep.past_kv_full). See PLAN E9.
+        self.per_layer_reward      = per_layer_reward
+        self.layer_reward_weight   = layer_reward_weight
         self._rng                  = np.random.default_rng(seed)
         self.eos_id                = tokenizer.eos_token_id
         self._cache                = free_growth_cache
@@ -344,6 +353,9 @@ class BatchedSharedKVVecEnv(VecEnv):
                 past_key_values=self._batch_kv,
                 position_ids=pos_ids,
                 use_cache=True,
+                # E9: expose per-block hidden states so per-layer damage can be
+                # measured against the shadow full cache (only when enabled).
+                output_hidden_states=self.per_layer_reward,
             )
         self._batch_kv = out.past_key_values
         new_tokens = out.logits[:, -1].argmax(dim=-1).cpu().tolist()  # [N]
@@ -398,6 +410,46 @@ class BatchedSharedKVVecEnv(VecEnv):
                 ep.kl_sum   += float(damage_np[b])
                 ep.kl_count += 1
 
+        # 2c. E9 per-layer reward: each layer-env gets its OWN dense reward =
+        # -w * clip(marginal hidden-state divergence it adds, 0, clip). For layer l
+        # (block l): div_k = 1 - cos(h_evict[k], h_full[k]) at each block output k;
+        # damage_l = relu(div_{l+1} - div_l) isolates layer l's own contribution
+        # (div_0 = 0: the token embedding is identical). Mutually exclusive with
+        # kl_shaping (config sets kl_shaping=false when per_layer_reward=true).
+        step_r_layers = None
+        if self.per_layer_reward:
+            hs_evict = out.hidden_states                      # tuple[L+1] of [N,1,d]
+            damage_layers = np.zeros((self.N, self.n_layers), dtype=np.float32)
+            for b, ep in enumerate(self.episodes):
+                with torch.no_grad():
+                    full_out = self.model(
+                        input_ids=next_toks[b:b+1],
+                        past_key_values=ep.past_kv_full,
+                        position_ids=pos_ids[b:b+1],
+                        use_cache=True,
+                        output_hidden_states=True,
+                    )
+                ep.past_kv_full = full_out.past_key_values    # grow (never evicted)
+                he = torch.stack([hs_evict[k][b, -1]
+                                  for k in range(self.n_layers + 1)]).float()   # [L+1, d]
+                hf = torch.stack([full_out.hidden_states[k][0, -1]
+                                  for k in range(self.n_layers + 1)]).float()   # [L+1, d]
+                divs = (1.0 - torch.nn.functional.cosine_similarity(he, hf, dim=1)
+                        ).detach().cpu().numpy()               # [L+1]
+                damage_layers[b] = np.clip(np.diff(divs), 0.0, None)  # relu increment
+                ep.kl_sum   += float(damage_layers[b].mean())  # reuse kl_step_mean log
+                ep.kl_count += 1
+            clipped_l = np.clip(damage_layers, 0.0, self.kl_clip)
+            step_r_layers = (-self.layer_reward_weight * clipped_l).astype(np.float32)
+            # One-shot proof the fix is live: the 28 per-layer rewards must DIFFER
+            # (the whole point vs the old broadcast scalar).
+            if not getattr(self, "_e9_printed", False):
+                self._e9_printed = True
+                v = step_r_layers[0]
+                print(f"  [E9] per-layer reward spread ep0: min={v.min():.5f} "
+                      f"max={v.max():.5f} std={v.std():.5f} "
+                      f"(constant? {np.allclose(v, v[0])})", flush=True)
+
         # 3. Update per-episode state
         for b, ep in enumerate(self.episodes):
             ep.generated.append(ep.next_token)
@@ -420,11 +472,16 @@ class BatchedSharedKVVecEnv(VecEnv):
             done = (ep.next_token == self.eos_id or ep.step_count >= self.max_new_tokens)
             base = b * self.n_layers
 
-            # Per-step KL shaping is broadcast to every layer-slot of this episode
-            # (the KL signal is joint over layers — see plan's "layer-shared" note).
-            # 0.0 when kl_shaping is off, so the baseline reward is unchanged.
-            for l in range(self.n_layers):
-                all_rewards[base + l] = step_r[b]
+            # Per-step reward → every layer-slot of this episode.
+            #  - per_layer_reward (E9): each layer gets its OWN damage-based reward
+            #    (step_r_layers[b, l]) → PPO can finally attribute credit per layer.
+            #  - else: the joint scalar step_r[b] broadcast to all layers (S4 or 0).
+            if step_r_layers is not None:
+                for l in range(self.n_layers):
+                    all_rewards[base + l] = step_r_layers[b, l]
+            else:
+                for l in range(self.n_layers):
+                    all_rewards[base + l] = step_r[b]
 
             if done:
                 truncated   = (ep.next_token != self.eos_id and
@@ -637,7 +694,8 @@ class BatchedSharedKVVecEnv(VecEnv):
         # cache gets evicted while past_kv_full only grows.
         ep.kl_sum   = 0.0
         ep.kl_count = 0
-        if self.kl_shaping and self.kl_mode == "exact":
+        # Shadow full cache needed by S4-exact AND by E9 per-layer reward.
+        if (self.kl_shaping and self.kl_mode == "exact") or self.per_layer_reward:
             ep.past_kv_full = _clone_cache(ep.past_kv)
         else:
             ep.past_kv_full = None

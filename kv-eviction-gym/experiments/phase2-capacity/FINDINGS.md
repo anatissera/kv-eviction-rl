@@ -372,12 +372,99 @@ because the policy was norm-blind AND the regime had no headroom — both now
 fixed (rich features + long-gen 45pp). S4 gives per-step credit so the policy
 no longer needs to stumble onto a fully-correct episode; it is rewarded for
 every eviction that keeps the next-token distribution close to full-cache.
-= Alex's "destilar al full caché". Calibrating kl_weight via smoke
-(target Σ≈1.0 = comparable to terminal), then E8 (mlp) on kvp-ab + E8-attn
-(Alex's attention-classifier idea, in the now-dense-reward regime) on
-kv-chat-v1. Launched autonomously overnight 2026-07-04.
+= Alex's "destilar al full caché". kl_weight=0.03 (first-principles; the runs'
+first-rollout kl_step_mean≈0.14 confirmed Σ≈1). E8 (mlp) on kvp-ab + E8-attn
+(Alex's attention-classifier idea) on kv-chat-v1.
 
-## 20. Current state / open questions / next
+**RESULT (2026-07-04): PARITY, both arms — but the most informative null.**
+- s_e8 (mlp+S4): 9 probes, paired `learned−kv_norm` = **+0.021 ± 0.014** (n.s.).
+- s_e8attn (attn+S4): 12 probes, **+0.016 ± 0.018** (n.s.). The single +0.125
+  final probe is one example; the mean is parity.
+- **Mechanistic finding:** `kl_step_mean` DROPS (0.109→0.073 on s_e8) — S4 IS
+  being optimized — but probe correctness never follows. **Minimizing joint
+  output-KL is a proxy that decouples from correctness** under the truncation
+  cliff (evicting reasoning tokens → model rambles → truncates → wrong;
+  `evict_generated_frac` 0.5-0.99 in the probes).
+
+## 20. ROOT CAUSE (code-level) — the layer credit-assignment wall
+
+Reviewing the code after E8, we found the structural reason the ENTIRE series is
+stuck at parity — and it is not any of the things we'd been fixing.
+
+- The env (`batched_env.py`) exposes **`n_envs = N × n_layers`**: each
+  `(episode, layer)` pair is a separate RL env. The policy emits **28 independent
+  eviction actions per step** — one per transformer layer (`step_wait`,
+  `actions.reshape(self.N, self.n_layers)`).
+- But the reward is a **single scalar per episode, broadcast identically to all
+  28 layer-slots** (`for l: all_rewards[base+l] = step_r[b]`; terminal
+  `rewards = np.full(n_layers, score)`). Even S4's KL is measured on the **final
+  output distribution** — a joint function of all 28 layers' evictions.
+
+So PPO sees 28 different (state, action) pairs sharing ONE return. The marginal
+effect of any single layer's eviction on the scalar is drowned by the other 27 →
+**no per-layer gradient**. The only thing learnable from a joint scalar over a
+220²⁸ joint action space is a "generically reasonable per-layer rule" — which is
+**approximately what kv_norm already is**. Hence parity, everywhere:
+
+| we tried | it improved | touched layer credit? |
+|---|---|---|
+| rich features (s_rich) | representation | ✗ |
+| warm-start (s_warm) | initialization | ✗ |
+| attention (s_attn) | architecture | ✗ |
+| S4 dense (s_e8) | **temporal** credit (per-step) | ✗ (KL is joint over layers) |
+| 50 reps + regret (s_e7) | sample count + difficulty variance | ✗ |
+
+None touched the binding constraint. This also explains s_e8 exactly: S4 improved
+the *joint average* (kl_step drops) but per-layer decisions can't be refined, so
+correctness stays at kv_norm level.
+
+**Why we trained each arm to completion anyway (it was not wasted):** each arm
+was a controlled ablation isolating ONE hypothesis (representation / exploration /
+architecture / reward density / sampling). Running them to convergence is what
+let us *rule each out* and, by elimination + code review, locate the real wall.
+The null series IS the evidence base for the root cause — and a clean methodo-
+logical contribution (apples-to-apples paired evaluation across a hypothesis
+ladder).
+
+## 21. E9 — per-layer reward (the fix for the root cause), LAUNCHED 2026-07-04
+
+**Architecture change (code):** a new training mode `per_layer_reward: true` in
+`batched_env.step_wait`. Instead of the joint scalar, each layer-env gets its OWN
+dense reward = the **marginal hidden-state divergence** that layer's eviction
+causes vs a never-evicted shadow cache:
+`div_k = 1 − cos(h_evict[k], h_full[k])` at each block output k (via
+`output_hidden_states`); `damage_l = relu(div_{l+1} − div_l)` isolates layer l's
+own contribution; reward `= −w · clip(damage_l, 0, 5)`. Terminal correctness
+(+ regret baseline) stays broadcast (a joint outcome the critic absorbs); the
+per-layer dense term supplies the differentiation.
+
+**Why this and not "tie the layers":** tying eviction (same position all layers)
+also fixes attributability but handicaps a *uniform* policy against a *per-layer*
+heuristic (kv_norm evicts per-layer) — a confounded, invasive change. Per-layer
+reward keeps the fair per-layer paradigm, is contained (the buffer/GAE ALREADY
+compute per-layer returns — `episode_ppo._finalize_episode` stacks rewards as
+`[T, n_layers]`; the ONLY thing forcing identical returns was the broadcast), and
+matches how the literature (KVP/ForesightKV) solves credit assignment (per-head
+supervision).
+
+**What we expect to see (the decisive difference from every prior run):** if
+layer credit assignment was the wall, the paired probe gap `learned−kv_norm`
+should now be able to **CLIMB above noise** (sustained > +1 example over ≥3
+probes) as per-layer damage drops — something no joint-reward run ever did. If it
+stays at parity while per-layer damage drops, per-layer *distributional* damage is
+also decoupled from correctness → next is per-layer *correctness* attribution or
+the env redesign (Phase B, GRAN_PLAN §4c).
+
+**Experiments launched (2 VMs, parallel):**
+- **s_e9** (per-layer reward, MLP policy) on kv-chat-v1.
+- **s_e9attn** (per-layer reward, attention policy — Alex's classifier, now with
+  fixed credit) on kvp-ab (after s_e8 finished).
+Both: long-gen arena (min_answer_words 60, budget 256), 50 reps, regret baseline,
+`per_layer_reward: true`, 4M steps, shared filtered probe, cron keeper +
+live-download. Verification: the smoke printed the 28 per-layer rewards to confirm
+they DIFFER (proof the fix is live) — the old broadcast made them identical.
+
+## 22. Current state / open questions / next
 
 - **ALL THREE SCALED ARMS DONE:** s_rich −0.044 (§7), s_warm −0.019 (§8),
   s_attn −0.111 (§9). Answer to the headline question: **no, nothing beats

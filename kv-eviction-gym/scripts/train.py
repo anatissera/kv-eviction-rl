@@ -402,6 +402,8 @@ def main():
             eviction_k=cfg.get("eviction_k_start", cfg.get("eviction_k", 100)),
             protect_prompt=cfg.get("protect_prompt", False),
             per_example_baseline=cfg.get("per_example_baseline", False),
+            per_layer_reward=cfg.get("per_layer_reward", False),
+            layer_reward_weight=cfg.get("layer_reward_weight", 0.0),
             **env_kwargs,
         )
     else:
