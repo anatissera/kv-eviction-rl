@@ -76,8 +76,20 @@ dl_e8attn(){
       kv-chat-v1:"~/repo/runs/s_e8attn/$f.csv" "$OUT/s_e8attn_$f.csv" 2>/dev/null
   done
 }
+dl_e9(){
+  for f in probe_curve learning_curve; do
+    G compute scp --project=proyecto-final-425415 --zone=us-west1-a --tunnel-through-iap \
+      kv-chat-v1:"~/repo/runs/s_e9/$f.csv" "$OUT/s_e9_$f.csv" 2>/dev/null
+  done
+}
+dl_e9attn(){
+  for f in probe_curve learning_curve; do
+    G compute scp --project=tp-final-rl-kv-eviction --zone=asia-southeast1-a --tunnel-through-iap \
+      kvp-ab:"~/repo/runs/s_e9attn/$f.csv" "$OUT/s_e9attn_$f.csv" 2>/dev/null
+  done
+}
 
-ensure kvp-ab tp-final-rl-kv-eviction asia-southeast1-a '~/scaled/E8_DONE' e8 \
-  "bash ~/run_e8.sh" 'configs/e8_s4' e8.finished
-ensure kv-chat-v1 proyecto-final-425415 us-west1-a '~/scaled/E8ATTN_DONE' e8attn \
-  "bash ~/run_e8attn.sh" 'configs/e8_attn_s4' e8attn.finished
+ensure kv-chat-v1 proyecto-final-425415 us-west1-a '~/scaled/E9_DONE' e9 \
+  "bash ~/run_e9.sh" 'configs/e9_perlayer.yaml' e9.finished
+ensure kvp-ab tp-final-rl-kv-eviction asia-southeast1-a '~/scaled/E9ATTN_DONE' e9attn \
+  "bash ~/run_e9attn.sh" 'configs/e9_perlayer_attn' e9attn.finished
