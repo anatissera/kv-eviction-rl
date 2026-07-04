@@ -499,6 +499,50 @@ one-shot prompt-compression (turns the sequential-infinite problem into one
 selection decision, the format where the literature wins); or per-layer CORRECTNESS
 attribution (offline, ForesightKV recipe). Not launched; awaiting decision.
 
+## 24. Is it the DATASET? (analysis + the two decisive experiments, 2026-07-04)
+
+Question from the user: is the null series GSM8K-specific or general? And can we
+replicate what Apple reports? Investigation of Apple's actual setup
+(github.com/apple/ml-learning-to-evict, the KVP paper arXiv 2602.10238):
+
+| | Apple / KVP | ours |
+|---|---|---|
+| task | RULER: LONG-context retrieval (needle in mostly-filler prompts) | GSM8K: SHORT dense prompts, decisive content is GENERATED reasoning |
+| training | OFFLINE, on pre-computed traces (Q/K/V extracted first) | online PPO in the decode loop |
+| agents | per-HEAD rankers (112 agents for Qwen2.5-7B) | one layer-shared policy |
+| reward | ranking of future utility across ALL budgets | terminal correctness (later: dense KL / per-layer divergence) |
+| compute | 8 GPUs DDP per agent | 1 L4 per run |
+
+**Why GSM8K is plausibly the worst case for learned eviction:**
+1. Nothing in a GSM8K prompt is redundant (short, information-dense), and the
+   tokens that matter most are the model's OWN reasoning, generated after the
+   eviction decisions. Future utility of a reasoning token is unpredictable
+   from its K/V (E5 measured this: 3% match). In RULER, most prompt tokens are
+   provably useless filler and the needle is content-distinguishable: future
+   utility IS predictable there.
+2. Our oracle numbers agree: even with perfect hindsight the gap over kv_norm
+   on GSM8K is only +7pp (and attn_cur <= kv_norm). Thin signal ceiling.
+3. The truncation cliff (evict reasoning -> rambling -> truncate -> wrong) is a
+   GSM8K-chain-of-thought phenomenon, not a retrieval phenomenon.
+
+**The two experiments that settle it (launched, one per VM):**
+- `scripts/eval_passkey.py` (kv-chat-v1): a RULER-style passkey arena at our
+  scale (filler + buried secret code, T~230-270 > budget=176, eviction pressure
+  on PROMPT tokens: Alex's prefill-eviction flavor). Paired arms full / random /
+  kv_norm / attn_cur / oracle_fut. If the dataset hypothesis is right, this
+  reproduces the Apple-regime signature: kv_norm ~ random, oracle >> kv_norm.
+- `scripts/rank_predictability.py` (kvp-ab): KVP-lite, the Apple RECIPE offline:
+  per-layer rankers trained on our 400 GSM8K traces (features = raw K/V + rich
+  columns, label = future attention), held-out Spearman + evictable-set overlap
+  vs the kv_norm ranking. If the learned ranker cannot beat kvz's own rank
+  correlation on GSM8K, the dataset carries no learnable eviction signal beyond
+  norms, and the null series is dataset-driven (not a bug, not the algorithm).
+
+Component-by-component check (Alex's suggestion): pytest suite re-run on the VM
+alongside; the E9 [E9]-print already verified per-layer rewards differ, the E5
+test verified argmin(kvz)==kv_norm choice, test_train_eval_obs_identical verified
+train/eval observation parity. No open bug candidates.
+
 ## 23. Current state / open questions / next
 
 - **ALL THREE SCALED ARMS DONE:** s_rich −0.044 (§7), s_warm −0.019 (§8),
