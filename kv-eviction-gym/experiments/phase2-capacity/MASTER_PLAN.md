@@ -7,25 +7,25 @@ intervention, and the closing plan for the report.
 
 ---
 
-## 1. Where we are — the full map of results
+## 1. Dónde estamos: el mapa completo de resultados
 
-| experiment | what it isolates | result (paired learned−kv_norm) | verdict |
+| experimento | qué aisla | resultado (paired learned−kv_norm) | veredicto |
 |---|---|---|---|
-| A/B overnight 5M (S4 vs control) | reward shaping | ctrl −0.038 / S4 −0.037 (the +0.183 was a probe-set artifact) | **S4 null**; methodological lesson |
-| E0 screen `baseline` | — | +0.00 (ties) | norm-blind policy ≈ random |
-| E0 screen `rich` | D1/D2 representation | **+0.19 peak** (overfit, 16 ex.) | representation WAS the bottleneck |
-| E0 screen `rich+S4` | reward on a capable policy | +0.06 < rich alone | **S4 does not help even with features** |
-| E0 screen `attn` | D3 architecture | **+0.19 peak**, still rising at the cutoff | candidate with a higher ceiling |
-| `s_rich` 2M at scale (1000 train, 32 held-out) | D1/D2 at scale | **mean −0.044, last5 −0.050** (31 probes) | **PARITY/barely-below — it does not beat it** |
-| `s_warm` 2M (BC→kv_norm + RL) | D4 exploration | RUNNING (ETA ~06:40 UTC) | does starting AT kv_norm push further? |
-| `s_attn` 2M (rich + cross-token attention) | D3 architecture | RUNNING on kv-chat-v1 (ETA ~09:30 UTC) | does cross-token reasoning beat the heuristic? |
+| A/B overnight 5M (S4 vs control) | reward shaping | ctrl −0.038 / S4 −0.037 (el +0.183 fue artefacto de probe-set) | **S4 nulo**; lección metodológica |
+| E0 screen `baseline` | (nada) | +0.00 (empata) | policy norm-blind ≈ random |
+| E0 screen `rich` | representación D1/D2 | **+0.19 peak** (overfit 16 ej.) | representación ERA el cuello |
+| E0 screen `rich+S4` | reward en policy capaz | +0.06 < rich solo | **S4 no ayuda ni con features** |
+| E0 screen `attn` | arquitectura D3 | **+0.19 peak**, subiendo al corte | candidato con techo mayor |
+| `s_rich` 2M @ escala (1000 train, 32 held-out) | D1/D2 a escala | **mean −0.044, last5 −0.050** (31 probes) | **PARIDAD/apenas-abajo, no le gana** |
+| `s_warm` 2M (BC→kv_norm + RL) | exploración D4 | CORRIENDO (ETA ~06:40 UTC) | ¿arrancar EN kv_norm empuja más allá? |
+| `s_attn` 2M (rich + cross-token attention) | arquitectura D3 | CORRIENDO en kv-chat-v1 (ETA ~09:30 UTC) | ¿razonar cross-token supera la heurística? |
 
 **The pattern:** rich features close the gap from ~random → kv_norm (real progress on
 representation), but online per-token PPO finds nothing BETTER than the heuristic.
 With `kvz` as a feature, "being kv_norm" is the easiest thing to learn and that is
 where it stays.
 
-## 2. What the literature says (2026) — and how it positions our result
+## 2. Qué dice la literatura (2026): y cómo posiciona nuestro resultado
 
 Three papers directly on our problem:
 
@@ -100,7 +100,7 @@ E5 (contingency, the "right next step" per the literature — NOT launched tonig
 **Cost rule (in force):** no VM on without an active run; seeds only to confirm an
 EFFECT (never for a null); 2M steps max per run.
 
-## 4b. PHASE A — "something that works" (E6, launched 2026-07-03)
+## 4b. PHASE A: "algo que ande" (E6, lanzado 2026-07-03)
 
 The user asked for a POSITIVE result. The accumulated evidence says where it is:
 eviction damage (= learnable headroom) concentrates in (a) long generations and
@@ -128,7 +128,7 @@ Additional decisions from the E5/debug analysis (2026-07-03):
 - The heterogeneity of GSM8K slices (kv_norm 0.06 on [400:432] vs 0.625 on
   [1000:1032]) is both a methodological trap AND the clue that motivated E6.
 
-## 4c. PHASE B — design (pending approval, drafted 2026-07-04)
+## 4c. PHASE B: diseño (pendiente de aprobación, redactado 2026-07-04)
 
 Phase A closed on the exploration cliff: in the long-gen arena the policy found
 correct episodes by chance (3 in 235 rollouts) but PPO did not turn them into
