@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 #
-# For licensing see accompanying LICENSE file.
+# Added for this project (UdeSA RL final). Not part of Apple's original
+# ml-learning-to-evict release. For licensing see accompanying LICENSE file.
 #
 """
 Minimal KV-cache-compression evaluation: trained KVP agents vs a heuristic baseline.

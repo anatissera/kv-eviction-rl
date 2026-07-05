@@ -1,3 +1,4 @@
+# Added for this project (UdeSA RL final). Not part of Apple's original ml-learning-to-evict release.
 # PPO agent training — GPU config for Qwen2-1.5B-Instruct.
 #
 # Mirrors train_qwen1b.yaml (the paper's RLOO config) in every shared

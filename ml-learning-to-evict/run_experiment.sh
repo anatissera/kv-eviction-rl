@@ -1,4 +1,5 @@
 #!/bin/bash
+# Added for this project (UdeSA RL final). Not part of Apple's original ml-learning-to-evict release.
 #
 # End-to-end KVP pipeline-validation run with Qwen2-1.5B-Instruct:
 #   data generation (unroll_and_store) -> agent training -> eval vs heuristic baseline.

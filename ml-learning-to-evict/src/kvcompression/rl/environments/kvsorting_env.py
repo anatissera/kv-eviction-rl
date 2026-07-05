@@ -184,6 +184,8 @@ class KVSortingEnvironmentV2:
     def reset_iterator(self):
         """Resets the internal dataloader iterator to start from the beginning."""
         pylogger.info("Resetting evaluation dataloader iterator.")
+        # local fix (not in Apple's release): upstream assigned self.iterator here,
+        # a dead attribute, so the eval dataloader never actually reset between evals
         self.dataloader_iter = iter(self.dataloader)
 
     def reset(self, raise_stop_iteration: bool = False) -> Dict[str, torch.Tensor]:
