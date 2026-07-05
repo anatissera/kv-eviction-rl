@@ -528,6 +528,7 @@ def main():
                 "features_extractor_class": _extractor_cls,
                 "features_extractor_kwargs": _extractor_kwargs,
             },
+            learning_rate=cfg.get("learning_rate", 3e-4),
             n_steps=cfg.get("n_steps", 524),
             batch_size=cfg.get("batch_size", 1024),
             n_epochs=cfg.get("n_epochs", 4),

@@ -22,11 +22,17 @@ vectors. We prove this two ways: (1) an **oracle** with perfect future-attention
 hindsight beats `kv_norm` by only +0.07 on GSM8K but by **+0.43** on a
 RULER-style passkey-retrieval arena built at the same scale (Fig. 1); (2) we then
 re-run the learning pipelines in that arena, where a learnable signal provably
-exists. There, a learned offline ranker (Apple's KVP recipe) **beats kv_norm by
-+0.45** (0.775 vs 0.325, 19 wins / 1 loss, p=4e-5; Fig. 5), while online PPO
-reaches transient peaks +0.19 above kv_norm but does not converge stably. The
-takeaway: learned eviction works, and it needs (a) a task with predictable future
-utility and (b) offline supervision rather than online RL from sparse reward.
+exists. As a REFERENCE POINT (this is Apple's KVP method, not our contribution),
+a re-implemented offline future-attention ranker **beats kv_norm by +0.46**
+(2 seeds, 49 wins / 3 losses of 100, p<1e-8; Fig. 5) - confirming the arena holds
+exploitable signal that SOME method captures. Our own contribution, the online
+per-step PPO formulation, transiently reaches perfect (1.0) eviction policies in
+this arena (impossible on GSM8K) but has not yet converged stably under the sparse
+correctness reward; a hyperparameter sweep with the dense causal KL reward (the
+report's final proposal, sec 3.2) is underway (E11) to test whether our online
+method converges here. The takeaway so far: the learnable signal is real and
+arena-dependent, and the open question is whether our online formulation can
+exploit it as stably as the offline reference does.
 
 ---
 
