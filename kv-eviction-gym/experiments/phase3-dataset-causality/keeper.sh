@@ -44,18 +44,18 @@ kvpab(){
   local ST=$(G compute instances describe kvp-ab --project=tp-final-rl-kv-eviction --zone=asia-southeast1-a --format="value(status)" 2>/dev/null)
   if [ "$ST" != "RUNNING" ]; then
     G compute instances start kvp-ab --project=tp-final-rl-kv-eviction --zone=asia-southeast1-a --quiet 2>/dev/null && \
-    { sleep 40; G compute ssh kvp-ab --project=tp-final-rl-kv-eviction --zone=asia-southeast1-a --tunnel-through-iap --ssh-flag="-o ConnectTimeout=30" --command="cd ~/repo && test -f runs/passkey_ranker_v2/summary.json || tmux new-session -d -s pk 'source .venv/bin/activate; export PYTHONPATH=~/repo/src; export MALLOC_MMAP_THRESHOLD_=1048576; python scripts/passkey_ranker.py --n 160 --n-train 120 --budget 176 --out-dir runs/passkey_ranker_v2 >> ~/pkranker2.log 2>&1'" 2>/dev/null; }
+    { sleep 40; G compute ssh kvp-ab --project=tp-final-rl-kv-eviction --zone=asia-southeast1-a --tunnel-through-iap --ssh-flag="-o ConnectTimeout=30" --command="cd ~/repo && test -f runs/passkey_ranker_seed1/summary.json || tmux new-session -d -s pk 'source .venv/bin/activate; export PYTHONPATH=~/repo/src; export MALLOC_MMAP_THRESHOLD_=1048576; python scripts/passkey_ranker.py --n 200 --n-train 140 --budget 176 --seed 1 --out-dir runs/passkey_ranker_seed1 >> ~/pkranker_s1.log 2>&1'" 2>/dev/null; }
     echo "$(date -u) kvp-ab revive+relaunch pk" >>"$LOG"; return
   fi
-  local R=$(G compute ssh kvp-ab --project=tp-final-rl-kv-eviction --zone=asia-southeast1-a --tunnel-through-iap --ssh-flag="-o ConnectTimeout=25" --command="pgrep -fc passkey_ranker; test -f ~/repo/runs/passkey_ranker_v2/summary.json && echo DONE" 2>/dev/null)
+  local R=$(G compute ssh kvp-ab --project=tp-final-rl-kv-eviction --zone=asia-southeast1-a --tunnel-through-iap --ssh-flag="-o ConnectTimeout=25" --command="pgrep -fc passkey_ranker; test -f ~/repo/runs/passkey_ranker_seed1/summary.json && echo DONE" 2>/dev/null)
   local NP=$(echo "$R"|sed -n 1p)
   if echo "$R"|grep -q DONE; then
-    G compute scp --project=tp-final-rl-kv-eviction --zone=asia-southeast1-a --tunnel-through-iap kvp-ab:'~/repo/runs/passkey_ranker_v2/summary.json' "$DATA/passkey_ranker_summary.json" 2>/dev/null
+    G compute scp --project=tp-final-rl-kv-eviction --zone=asia-southeast1-a --tunnel-through-iap kvp-ab:'~/repo/runs/passkey_ranker_seed1/summary.json' "$DATA/passkey_ranker_summary.json" 2>/dev/null
     G compute scp --project=tp-final-rl-kv-eviction --zone=asia-southeast1-a --tunnel-through-iap kvp-ab:'~/pkranker2.log' "$DATA/passkey_ranker.log" 2>/dev/null
     return
   fi
   if [ "$NP" = "0" ]; then
-    G compute ssh kvp-ab --project=tp-final-rl-kv-eviction --zone=asia-southeast1-a --tunnel-through-iap --ssh-flag="-o ConnectTimeout=25" --command="cd ~/repo && tmux new-session -d -s pk 'source .venv/bin/activate; export PYTHONPATH=~/repo/src; export MALLOC_MMAP_THRESHOLD_=1048576; python scripts/passkey_ranker.py --n 160 --n-train 120 --budget 176 --out-dir runs/passkey_ranker_v2 >> ~/pkranker2.log 2>&1'" 2>/dev/null
+    G compute ssh kvp-ab --project=tp-final-rl-kv-eviction --zone=asia-southeast1-a --tunnel-through-iap --ssh-flag="-o ConnectTimeout=25" --command="cd ~/repo && tmux new-session -d -s pk 'source .venv/bin/activate; export PYTHONPATH=~/repo/src; export MALLOC_MMAP_THRESHOLD_=1048576; python scripts/passkey_ranker.py --n 200 --n-train 140 --budget 176 --seed 1 --out-dir runs/passkey_ranker_seed1 >> ~/pkranker_s1.log 2>&1'" 2>/dev/null
     echo "$(date -u) kvp-ab relaunch pk" >>"$LOG"
   fi
 }
