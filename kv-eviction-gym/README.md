@@ -5,7 +5,9 @@ Reinforcement learning agent that learns to evict tokens from a transformer's KV
 
 The policy (MaskablePPO + per-token MLP) makes one eviction decision per layer per
 decode step, keeping the cache at a fixed budget throughout generation. See
-[METHOD.md](METHOD.md) for the full design.
+[../docs/METHOD.md](../docs/METHOD.md) for the full design and
+[../docs/README.md](../docs/README.md) for the per-experiment documentation
+(one doc per report experiment, with result tables and raw-data pointers).
 
 ---
 
@@ -66,15 +68,22 @@ Key config options (`configs/run_none.yaml`):
 | `model_name` | `qwen-1.5b` | Model key; defaults loaded from `configs/model_defaults.json` |
 | `n_examples` | `1000` | GSM8K training examples (cycled) |
 | `probe_n` | `32` | Left-out training examples for periodic eval (0 to disable) |
-| `budget_min` | `128` | Minimum cache capacity (tokens) |
-| `budget_max` | `512` | Maximum cache capacity (tokens) |
+| `budget_min` / `budget_max` | `256` / `600` | Cache capacity range (with optional curriculum `budget_min_start/end`) |
 | `max_new_tokens` | `800` | Max decode steps per episode |
-| `n_recent` | `32` | Recency window — protected from eviction |
-| `n_sinks` | `4` | Attention sink tokens — protected from eviction |
-| `length_penalty_weight` | `0.5` | Dense signal: `−weight × steps/max_new_tokens` |
+| `n_recent` / `n_sinks` | `32` / `4` | Recency window and attention sinks, protected from eviction |
+| `n_parallel` | `2` | Episodes decoded together in one forward pass (n_envs = 2 x 28 layers = 56) |
+| `length_penalty_weight` | `0.5` | Dense signal: `-weight x steps/max_new_tokens` |
 | `truncation_penalty` | `1.0` | Hard penalty when episode hits token cap without EOS |
-| `total_timesteps` | `5000000` | SB3 timestep budget (counts ×28 envs per step) |
-| `shaping_mode` | `none` | `none` = pure correctness (fastest); `per_step` = attention shaping |
+| `total_timesteps` | `5000000` | SB3 timestep budget (counts x56 envs per wall-step) |
+| `shaping_mode` | `none` | `none` = pure correctness (fastest); see also `kl_shaping` below |
+| `rich_features` | (E1+) | Scale-aware feature columns incl. `kvz` (the exact kv_norm signal) |
+| `kl_shaping` / `kl_weight` / `kl_clip` | (E8+) | Dense causal reward: per-step KL to a never-evicted shadow cache |
+| `per_layer_reward` | (E9+) | Per-layer dense reward (marginal hidden-state divergence) |
+| `dataset` | `gsm8k` | `passkey` selects the synthetic retrieval arena (phase 3) |
+
+The experiment configs used in the report live in `configs/` (`e1_rich`, `e3_warm`,
+`e4_attn`, `e5_golden`, `e6*`, `e7_repeat`, `e8*`, `e9*`, `e10*`, `e11*`); each maps to a
+doc in [`../docs/runs/`](../docs/runs/).
 
 All outputs go to `runs/<run_name>/`:
 
@@ -86,11 +95,11 @@ runs/<run_name>/
   checkpoints/           # periodic saves
   learning_curve.csv     # timestep, ep_rew_mean, correctness_rate, truncation_rate, …
   probe_curve.csv        # periodic held-out eval (correctness, retention, gen_frac, …)
-  probe_anchors.pkl      # cached baselines — reused on resume, skip recompute
+  probe_anchors.pkl      # cached baselines, reused on resume, skip recompute
   tb/                    # TensorBoard event files
 ```
 
-**Monitoring during training** — the callback prints per rollout:
+**Monitoring during training**: the callback prints per rollout:
 
 ```
 t=   14,672  rew=0.3142  correct=28.6%  align=0.412  ep_time=12.3s  episodes=4  trunc=100.0%  seen=4 (max 1x)  pass=0
@@ -111,7 +120,7 @@ tensorboard --logdir runs/my_run/tb
 ```bash
 python scripts/eval.py \
   --model  runs/my_run/best_model \
-  --config configs/train.yaml \
+  --config configs/run_none.yaml \
   --budget 180 \
   --n      100 \
   --output runs/my_run/eval_results.json
@@ -121,7 +130,7 @@ Runs six strategies online (one eviction per decode step, hard budget constraint
 
 | Strategy | Description |
 |----------|-------------|
-| `full` | No eviction — upper bound |
+| `full` | No eviction (upper bound) |
 | `learned` | Trained PPO policy |
 | `streaming` | Attention sinks (first `--n-sinks` tokens) + most recent |
 | `attn_layer` | Per-layer attention oracle (requires eager attention) |
@@ -156,6 +165,23 @@ in a few minutes (3 examples, small budget, 300k steps):
 ```bash
 uv run python scripts/train.py --config configs/quickstart.yaml --run-name quickstart
 ```
+
+---
+
+## Experiment / analysis scripts
+
+| Script | What it does | Doc |
+|---|---|---|
+| `scripts/wide_eval.py` | Wide paired eval (n=128, one stack, shared anchors) | [05](../docs/runs/05-wide-eval-regimen.md) |
+| `scripts/oracle_eval.py` | Future-attention oracle vs heuristics (paired, eager) | [06](../docs/runs/06-oraculo-atencion-futura.md) |
+| `scripts/trace_gen.py` | Full-cache traces with attention capture (for BC/rankers) | [07](../docs/runs/07-bc-match-oracle.md) |
+| `scripts/screen_pool.py` | Full-cache solvability screening of a training pool | [08](../docs/runs/08-longgen-exploracion.md) |
+| `scripts/eval_passkey.py` | Passkey retrieval arena (oracle vs heuristics) | [11](../docs/runs/11-dataset-causalidad.md) |
+| `scripts/eval_prefill_compress.py` | HotpotQA prefill-compression arena (SnapKV-style) | [11](../docs/runs/11-dataset-causalidad.md) |
+| `scripts/rank_predictability.py` | Offline ranker predictability control (GSM8K traces) | [11](../docs/runs/11-dataset-causalidad.md) |
+| `scripts/passkey_ranker.py` | KVP offline recipe end-to-end on passkey (reference) | [12](../docs/runs/12-capstone-passkey.md) |
+| `experiments/phase2-capacity/` | E0 screen + scaled-run drivers, `compare.py` | [03](../docs/runs/03-screen-capacidad.md)-[04](../docs/runs/04-runs-a-escala.md) |
+| `experiments/phase3-dataset-causality/` | Phase-3 data, plots (`make_plots.py`), E11 keeper | [11](../docs/runs/11-dataset-causalidad.md)-[12](../docs/runs/12-capstone-passkey.md) |
 
 ---
 
