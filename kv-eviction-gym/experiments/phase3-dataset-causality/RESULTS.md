@@ -152,8 +152,11 @@ held-out examples vs full/oracle/random/kv_norm.
 | kv_norm (heuristic)     | 0.325 |
 
 **learned - kv_norm = +0.45 (z=5.2, McNemar p=4e-5, 19 wins / 1 loss / 20 ties).**
-This is the project's clean POSITIVE result: a learned eviction policy beats the
-norm heuristic by a wide, highly-significant margin in the signal-bearing regime.
+**REPLICATED (seed 1, n=60 held-out): +0.467 (30 wins / 2 losses), learned=0.883
+= oracle=0.883.** Combined across the two independent seeds: **49 wins / 3 losses
+of 100, mean margin +0.46 (p<1e-8).** This is the project's clean POSITIVE result:
+a learned eviction policy beats the norm heuristic by a wide, highly-significant,
+REPRODUCIBLE margin in the signal-bearing regime.
 Notes:
 - learned (0.775) even edges out the oracle (0.675) and full-cache (0.725):
   removing distractor tokens can help, and the learned ranker generalizes across

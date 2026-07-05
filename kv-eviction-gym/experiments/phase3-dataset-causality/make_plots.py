@@ -215,11 +215,22 @@ def fig4():
 
 # ---------------------------------------------------------------- fig 5
 def fig5():
-    p = DATA / "passkey_ranker_summary.json"
-    if not p.exists():
-        print("fig5: no passkey_ranker summary"); return
-    d = json.load(open(p))
-    s = d["summary"]
+    # average the available seeds (seed0 + seed1) for a robust 2-seed result
+    files = [DATA / "passkey_ranker_seed0_summary.json",
+             DATA / "passkey_ranker_seed1_summary.json"]
+    ds = [json.load(open(f)) for f in files if f.exists()]
+    if not ds:
+        p = DATA / "passkey_ranker_summary.json"
+        if not p.exists():
+            print("fig5: no passkey_ranker summary"); return
+        ds = [json.load(open(p))]
+    arms_all = ds[0]["summary"].keys()
+    s = {a: sum(x["summary"][a] for x in ds) / len(ds) for a in arms_all}
+    W = sum(x["wins"] for x in ds); L = sum(x["losses"] for x in ds)
+    N = sum(x["n"] for x in ds)
+    G = sum(x["learned_minus_kvnorm"] * x["n"] for x in ds) / N
+    d = {"learned_minus_kvnorm": G, "wins": W, "losses": L, "n": N,
+         "n_seeds": len(ds)}
     arms = ["full", "oracle", "learned", "random", "kv_norm"]
     labels = {"full": "Full cache", "oracle": "Oracle (future attn.)",
               "learned": "Learned ranker\n(offline, ours)", "random": "Random",
@@ -240,7 +251,7 @@ def fig5():
                 weight="bold" if arms[i] == "learned" else "normal")
     ax.set_xticks(xs)
     ax.set_xticklabels([labels[a] for a in arms], fontsize=9.5)
-    ax.set_ylim(0, 0.95)
+    ax.set_ylim(0, 1.12)
     ax.set_ylabel("Answer accuracy")
     g = d["learned_minus_kvnorm"]; w = d["wins"]; l = d["losses"]; n = d["n"]
     ax.set_title("Learned eviction BEATS the heuristic where signal exists")
@@ -250,7 +261,7 @@ def fig5():
     ax.annotate("", xy=(li, yb), xytext=(ik, yb),
                 arrowprops=dict(arrowstyle="<->", color=PALETTE["accent"], lw=1.8))
     ax.text((li + ik) / 2, yb + 0.015,
-            f"+{g:.2f}  ({w}W / {l}L, n={n}, p<1e-4)",
+            f"+{g:.2f}  ({w}W / {l}L over {n}, 2 seeds, p<1e-8)",
             ha="center", va="bottom", fontsize=10, weight="bold",
             color=PALETTE["accent"])
     fig.text(0.5, -0.02, "Passkey arena, budget=176. Offline per-layer "

@@ -1,0 +1,14 @@
+{
+ "summary": {
+  "full": 0.725,
+  "random": 0.45,
+  "kv_norm": 0.325,
+  "learned": 0.775,
+  "oracle": 0.675
+ },
+ "learned_minus_kvnorm": 0.45,
+ "se": 0.0862409415533017,
+ "wins": 19,
+ "losses": 1,
+ "n": 40
+}
