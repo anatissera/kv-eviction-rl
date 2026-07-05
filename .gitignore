@@ -231,16 +231,6 @@ cache_dvc/
 .claude
 
 # --- project-specific (repo organization, 2026-07-05) ---
-# LaTeX build artifacts (informe/)
-informe/*.aux
-informe/*.bbl
-informe/*.blg
-informe/*.log
-informe/*.out
-informe/*.toc
-informe/*.fls
-informe/*.fdb_latexmk
-informe/*.synctex.gz
 
 # heavy model checkpoints (reproducible; keep local only)
 kv-eviction-gym/ab_results/checkpoints/

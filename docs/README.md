@@ -1,10 +1,10 @@
 # Experiment documentation
 
-One document per experiment, in the order they appear in the report
-([`report/main.pdf`](../report/main.pdf), section 4 "Development and Results"). Every doc
-follows the same format: question/hypothesis, setup, results (tables with the measured
-numbers), what the report says, pointers to the raw data, and status (valid / superseded /
-invalid and why).
+One document per experiment, in the order they appear in the report (section 4,
+"Development and Results"; the LaTeX report is delivered separately and does not live in
+this repo). Every doc follows the same format: question/hypothesis, setup, results (tables
+with the measured numbers), what the report says, pointers to the raw data, and status
+(valid / superseded / invalid and why). The report figures live in [`imgs/`](imgs/).
 
 - [`METHOD.md`](METHOD.md): the design of the environment and the policy (what the project
   does, how, and what it explicitly does not do).
@@ -36,10 +36,11 @@ run are comparable** (the report documents five backend/stack "regime shifts").
 | [12](runs/12-capstone-passkey.md) | Capstone: E11 online + offline KVP reference | §4.16 | fig10 | `configs/e11_kl*`, `scripts/passkey_ranker.py` | `phase3.../data/e11_*`, `passkey_ranker_*` |
 | [13](runs/13-e12-stability.md) | E12: 48h stability sweep (seeds, epochs, PPO knobs) | §4.16 | fig11-14 | `configs/e12_*`, `experiments/phase4-stability/` | `experiments/phase4-stability/data/` |
 
-Paths are relative to `kv-eviction-gym/` unless stated otherwise. The report's `figN`
-figures live in `report/Figures/1. Imgs/` and are regenerated with `report/figures.py`; the
-phase-3 figures in `kv-eviction-gym/experiments/phase3-dataset-causality/plots/` are
-regenerated with `make_plots.py` in that directory.
+Paths are relative to `kv-eviction-gym/` unless noted. The report's `figN` figures live in
+[`imgs/`](imgs/) and are regenerated with `scripts/figures.py` and `scripts/figures_e12.py`
+(they read the raw data from `kv-eviction-gym/`); the phase-3-specific figures in
+`kv-eviction-gym/experiments/phase3-dataset-causality/plots/` are regenerated with
+`make_plots.py` in that directory.
 
 ## The story in four lines
 

@@ -53,8 +53,8 @@ Figure 2 shows the three trajectories oscillating around or below 0.
 
 - `kv-eviction-gym/ab_results/s_{rich,warm,attn}_{learning,probe}_curve.csv`
 - `kv-eviction-gym/ab_results/scaled_comparison.txt`, `scaled_retention.png`
-- Checkpoints finales (no trackeados, en `ab_results/checkpoints/` local): s_rich, s_warm, s_golden.
-- Figura del informe: `informe/Figures/1. Imgs/fig2_scaled_traj.png`.
+- Final checkpoints (untracked, in local `ab_results/checkpoints/`): s_rich, s_warm, s_golden.
+- Report figure: `../imgs/fig2_scaled_traj.png`.
 
 ## Status
 

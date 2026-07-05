@@ -73,9 +73,9 @@ future work.
 
 - `kv-eviction-gym/experiments/phase3-dataset-causality/data/e11_kl{A,B,C}_{learning,probe}.csv`,
   `e11_klC_seed1_{learning,probe}.csv`
-- Ranker de referencia: `data/passkey_ranker_seed{0,1}_summary.json`,
+- Reference ranker: `data/passkey_ranker_seed{0,1}_summary.json`,
   `ab_results/passkey_ranker_summary.json`
-- Figuras: `informe/Figures/1. Imgs/fig10_capstone.png`,
+- Figures: `../imgs/fig10_capstone.png`,
   `experiments/phase3-dataset-causality/plots/fig5_learned_ranker_wins.png`
 
 ## Status
