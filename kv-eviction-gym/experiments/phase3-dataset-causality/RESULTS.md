@@ -21,8 +21,12 @@ reasoning, whose future usefulness is not predictable from a token's Key/Value
 vectors. We prove this two ways: (1) an **oracle** with perfect future-attention
 hindsight beats `kv_norm` by only +0.07 on GSM8K but by **+0.43** on a
 RULER-style passkey-retrieval arena built at the same scale (Fig. 1); (2) we then
-re-run the exact same learning pipelines in the passkey arena, where a learnable
-signal provably exists, as the causal test.
+re-run the learning pipelines in that arena, where a learnable signal provably
+exists. There, a learned offline ranker (Apple's KVP recipe) **beats kv_norm by
++0.45** (0.775 vs 0.325, 19 wins / 1 loss, p=4e-5; Fig. 5), while online PPO
+reaches transient peaks +0.19 above kv_norm but does not converge stably. The
+takeaway: learned eviction works, and it needs (a) a task with predictable future
+utility and (b) offline supervision rather than online RL from sparse reward.
 
 ---
 
@@ -105,12 +109,37 @@ Early signal (pre-retune, budget=340): training correctness climbed 0.80 -> 1.0
 GSM8K, i.e. an exploitable signal is present but PPO was not yet converging
 stably. The retuned discriminative config is the clean re-measurement.
 
-### passkey_ranker - the KVP offline recipe, end-to-end
+### passkey_ranker - the KVP offline recipe, end-to-end  [RESULT: POSITIVE]
 `scripts/passkey_ranker.py` (kvp-ab, budget=176 = the +0.43 regime). Trains
-per-layer future-attention rankers OFFLINE on passkey traces (features = K/V +
-scale/position columns, label = future attention) - Apple's recipe - and then
-evaluates the learned ranker AS an eviction policy (accuracy) vs kv_norm/oracle.
-**Question:** does a learned ranker beat kv_norm end-to-end where signal exists?
+per-layer future-attention rankers OFFLINE on 120 passkey examples (features =
+K/V + scale/position columns, label = future attention) - Apple's recipe - and
+then evaluates the learned ranker AS an eviction policy (accuracy) on 40
+held-out examples vs full/oracle/random/kv_norm.
+
+| arm | accuracy (n=40 held-out) |
+|---|---|
+| full (ceiling)          | 0.725 |
+| oracle (future attn.)   | 0.675 |
+| **learned ranker (ours)** | **0.775** |
+| random                  | 0.450 |
+| kv_norm (heuristic)     | 0.325 |
+
+**learned - kv_norm = +0.45 (z=5.2, McNemar p=4e-5, 19 wins / 1 loss / 20 ties).**
+This is the project's clean POSITIVE result: a learned eviction policy beats the
+norm heuristic by a wide, highly-significant margin in the signal-bearing regime.
+Notes:
+- learned (0.775) even edges out the oracle (0.675) and full-cache (0.725):
+  removing distractor tokens can help, and the learned ranker generalizes across
+  the actual eviction trajectory rather than a single hindsight snapshot (n=40,
+  so small differences among the top arms are within noise; the load-bearing
+  comparison is learned vs kv_norm).
+- kv_norm (0.325) sits BELOW random (0.45): norm-based eviction is actively
+  harmful for needle retrieval, the same inversion seen in the oracle experiment.
+- This is the OFFLINE recipe (supervised ranking on precomputed traces), which is
+  exactly Apple's KVP design. It works; online PPO (E10) does not converge on the
+  same arena. The report's practical conclusion follows directly (see 4).
+
+See `plots/fig5_learned_ranker_wins.png`.
 
 ### Offline predictability control (done, Fig. 4)
 `scripts/rank_predictability.py` on GSM8K traces: held-out Spearman of predicted

@@ -207,8 +207,57 @@ def fig4():
     print("wrote fig4_ranker_predictability.png")
 
 
+# ---------------------------------------------------------------- fig 5
+def fig5():
+    p = DATA / "passkey_ranker_summary.json"
+    if not p.exists():
+        print("fig5: no passkey_ranker summary"); return
+    d = json.load(open(p))
+    s = d["summary"]
+    arms = ["full", "oracle", "learned", "random", "kv_norm"]
+    labels = {"full": "Full cache", "oracle": "Oracle (future attn.)",
+              "learned": "Learned ranker\n(offline, ours)", "random": "Random",
+              "kv_norm": "kv_norm (heuristic)"}
+    colors = {"full": PALETTE["grey"], "oracle": PALETTE["teal"],
+              "learned": PALETTE["accent"], "random": PALETTE["slate_light"],
+              "kv_norm": PALETTE["slate"]}
+    fig, ax = plt.subplots(figsize=(7.4, 4.6))
+    xs = list(range(len(arms)))
+    vals = [s[a] for a in arms]
+    bars = ax.bar(xs, vals, color=[colors[a] for a in arms], width=0.66,
+                  edgecolor="white", linewidth=1.3)
+    # emphasize the learned bar
+    li = arms.index("learned")
+    bars[li].set_edgecolor(PALETTE["ink"]); bars[li].set_linewidth(1.8)
+    for i, v in enumerate(vals):
+        ax.text(i, v + 0.015, f"{v:.2f}", ha="center", va="bottom", fontsize=10.5,
+                weight="bold" if arms[i] == "learned" else "normal")
+    ax.set_xticks(xs)
+    ax.set_xticklabels([labels[a] for a in arms], fontsize=9.5)
+    ax.set_ylim(0, 0.95)
+    ax.set_ylabel("Answer accuracy")
+    g = d["learned_minus_kvnorm"]; w = d["wins"]; l = d["losses"]; n = d["n"]
+    ax.set_title("Learned eviction BEATS the heuristic where signal exists")
+    # bracket learned vs kv_norm
+    ik = arms.index("kv_norm")
+    yb = max(vals[li], vals[ik]) + 0.10
+    ax.annotate("", xy=(li, yb), xytext=(ik, yb),
+                arrowprops=dict(arrowstyle="<->", color=PALETTE["accent"], lw=1.8))
+    ax.text((li + ik) / 2, yb + 0.015,
+            f"+{g:.2f}  ({w}W / {l}L, n={n}, p<1e-4)",
+            ha="center", va="bottom", fontsize=10, weight="bold",
+            color=PALETTE["accent"])
+    fig.text(0.5, -0.02, "Passkey arena, budget=176. Offline per-layer "
+             "future-attention rankers (Apple/KVP recipe), evaluated as an "
+             "eviction policy on held-out examples.",
+             ha="center", fontsize=8, color="#6b7480")
+    fig.tight_layout()
+    fig.savefig(OUT / "fig5_learned_ranker_wins.png")
+    print("wrote fig5_learned_ranker_wins.png")
+
+
 if __name__ == "__main__":
-    for f in (fig1, fig2, fig3, fig4):
+    for f in (fig1, fig2, fig3, fig4, fig5):
         try:
             f()
         except Exception as e:  # noqa: BLE001
