@@ -43,7 +43,7 @@ a supervisión offline con features de atención histórica.
 
 ## Datos crudos
 
-- `kv-eviction-gym/ab_results/s_golden_{learning,probe}_curve.csv`, `s_golden_run.log`
+- `kv-eviction-gym/ab_results/s_golden_{learning,probe}_curve.csv`
 - wide2 (la eval que desenmascara el artefacto): `ab_results/wide2_probe_curve.csv`
 
 ## Estado

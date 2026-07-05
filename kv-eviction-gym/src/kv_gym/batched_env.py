@@ -12,8 +12,8 @@ us maintain a single batched DynamicCache of shape [N, H, S, D] and run ONE
 model forward pass per step instead of N sequential batch=1 passes.
 
 Per-layer eviction is applied batch-wise via index-gather (physically removing
-the evicted slot per (episode, layer)) — verified equivalent to N independent
-_evict_slot calls in test_batched_forward.py TEST 4.
+the evicted slot per (episode, layer)), verified equivalent to N independent
+_evict_slot calls (verification script preserved in git history).
 
 Individual episode resets run sequentially (prefill + free-growth, batch=1)
 and reinstate the same shared budget so the replaced cache slice matches

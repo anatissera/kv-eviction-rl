@@ -3,7 +3,7 @@
 These are dependency-light (no LLM load): they test the KL/entropy math
 contract, the shadow-cache deep-copy helper (real code), and that the batched
 env exposes the kl_* knobs. The full end-to-end behaviour (real model, real
-rollout) is validated by the smoke run in experiments/s4-entropy-shaping/.
+rollout) was validated by the E8 smoke run (configs/e8_smoke.yaml).
 """
 
 import inspect

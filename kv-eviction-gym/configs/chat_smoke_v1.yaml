@@ -1,4 +1,4 @@
-# Smoke run: chat template + fixed budget, no find_easy_examples prerequisite.
+# Smoke run: chat template + fixed budget (no cold-start prerequisites).
 #
 # With the chat template (format_gsm8k_chat), Qwen2.5-1.5B-Instruct emits EOS
 # naturally at gen_len ~200-400 tokens. Setting budget=200 means:
