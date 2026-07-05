@@ -14,9 +14,10 @@ Every run, regardless of the reward, died against the same wall:
 | `s4_kl_v1` | correctness + KL-to-full | 100% truncation, retention 0-5%, identical pattern |
 
 100% truncation, 0% correctness, `explained_variance=NaN`: PPO with no gradient.
-Before finding the real cause, mitigations were tried that did not attack the problem
-(easy example sets, per-example budgets, prompt protection); that period's HANDOFF blamed
-the "free-growth skip" that discarded easy examples. That was a symptom, not the cause.
+Before finding the real cause, mitigations that did not attack the problem were tried
+(easy-example sets, per-example budgets, prompt protection); the handoff of that era
+(now in the git history) attributed the problem to the "free-growth skip" that discarded
+easy examples. That was a symptom, not the cause.
 
 ## Root cause
 
