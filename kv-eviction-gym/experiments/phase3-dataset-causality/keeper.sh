@@ -13,12 +13,12 @@ G(){ gcloud --account=atissera@udesa.edu.ar "$@"; }
 kvnone(){
   local ST=$(G compute instances describe kv-none-v2 --project=proyecto-final-425415 --zone=us-west4-a --format="value(status)" 2>/dev/null)
   [ "$ST" = "RUNNING" ] || { G compute instances start kv-none-v2 --project=proyecto-final-425415 --zone=us-west4-a --quiet 2>/dev/null; echo "$(date -u) kv-none-v2 start" >>"$LOG"; return; }
-  local R=$(G compute ssh kv-none-v2 --project=proyecto-final-425415 --zone=us-west4-a --tunnel-through-iap --ssh-flag="-o ConnectTimeout=25" --command="pgrep -fc eval_prefill; test -f ~/repo/runs/hotpot_eval/HOTPOT_DONE && echo DONE" 2>/dev/null)
+  local R=$(G compute ssh kv-none-v2 --project=proyecto-final-425415 --zone=us-west4-a --tunnel-through-iap --ssh-flag="-o ConnectTimeout=25" --command="pgrep -fc eval_prefill; test -f ~/repo/runs/hotpot_b128/HOTPOT_DONE && echo DONE" 2>/dev/null)
   local NP=$(echo "$R"|sed -n 1p)
-  G compute scp --project=proyecto-final-425415 --zone=us-west4-a --tunnel-through-iap kv-none-v2:'~/repo/runs/hotpot_eval/hotpot_results.jsonl' "$DATA/hotpot_results.jsonl" 2>/dev/null
+  G compute scp --project=proyecto-final-425415 --zone=us-west4-a --tunnel-through-iap kv-none-v2:'~/repo/runs/hotpot_b128/hotpot_results.jsonl' "$DATA/hotpot_b128_results.jsonl" 2>/dev/null
   echo "$R"|grep -q DONE && return
   if [ "$NP" = "0" ]; then
-    G compute ssh kv-none-v2 --project=proyecto-final-425415 --zone=us-west4-a --tunnel-through-iap --ssh-flag="-o ConnectTimeout=25" --command="cd ~/repo && tmux kill-session -t hotpot 2>/dev/null; tmux new-session -d -s hotpot 'source .venv/bin/activate; export PYTHONPATH=~/repo/src; export MALLOC_MMAP_THRESHOLD_=1048576; python scripts/eval_prefill_compress.py --n 96 --budget 256 --out-dir runs/hotpot_eval >> ~/hotpot.log 2>&1'" 2>/dev/null
+    G compute ssh kv-none-v2 --project=proyecto-final-425415 --zone=us-west4-a --tunnel-through-iap --ssh-flag="-o ConnectTimeout=25" --command="cd ~/repo && tmux kill-session -t hotpot 2>/dev/null; tmux new-session -d -s hotpot128 'source .venv/bin/activate; export PYTHONPATH=~/repo/src; export MALLOC_MMAP_THRESHOLD_=1048576; python scripts/eval_prefill_compress.py --n 96 --budget 128 --out-dir runs/hotpot_b128 >> ~/hotpot128.log 2>&1'" 2>/dev/null
     echo "$(date -u) kv-none-v2 relaunch HotpotQA" >>"$LOG"
   fi
 }
