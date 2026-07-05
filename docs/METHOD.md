@@ -3,6 +3,13 @@
 This document defines what this project does, how it does it, and what it
 explicitly does NOT do.
 
+> Currency note (2026-07-05): this is the design document of `kv-eviction-gym/`.
+> It remains the reference for the environment and the policy, with two later
+> updates: (1) prompts are ALWAYS formatted with the model's chat template
+> (see [runs/02](runs/02-chat-template-fix.md)); (2) the environment supports the
+> causal dense reward (`kl_shaping`) and the per-layer reward (`per_layer_reward`),
+> see [runs/09](runs/09-dense-kl-at-scale.md) and [runs/10](runs/10-per-layer-credit.md).
+
 ---
 
 ## What we are building
@@ -10,7 +17,7 @@ explicitly does NOT do.
 A reinforcement learning agent that learns to evict tokens from a transformer's
 KV cache **during generation** while preserving answer correctness on GSM8K.
 
-**Model**: Qwen2.5-1.5B-Instruct (28 layers, 12 Q-heads, 2 KV-heads — GQA)
+**Model**: Qwen2.5-1.5B-Instruct (28 layers, 12 Q-heads, 2 KV-heads: GQA)
 **Dataset**: GSM8K grade-school math problems (~100–200 token prompts, train split for training / test split for eval)
 
 ---
@@ -36,7 +43,7 @@ not just tokens that look important from the static prompt.
 The Learning to Evict paper does eviction in one shot with a Plackett-Luce
 ranking policy. We implement it sequentially (one eviction per decode step)
 so we can use standard MaskablePPO and get up to `max_new_tokens` gradient
-updates per episode — important with the sparse 0/1 correctness reward.
+updates per episode: important with the sparse 0/1 correctness reward.
 
 ---
 
@@ -46,20 +53,20 @@ updates per episode — important with the sparse 0/1 correctness reward.
 
 Qwen2.5-1.5B has 28 layers × 2 KV-heads = 56 KV caches. We run **one
 sub-environment per layer** (28 total), feeding it K/V features averaged over
-that layer's 2 KV-heads. Each layer makes its own independent eviction decision
-— layer 0 might evict token 47 while layer 15 evicts token 12 at the same step.
+that layer's 2 KV-heads. Each layer makes its own independent eviction decision:
+layer 0 might evict token 47 while layer 15 evicts token 12 at the same step.
 
 Per-layer is the finest granularity that standard transformers supports.
 DynamicCache stores each layer's K and V as `[1, n_kv_heads, seq_len, head_dim]`;
 `index_select(dim=2)` evicts the same token positions from both KV-heads within
-a layer — the seq dimension is shared. Truly independent per-head caches would
+a layer: the seq dimension is shared. Truly independent per-head caches would
 require a custom attention kernel (paged attention / block-sparse), which is out
 of scope.
 
 We empirically validated that per-layer is sufficient. A diagnostic over 20 GSM8K
 examples measured the Spearman rank correlation between the two KV-heads'
 importance rankings using actual decode-time attention weights (`output_attentions=True`,
-GQA-aware: max over Q-head group per KV-head). Mean ρ = 0.67 across layers —
+GQA-aware: max over Q-head group per KV-head). Mean ρ = 0.67 across layers:
 the heads largely agree on which tokens matter. See `diagnostics/per_head_importance_correlation.py`.
 
 Eviction is applied per-layer by **slicing the live DynamicCache**:
@@ -77,7 +84,7 @@ time; the new Q must use the same coordinate to compute the correct attention
 logit Q[true_pos] · K[i].
 
 This approach (from H2O / SnapKV / PyramidKV) is exact and works with any
-attention backend — no eager attention required for eviction.
+attention backend: no eager attention required for eviction.
 
 ### GQA and head aggregation
 
@@ -93,7 +100,7 @@ the SnapKV / Learning-to-Evict convention:
 > Q-head in the group attends to it; mean would dilute tokens critical to a
 > single head.
 
-### Online sequential eviction — one token per decode step
+### Online sequential eviction: one token per decode step
 
 The episode runs as follows:
 
@@ -105,19 +112,19 @@ The episode runs as follows:
    eviction until `cache_size > budget`. This runs `budget − T` decode steps
    internally, so the RL agent never sees a no-op transition. If EOS fires
    during free-growth, the episode is silently discarded and `reset()` moves
-   to the next example — SB3 never pairs an observation with an action that
+   to the next example: SB3 never pairs an observation with an action that
    had no effect on the outcome.
 
 3. **Decode loop** (RL steps, up to `max_new_tokens − free_growth` steps or EOS):
    - Each layer-env evicts the token at its chosen slot from the live DynamicCache.
-     Eviction **always fires** — no conditional needed after free-growth.
+     Eviction **always fires**: no conditional needed after free-growth.
    - Run one greedy decode step → new K/V appended → new `next_token`.
    - Accumulate the fed token in `generated`.
    - Return the updated cache K/V as the next observation.
 
 4. **Terminal**: decode `generated` → correctness check against gold answer.
    When the episode ends by hitting `max_new_tokens` (not EOS), the last
-   *predicted* token is appended to `generated` before decoding — without this,
+   *predicted* token is appended to `generated` before decoding: without this,
    ~23% of episodes (those truncated mid-answer) would be scored on text missing
    their final token, silently returning correctness=0 for correct generations.
 
@@ -128,7 +135,7 @@ there for the rest of the episode (one evicted per step, one generated per step)
 With terminal-only reward, `gamma=1`, and `gae_lambda=1`, every step in the
 rollout buffer receives identical advantages.  If no-op steps (where
 `cache ≤ budget`) were stored, the gradient would be diluted by a factor of
-`max_new_tokens / n_eviction_steps` — in the worst case, 524 / 124 ≈ 4×.
+`max_new_tokens / n_eviction_steps`: in the worst case, 524 / 124 ≈ 4×.
 Moving free-growth into `reset()` means the buffer contains only genuine
 eviction decisions, eliminating this dilution entirely.
 
@@ -149,7 +156,7 @@ by all layer-envs. All envs terminate together (EOS or `max_new_tokens`).
 | `K_h0[t] \|\| K_h1[t]` | (n_kv_heads × head_dim,) = (128,) | All key vectors concatenated across KV-heads |
 | `V_h0[t] \|\| V_h1[t]` | (n_kv_heads × head_dim,) = (128,) | All value vectors concatenated across KV-heads |
 
-Heads are **concatenated, not averaged**.  Averaging is lossy — K vectors from
+Heads are **concatenated, not averaged**.  Averaging is lossy: K vectors from
 different heads can point in different directions, so their mean can be
 geometrically meaningless.  Concatenation lets the MLP learn per-head weights
 independently at the cost of doubling the K/V feature size (64→128 per half),
@@ -160,8 +167,8 @@ Position is already embedded in each `K[t]` via the RoPE rotation, so an explici
 
 **Observation includes generated tokens.** At each decode step, the new
 generated token's K/V is appended to the cache before the observation is built.
-The policy can see the full current cache — prompt tokens and any already-
-generated tokens — and evict from either.
+The policy can see the full current cache: prompt tokens and any already-
+generated tokens: and evict from either.
 
 **Zeroing is not needed.** In the offline (pre-eviction) design, evicted
 positions were zeroed to signal removal. In the online design, eviction removes
@@ -186,7 +193,7 @@ point; add `h[t]` if the policy underperforms.
 
 ## Policy architecture
 
-`PerTokenMLP` — a shared MLP applied independently to each token position:
+`PerTokenMLP`: a shared MLP applied independently to each token position:
 
 ```
 Input:  [K_h0[t] || K_h1[t] || V_h0[t] || V_h1[t]]   shape: (2 * n_kv_heads * head_dim,) = (256,)
@@ -218,7 +225,7 @@ gradients.
 
 ### Motivation
 
-The correctness signal (0 or 1) is sparse — many early episodes score 0.
+The correctness signal (0 or 1) is sparse: many early episodes score 0.
 Reward shaping supplements it with a dense proxy: how much of the model's
 attention mass falls on the tokens we kept?
 
@@ -237,11 +244,11 @@ attention mass falls on the tokens we kept?
 `model.generate()` on the **full** prompt with `output_attentions=True`.
 For each (step, layer), query-head attention weights are collapsed within each
 GQA group using **max** (SnapKV convention), then averaged over KV-heads and
-accumulated across decode steps. The result is `importance[t]` — how much the
+accumulated across decode steps. The result is `importance[t]`: how much the
 model attended to prompt position `t` while producing the full-context answer,
 normalised to sum to 1.
 
-The reference run requires `attn_implementation="eager"` — SDPA and
+The reference run requires `attn_implementation="eager"`: SDPA and
 `flash_attention_2` do not return attention tensors and will raise a
 `RuntimeError` rather than silently fall back.
 
@@ -255,7 +262,7 @@ use_attention_shaping: false
 
 The alignment shaping can be paid out two ways, selected by `shaping_mode`.
 
-**`terminal`** (original) — add the whole alignment term once, at the episode end:
+**`terminal`** (original): add the whole alignment term once, at the episode end:
 
 ```
 soft_keep[t]  = mean_l( t still cached in layer l at terminal )   ∈ [0, 1]
@@ -269,10 +276,10 @@ reward_t<T      = 0
 
 Every step in the episode then shares one scalar return. With `gamma=1, gae_lambda=1`
 the return is *identical for all steps*, so the only thing distinguishing a good
-eviction at step 5 from a bad one at step 50 is the critic baseline — weak temporal
+eviction at step 5 from a bad one at step 50 is the critic baseline: weak temporal
 credit assignment across the ~`budget−T` eviction decisions.
 
-**`per_step`** (default, recommended) — pay the alignment loss incrementally, at the
+**`per_step`** (default, recommended): pay the alignment loss incrementally, at the
 exact step and layer that caused it. `alignment` is additive over the prompt tokens
 still cached, so its loss is additive over the tokens evicted:
 
@@ -288,16 +295,16 @@ Telescoping over an episode, `Σ_t reward[l,t] = attention_weight × alignment_l
 i.e. the *same* alignment signal as `terminal` mode (the constant `−attention_weight`
 is absorbed by the PPO advantage baseline), but:
 
-- **Localized in time** — each eviction is credited at its own step. Under
+- **Localized in time**: each eviction is credited at its own step. Under
   `gamma=1, gae_lambda=1` the per-step return now *varies* with `t` (it measures the
   alignment lost from `t` onward), giving real per-decision credit instead of one
   constant terminal scalar.
-- **Localized per layer** — env `l` is rewarded for *its own* eviction
+- **Localized per layer**: env `l` is rewarded for *its own* eviction
   (`alignment_l`, layer `l`'s kept set) rather than the 28-layer mean `soft_keep`.
   Because the policy is **shared**, the same weights now receive 28 distinct
-  `(obs, action, reward)` signals per step instead of one shared scalar — far richer
+  `(obs, action, reward)` signals per step instead of one shared scalar: far richer
   gradient.
-- **Objective-preserving** — this is the potential-based decomposition of the same
+- **Objective-preserving**: this is the potential-based decomposition of the same
   alignment reward (potential `Φ_l = attention_weight × Σ_{t∈kept_l} importance[t]`),
   so it does not bias the converged policy relative to terminal-mode shaping; it only
   changes *when* the signal is delivered. Correctness remains the sparse global
@@ -306,13 +313,13 @@ is absorbed by the PPO advantage baseline), but:
 `soft_keep[t]` / `alignment` are still computed at terminal in both modes and reported
 in the `info` dict (`alignment`) for logging.
 
-`gamma = 1.0` — no discounting. Every decode step contributes equally to
+`gamma = 1.0`: no discounting. Every decode step contributes equally to
 the outcome; discounting would introduce an arbitrary credit bias.
 
-`gae_lambda = 1.0` — Monte Carlo returns. In `terminal` mode this gives identical
+`gae_lambda = 1.0`: Monte Carlo returns. In `terminal` mode this gives identical
 advantage estimates for all steps; in `per_step` mode the per-step rewards make the
 returns vary across steps (the intended effect). `lambda < 1` would add TD
-bootstrapping for even more local credit — a separate tuning knob, left at 1.0.
+bootstrapping for even more local credit: a separate tuning knob, left at 1.0.
 
 ---
 
@@ -333,12 +340,12 @@ OUTER LOOP  (repeat until total_timesteps reached)
 
   for each episode in rollout:
 
-    # ① Prefill — one frozen LLM forward pass per episode
+    # ① Prefill: one frozen LLM forward pass per episode
     past_kv = LLM.prefill(prompt)          # torch.no_grad(), use_cache=True
     next_token = prefill_logits[-1].argmax()
     cache_size = T                          # prompt length
 
-    # ② Reference run — full-context generate with output_attentions=True
+    # ② Reference run: full-context generate with output_attentions=True
     #    (only when use_attention_shaping=True; requires attn_implementation="eager")
     #    Raises RuntimeError if backend doesn't support output_attentions (SDPA/flash).
     importance = compute_token_importance(model, input_ids)  # [T], sums to 1
@@ -348,7 +355,7 @@ OUTER LOOP  (repeat until total_timesteps reached)
     budget ~ Uniform(max(budget_min, T), budget_max)  if T ≤ budget_max
            = budget_max                               if T > budget_max
 
-    # ② Free-growth (no RL steps — runs inside reset())
+    # ② Free-growth (no RL steps: runs inside reset())
     #    Decode until cache_size > budget.  Every subsequent step_wait() evicts.
     while cache_size <= budget:
         decode one step; cache_size += 1
@@ -356,16 +363,16 @@ OUTER LOOP  (repeat until total_timesteps reached)
     # Initial obs per layer: K/V for all T prompt tokens
     obs = _obs(past_kv)                    # [L, max_len, 2D], zero-padded
 
-    # ③ Online decode — up to max_new_tokens steps (only eviction steps; free-growth already done)
+    # ③ Online decode: up to max_new_tokens steps (only eviction steps; free-growth already done)
     for step in range(max_new_tokens):
 
-        # action[l] = which slot layer l should evict — INDEPENDENT per layer.
+        # action[l] = which slot layer l should evict: INDEPENDENT per layer.
         # All layers share the same cache_size = budget+1 (invariant after free-growth).
         # But action[0] ≠ action[1] ≠ … in general: each layer decides for itself.
-        action_mask = valid cache slots    # [L, cache_size] — same shape, independent values
+        action_mask = valid cache slots    # [L, cache_size]: same shape, independent values
         action = policy.predict(obs, mask)          # no_grad; action shape [L]
 
-        # Per-layer eviction — always fires (free-growth guarantees cache_size > budget)
+        # Per-layer eviction: always fires (free-growth guarantees cache_size > budget)
         for l in range(L):
             index_select(past_kv.layer[l], remove=action[l])   # action[l] differs per layer
         cache_size -= 1   # → budget
@@ -386,7 +393,7 @@ OUTER LOOP  (repeat until total_timesteps reached)
         done = (next_token == EOS or step == max_new_tokens - 1)
 
         # per_step mode (default): each layer-env is credited at THIS step for the
-        # alignment it just lost — reward[l] = −0.3 × importance[evicted_pos_l]
+        # alignment it just lost: reward[l] = −0.3 × importance[evicted_pos_l]
         # (0 if it evicted a generated token).  terminal mode: reward[l] = 0 here.
         reward[l] = -0.3 × importance[evicted_pos_l]   if per_step else 0.0
         if done:
@@ -413,7 +420,7 @@ OUTER LOOP  (repeat until total_timesteps reached)
   for epoch in range(n_epochs):
     for minibatch in rollout_buffer:
 
-      # ⑤ Gradient flows HERE — through policy MLP only
+      # ⑤ Gradient flows HERE: through policy MLP only
       logits, value = policy.forward(obs)         # ← gradients ON
       ppo_loss = clip_loss(logits, actions, adv)
                + value_coef × value_loss(value, returns)
@@ -425,11 +432,11 @@ OUTER LOOP  (repeat until total_timesteps reached)
 ```
 
 **Key points:**
-- Steps ①②③ are all `torch.no_grad()` — the LLM is a black-box oracle.
+- Steps ①②③ are all `torch.no_grad()`: the LLM is a black-box oracle.
 - Step ⑤ is the only place gradients flow, through the tiny policy MLP only.
 - **Per-layer independent eviction**: `action[l]` differs across the 28 layers.
   Layer 0 may evict slot 47 while layer 15 evicts slot 3 at the same step.
-  There is no global consensus mask — each layer maintains its own cache.
+  There is no global consensus mask: each layer maintains its own cache.
 - The episode is the generation: `generated` tokens accumulate inline; no
   separate "eviction generate" call at terminal.
 - Every episode produces up to `max_new_tokens × 28` transitions; only the
@@ -446,15 +453,15 @@ OUTER LOOP  (repeat until total_timesteps reached)
 | What | Why |
 |------|-----|
 | One-shot ranking (Plackett-Luce) | Sequential gives more gradient signal per episode with sparse reward |
-| Per-KV-head independent eviction | DynamicCache stores each layer as `[1, n_kv_heads, seq_len, head_dim]`; `index_select(dim=2)` evicts the same positions from all heads — truly independent per-head caches require a custom attention kernel (paged attention / block-sparse), which standard transformers does not provide |
-| Batched parallel episodes | DynamicCache supports batch dimension `[B, heads, seq, dim]` but `index_select` eviction breaks batching: after one step, each batch element has a different cache shape (evicted different tokens). Fix requires switching to attention-mask-based eviction (mark slots as masked rather than removing them), which keeps all batch elements at the same cache shape. Left as future work — would give ~B× speedup on the decode loop. |
+| Per-KV-head independent eviction | DynamicCache stores each layer as `[1, n_kv_heads, seq_len, head_dim]`; `index_select(dim=2)` evicts the same positions from all heads: truly independent per-head caches require a custom attention kernel (paged attention / block-sparse), which standard transformers does not provide |
+| Batched parallel episodes | DynamicCache supports batch dimension `[B, heads, seq, dim]` but `index_select` eviction breaks batching: after one step, each batch element has a different cache shape (evicted different tokens). Fix requires switching to attention-mask-based eviction (mark slots as masked rather than removing them), which keeps all batch elements at the same cache shape. Left as future work: would give ~B× speedup on the decode loop. |
 | Global consensus mask | Each layer applies its own independent eviction via DynamicCache slicing |
 | Pre-evict the prompt before generation | Eviction starts during decoding; the policy decides which tokens to drop as the answer unfolds |
 | Eager attention for cache eviction | Cache slicing works with any backend; eager is only needed for the optional reference run (`use_attention_shaping: true`) |
 | Hidden state `h[t]` features | Good next step if K/V features underfit; adds hook complexity |
-| Mean over Q-heads in GQA | Max within each KV-group (SnapKV convention) — mean dilutes tokens critical to specific heads |
+| Mean over Q-heads in GQA | Max within each KV-group (SnapKV convention): mean dilutes tokens critical to specific heads |
 | No-op steps in rollout buffer | Free-growth (cache ≤ budget) runs inside `reset()`, not `step_wait()`; every rollout transition is a real eviction decision |
-| `ent_coef: 0.0` | Set to 0.01 — with `Discrete(max_len)` and sparse terminal reward, zero entropy bonus collapses the policy to a deterministic local optimum immediately |
+| `ent_coef: 0.0` | Set to 0.01: with `Discrete(max_len)` and sparse terminal reward, zero entropy bonus collapses the policy to a deterministic local optimum immediately |
 | `cache_position = cache_size` | We pass `true_position` for both `position_ids` and `cache_position`; the causal mask row at `true_position` allows attending to all positions 0..true_position-1, which covers every cached token. Using `cache_size` instead would block cached tokens whose original position > cache_size |
 | Score zero-padded positions | `PerTokenMLP` multiplies output by `is_real = (input.abs().sum() > 0)`, zeroing padded slots and blocking gradient flow through them |
 
@@ -470,7 +477,7 @@ Eval reports Wilson 95% confidence intervals; a 5pp difference requires
 
 ---
 
-## Update (2026-06-21) — recency/sink window + shaping post-mortem
+## Update (2026-06-21): recency/sink window + shaping post-mortem
 
 The first real run with dense per-step attention shaping **collapsed**: the policy learned to
 evict its own most-recent generated tokens (`evict_mean_pos_frac`→0.91). Root cause: attention
@@ -480,7 +487,7 @@ the attention proxy turned out uninformative for GSM8K (attn-oracle == random in
 
 Changes:
 - **Recency + sink window** (`n_sinks`, `n_recent`) enforced in `action_masks()` /
-  `eval_core.valid_action_mask` — the policy cannot evict the first `n_sinks` or last `n_recent`
+  `eval_core.valid_action_mask`: the policy cannot evict the first `n_sinks` or last `n_recent`
   slots (StreamingLLM/H2O/SnapKV). Applied to baselines too for fair comparison.
 - **`shaping_mode`** now: `none` (default; pure correctness, fastest via `sdpa`),
   `per_step_recency` (fixed dense shaping, `keep_value = max(norm_attn, recency)`), `terminal`
