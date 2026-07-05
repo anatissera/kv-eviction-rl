@@ -262,8 +262,45 @@ def fig5():
     print("wrote fig5_learned_ranker_wins.png")
 
 
+# ---------------------------------------------------------------- fig 6
+def fig6():
+    b256 = load_jsonl("hotpot_results.jsonl")
+    b128 = load_jsonl("hotpot_b128_results.jsonl")
+    if not b256 or not b128:
+        print("fig6: missing HotpotQA data"); return
+    arms = ["full", "oracle_fut", "kv_norm", "random"]
+    labels = {"full": "Full", "oracle_fut": "Oracle", "kv_norm": "kv_norm",
+              "random": "Random"}
+    m256, _ = arm_means(b256, arms)
+    m128, _ = arm_means(b128, arms)
+    fig, ax = plt.subplots(figsize=(6.6, 4.4))
+    x = np.arange(len(arms)); w = 0.38
+    v256 = [m256[a] for a in arms]; v128 = [m128[a] for a in arms]
+    ax.bar(x - w / 2, v256, w, color=PALETTE["blue"], label="4-5x  (budget 256)",
+           edgecolor="white", linewidth=1.2)
+    ax.bar(x + w / 2, v128, w, color=PALETTE["accent"], label="8-10x  (budget 128)",
+           edgecolor="white", linewidth=1.2)
+    for i, v in enumerate(v256):
+        ax.text(i - w / 2, v + 0.008, f"{v:.2f}", ha="center", fontsize=8.5)
+    for i, v in enumerate(v128):
+        ax.text(i + w / 2, v + 0.008, f"{v:.2f}", ha="center", fontsize=8.5)
+    ax.set_xticks(x); ax.set_xticklabels([labels[a] for a in arms])
+    ax.set_ylabel("Answer accuracy")
+    ax.set_ylim(0, 0.68)
+    ax.set_title("HotpotQA (real data): harder compression, bigger learned margin")
+    g256, _ = paired_se(b256, "oracle_fut", "kv_norm")
+    g128, _ = paired_se(b128, "oracle_fut", "kv_norm")
+    ax.legend(title=f"oracle - kv_norm:  +{g256:.2f} -> +{g128:.2f}", loc="upper right")
+    fig.text(0.5, -0.02, "kv_norm collapses to random under aggressive "
+             "compression while the oracle holds near full-cache.",
+             ha="center", fontsize=8, color="#6b7480")
+    fig.tight_layout()
+    fig.savefig(OUT / "fig6_hotpot_compression.png")
+    print("wrote fig6_hotpot_compression.png")
+
+
 if __name__ == "__main__":
-    for f in (fig1, fig2, fig3, fig4, fig5):
+    for f in (fig1, fig2, fig3, fig4, fig5, fig6):
         try:
             f()
         except Exception as e:  # noqa: BLE001
