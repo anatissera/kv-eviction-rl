@@ -45,8 +45,8 @@ resorts to offline supervision with attention-history features.
 
 ## Raw data
 
-- `kv-eviction-gym/ab_results/s_golden_{learning,probe}_curve.csv`, `s_golden_run.log`
-- wide2 (la eval que desenmascara el artefacto): `ab_results/wide2_probe_curve.csv`
+- `kv-eviction-gym/ab_results/s_golden_{learning,probe}_curve.csv`
+- wide2 (the eval that unmasks the artifact): `ab_results/wide2_probe_curve.csv`
 
 ## Status
 

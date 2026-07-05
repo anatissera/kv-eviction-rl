@@ -3,19 +3,19 @@
 #
 # Usage:
 #   bash run.sh                              # defaults
-#   bash run.sh my_run configs/train.yaml    # named run, custom config
-#   bash run.sh my_run configs/train.yaml 180 100   # + eval budget, n examples
+#   bash run.sh my_run configs/run_none.yaml    # named run, custom config
+#   bash run.sh my_run configs/run_none.yaml 180 100   # + eval budget, n examples
 #
 # Arguments (all optional, positional):
 #   $1  RUN_NAME  — label for runs/<name>/ directory  (default: timestamp)
-#   $2  CONFIG    — training config yaml               (default: configs/train.yaml)
+#   $2  CONFIG    — training config yaml               (default: configs/run_none.yaml)
 #   $3  BUDGET    — tokens to keep at eval             (default: 180)
 #   $4  EVAL_N    — number of test examples for eval   (default: 100)
 
 set -euo pipefail
 
 RUN_NAME="${1:-run_$(date +%Y%m%d_%H%M%S)}"
-CONFIG="${2:-configs/train.yaml}"
+CONFIG="${2:-configs/run_none.yaml}"
 BUDGET="${3:-180}"
 EVAL_N="${4:-100}"
 RESUME_FROM="${5:-}"
