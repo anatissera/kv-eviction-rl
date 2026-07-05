@@ -580,6 +580,49 @@ alongside; the E9 [E9]-print already verified per-layer rewards differ, the E5
 test verified argmin(kvz)==kv_norm choice, test_train_eval_obs_identical verified
 train/eval observation parity. No open bug candidates.
 
+## 26. Building a dataset with signal, and re-running the ladder there (2026-07-05)
+
+If the null is dataset-driven (25), the constructive move is a dataset that HAS
+learnable eviction signal, then re-run the key experiments to confirm learned
+eviction beats kv_norm there. Dataset checklist derived from the RULER-vs-GSM8K
+contrast:
+  1. real compression ratio >= 3-4x (context >> budget)
+  2. large fraction of provably-useless tokens (distractors / filler)
+  3. utility distinguishable FROM CONTENT (retrieval/QA, not dense reasoning)
+  4. SHORT generation (answer, not long CoT), avoids the truncation cliff
+  5. verifiable answer (exact/substring match) for clean reward + eval
+
+Datasets that qualify: synthetic passkey (done, 25), and the REAL upgrade
+HotpotQA-distractor (2 gold paragraphs among 8 distractors, T~900-1400, 4-5x
+compression). scripts/eval_prefill_compress.py implements Alex's prefill-only
+compression (SnapKV family): one-shot top-budget keep per layer after prefill,
+then decode with no further eviction. Real ratios, much faster than the online
+1-per-step loop.
+
+Experiments queued/running (2 VMs):
+  - GSM8K offline ranker (rank_predictability.py, kvp-ab): CONTROL. Is future
+    utility predictable from K/V on GSM8K? Expected weak.
+  - passkey learned ranker (passkey_ranker.py, kvp-ab, chained): the KVP recipe
+    end-to-end (train per-layer future-attn rankers offline, evaluate AS an
+    eviction policy vs kv_norm). v1 was TOO EASY (budget 176 + short answer =
+    only ~15 evictions, needle always survived, everything=1.0): LESSON =
+    eviction pressure scales with GENERATION length (1 evict/step), not with
+    prompt excess. v2 uses the forced count-to-40 generation (~200 evictions).
+  - HotpotQA prefill-compression arena (eval_prefill_compress.py, kv-chat-v1):
+    real-dataset oracle gap at 4-5x compression. Smoke (n=3) ran clean.
+
+Component check (Alex's request): pytest 272/273 pass on the VM; the 1 failure is
+a config assertion (test_train_config_gamma_is_one, a stale expected value in a
+new e6-e9 config), NOT a pipeline bug. The eviction/feature/obs paths are clean.
+
+VM plan for the FULL ladder in 12-15h (answer to the user's question): the core
+(oracle gaps + offline rankers on passkey/hotpot) fits on 2 L4s serialized. To
+add the causal capstone, an RL re-run in a signal-bearing arena (does PPO, which
+plateaued on GSM8K, now beat kv_norm?), plus per-head vs per-layer ablation and a
+2nd seed for error bars, comfortably in 12-15h needs 3-4 on-demand L4s in
+capacity-healthy regions (the 2 current spot/on-demand VMs hit repeated Asia
+stockouts + preemptions tonight).
+
 ## 23. Current state / open questions / next
 
 - **ALL THREE SCALED ARMS DONE:** s_rich −0.044 (§7), s_warm −0.019 (§8),
