@@ -93,10 +93,12 @@ def build_extra_columns(
     vz_mean = _z(vmean).unsqueeze(-1)
     kvz     = _z(kmean + vmean).unsqueeze(-1)     # [B, S, 1]  EXACT kv_norm signal
 
-    slot = torch.arange(S, dtype=torch.float32).unsqueeze(0).expand(B, S)
+    dev  = Knorm.device   # follow K/V's device (callers pass CPU or CUDA tensors)
+    slot = torch.arange(S, dtype=torch.float32, device=dev).unsqueeze(0).expand(B, S)
     rec  = ((cache_size - 1 - slot).clamp(min=0) / max(max_len, 1)).unsqueeze(-1)
     if orig_pos is not None:
-        pos = (torch.as_tensor(np.asarray(orig_pos), dtype=torch.float32).reshape(B, S)
+        pos = (torch.as_tensor(np.asarray(orig_pos), dtype=torch.float32,
+                               device=dev).reshape(B, S)
                / POS_SCALE).unsqueeze(-1)
     else:
         pos = (slot / max(cache_size, 1)).unsqueeze(-1)
