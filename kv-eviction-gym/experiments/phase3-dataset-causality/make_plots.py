@@ -100,29 +100,35 @@ def fig1():
 # ---------------------------------------------------------------- fig 2
 def fig2():
     gsm = load_jsonl("gsm8k_oracle.jsonl")
+    hot = load_jsonl("hotpot_results.jsonl")
     pk = load_jsonl("passkey_oracle.jsonl")
     if not gsm or not pk:
         print("fig2: missing data"); return
-    # headroom = full - random ; margin = oracle - kv_norm
-    def stats(rows):
-        gm, _ = arm_means(rows, ["full", "random", "oracle_fut", "kv_norm"])
-        head = (gm["full"] - gm["random"]) if gm["random"] is not None else None
-        marg, _ = paired_se(rows, "oracle_fut", "kv_norm")
-        return head, marg
-    gh, gmarg = stats(gsm)
-    ph, pmarg = stats(pk)
-    labels = ["GSM8K", "Passkey"]
-    margins = [gmarg, pmarg]
 
-    fig, ax = plt.subplots(figsize=(5.2, 4.2))
-    bars = ax.bar(labels, margins, color=[PALETTE["slate_light"], PALETTE["accent"]],
-                  width=0.55, edgecolor="white", linewidth=1.4)
+    def marg(rows):
+        m, se = paired_se(rows, "oracle_fut", "kv_norm")
+        return m, se
+    items = [("GSM8K\n(reasoning)", gsm, PALETTE["slate_light"]),
+             ("HotpotQA\n(real retrieval)", hot, PALETTE["blue"]) if hot else None,
+             ("Passkey\n(synthetic retrieval)", pk, PALETTE["accent"])]
+    items = [it for it in items if it]
+    labels, margins, ses, colors = [], [], [], []
+    for lab, rows, col in items:
+        m, se = marg(rows); labels.append(lab); margins.append(m)
+        ses.append(se); colors.append(col)
+
+    fig, ax = plt.subplots(figsize=(6.2, 4.4))
+    bars = ax.bar(range(len(labels)), margins, yerr=ses, capsize=4,
+                  color=colors, width=0.6, edgecolor="white", linewidth=1.4,
+                  error_kw=dict(ecolor=PALETTE["ink"], lw=1.1))
     for i, v in enumerate(margins):
-        ax.text(i, v + 0.008, f"+{v:.2f}", ha="center", va="bottom",
+        ax.text(i, v + ses[i] + 0.012, f"+{v:.2f}", ha="center", va="bottom",
                 fontsize=12, weight="bold", color=PALETTE["ink"])
+    ax.set_xticks(range(len(labels)))
+    ax.set_xticklabels(labels, fontsize=10)
     ax.set_ylabel("Learnable margin  (oracle - kv_norm)")
-    ax.set_title("How much a learned policy CAN win")
-    ax.set_ylim(0, max(margins) * 1.25)
+    ax.set_title("The learnable eviction margin scales with retrieval structure")
+    ax.set_ylim(0, max(margins) * 1.3)
     ax.axhline(0, color=PALETTE["ink"], lw=0.9)
     fig.tight_layout()
     fig.savefig(OUT / "fig2_regime_headroom.png")
