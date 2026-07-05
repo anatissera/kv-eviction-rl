@@ -5,7 +5,7 @@
 #   - Fixed budget=256 (NO curriculum): 256 > max chat-format prompt T (=232 over
 #     the 1000 train examples), so the batched env never skips an example for
 #     T > shared_budget and never hits the _replace_slice size mismatch. See
-#     BUDGET_AND_CRASH_FIX.md.
+#     docs/runs/02-chat-template-fix.md.
 #   - protect_prompt: false — the agent MAY evict prompt tokens. Only the standard
 #     StreamingLLM-style protection remains (n_sinks=4 + n_recent=32). This is the
 #     more standard / harder KV-eviction problem.

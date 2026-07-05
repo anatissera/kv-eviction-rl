@@ -494,5 +494,5 @@ Changes:
   (Alex's original, reference), `per_step` (the mode that collapsed; kept for reproduction).
 - **`probe/evict_generated_frac`** metric makes the collapse visible.
 
-See `HANDOFF.md` for the full post-mortem, the A/B configs (`run_none`/`run_recency`/`run_terminal`),
+See [runs/01](runs/01-entorno-primeras-rewards.md) for the full post-mortem,
 and how to run. **Always eval `best_probe_model`, not `final_model`.**

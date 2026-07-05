@@ -6,7 +6,7 @@
 # reason about redundancy ACROSS the kept set ("evict A because B is kept"),
 # which kv_norm and any per-token policy structurally cannot (PLAN.md §3 D3).
 #
-# Motivation from results (FINDINGS.md §4, §7): on the E0 screen attention beat
+# Motivation from results (docs/runs/03-screen-capacidad.md): on the E0 screen attention beat
 # kv_norm (+0.19 peak, trending up at cutoff); at scale the per-token rich policy
 # (s_rich) reached only PARITY with kv_norm. Hypothesis H-E4: cross-token
 # reasoning is what's needed to EXCEED the heuristic, not just match it.

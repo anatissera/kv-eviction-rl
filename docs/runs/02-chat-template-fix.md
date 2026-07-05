@@ -15,8 +15,8 @@ Todos los runs, independientemente de la recompensa, morían en la misma pared:
 
 100% de truncamiento, corrección 0%, `explained_variance=NaN`: PPO sin gradiente.
 Antes de encontrar la causa real se probaron mitigaciones que no atacaban el problema
-(sets de ejemplos fáciles, presupuestos por ejemplo, protección del prompt); el HANDOFF de
-la época atribuía el problema al "free-growth skip" que descartaba ejemplos fáciles. Eso era
+(sets de ejemplos fáciles, presupuestos por ejemplo, protección del prompt); el handoff de
+la época (hoy en el historial de git) atribuía el problema al "free-growth skip" que descartaba ejemplos fáciles. Eso era
 un síntoma, no la causa.
 
 ## Causa raíz

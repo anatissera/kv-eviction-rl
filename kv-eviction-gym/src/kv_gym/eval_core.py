@@ -230,7 +230,7 @@ def valid_action_mask(
     `n_prompt` (= prompt length T) protects the entire problem statement from eviction:
     once protected, the prompt never moves from slots [0, T), so only GENERATED tokens
     (slots ≥ T, minus the recency window) are evictable. This is the inductive bias from
-    HANDOFF.md step 3: preserve the question, compress the intermediate reasoning. It also
+    docs/runs/01 fix list: preserve the question, compress the intermediate reasoning. It also
     structurally prevents the "evict recent generated" collapse. n_prompt=0 → old behavior.
 
     Graceful degradation (never returns an all-False mask — MaskablePPO needs ≥1 valid
