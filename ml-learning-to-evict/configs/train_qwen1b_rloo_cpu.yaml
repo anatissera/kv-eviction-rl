@@ -1,3 +1,4 @@
+# Added for this project (UdeSA RL final). Not part of Apple's original ml-learning-to-evict release.
 # RLOO (Gumbel) local CPU config — mirrors train_qwen1b_ppo.yaml for fair comparison
 target_layer_idx: 0
 kv_head_idx: 0

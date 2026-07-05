@@ -1,5 +1,28 @@
 # Learning to Evict from Key-Value Cache
 
+> **PROVENANCE / ATRIBUCION**
+>
+> This directory is a copy of Apple's [`apple/ml-learning-to-evict`](https://github.com/apple/ml-learning-to-evict)
+> repository (the code release for the KVP paper), used here as the **starting point and
+> reference implementation** for our final project. All code is Apple's, under Apple's
+> sample code [LICENSE](LICENSE), **except** for the following files that we added for
+> the Qwen2-1.5B reproduction (each carries an "Added for this project" header):
+>
+> - `configs/preprocess_qwen1b.yaml`, `configs/train_qwen1b.yaml`, `configs/train_qwen1b_ppo.yaml`, `configs/train_qwen1b_ppo_gpu.yaml`, `configs/train_qwen1b_rloo_cpu.yaml`
+> - `src/kvcompression/rl/trainers/ppo_trainer.py` (PPO variant of the paper's RLOO trainer)
+> - `scripts/eval_vs_baseline.py`, `scripts/plot_rloo_vs_ppo.py`
+> - `run_experiment.sh`, `run_ppo_local.sh`, `learning_curves.png`
+>
+> We modified two of Apple's files: this `README.md` (this block and the Qwen2-1.5B
+> section below) and `src/kvcompression/rl/environments/kvsorting_env.py` (a one-line
+> fix so the eval dataloader actually resets; marked with a `local fix` comment).
+>
+> Como usamos este codigo: reproducción del método KVP (rankers offline por (capa, cabeza)
+> entrenados con RLOO + Gumbel-top-k sobre RULER) con Qwen2-1.5B-Instruct, y comparación
+> RLOO vs PPO. Ver [`docs/runs/00-kvp-repro.md`](../docs/runs/00-kvp-repro.md). Nuestra
+> contribución principal (el entorno secuencial entrenable con MaskablePPO) es independiente
+> de este código y vive en [`kv-eviction-gym/`](../kv-eviction-gym/).
+
 [![OpenReview](https://img.shields.io/badge/OpenReview-Paper-1f6feb?logo=openreview)](https://openreview.net/forum?id=0OevIlRMYN)
 [![arXiv](https://img.shields.io/badge/arXiv-2602.10238-b31b1b.svg)](https://arxiv.org/abs/2602.10238)
 
@@ -117,9 +140,9 @@ sudo modprobe nvidia nvidia_uvm
 ```
 
 This script runs three phases in sequence:
-1. **Data generation** — loads Qwen2-1.5B, captures Q/K/V activations from ~100 RULER examples, writes safetensors to `$KVCOMPRESSION_DATA_ROOT`
-2. **Training** — trains one RLOO agent per `(layer, head)` pair specified by `LAYERS`/`HEADS`
-3. **Evaluation** — compares learned agents vs `RandomPress` heuristic baseline
+1. **Data generation**: loads Qwen2-1.5B, captures Q/K/V activations from ~100 RULER examples, writes safetensors to `$KVCOMPRESSION_DATA_ROOT`
+2. **Training**: trains one RLOO agent per `(layer, head)` pair specified by `LAYERS`/`HEADS`
+3. **Evaluation**: compares learned agents vs `RandomPress` heuristic baseline
 
 Key tunables (pass as env vars):
 

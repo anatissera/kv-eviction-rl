@@ -1,6 +1,7 @@
 #!/bin/bash
+# Added for this project (UdeSA RL final). Not part of Apple's original ml-learning-to-evict release.
 #
-# Quick local PPO experiment (Mac CPU) — proves the agent learns before GPU run.
+# Quick local PPO experiment (Mac CPU): proves the agent learns before GPU run.
 #
 # Prerequisites (same as run_experiment.sh):
 #   1. .env file with PROJECT_ROOT and KVCOMPRESSION_DATA_ROOT

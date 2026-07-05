@@ -1,6 +1,6 @@
 #
-# For licensing see accompanying LICENSE file.
-# Copyright (C) 2026 Apple Inc. All Rights Reserved.
+# Added for this project (UdeSA RL final). Not part of Apple's original
+# ml-learning-to-evict release. For licensing see accompanying LICENSE file.
 #
 
 import logging
