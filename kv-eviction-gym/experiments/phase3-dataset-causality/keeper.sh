@@ -13,13 +13,13 @@ G(){ gcloud --account=atissera@udesa.edu.ar "$@"; }
 kvnone(){
   local ST=$(G compute instances describe kv-none-v2 --project=proyecto-final-425415 --zone=us-west4-a --format="value(status)" 2>/dev/null)
   [ "$ST" = "RUNNING" ] || { G compute instances start kv-none-v2 --project=proyecto-final-425415 --zone=us-west4-a --quiet 2>/dev/null; echo "$(date -u) kv-none-v2 start" >>"$LOG"; return; }
-  local R=$(G compute ssh kv-none-v2 --project=proyecto-final-425415 --zone=us-west4-a --tunnel-through-iap --ssh-flag="-o ConnectTimeout=25" --command="pgrep -fc 'python scripts/train.py'; test -f ~/repo/runs/s_e10/final_model.zip && echo DONE" 2>/dev/null)
+  local R=$(G compute ssh kv-none-v2 --project=proyecto-final-425415 --zone=us-west4-a --tunnel-through-iap --ssh-flag="-o ConnectTimeout=25" --command="pgrep -fc 'python scripts/train.py'; test -f ~/repo/runs/s_e10_warm/final_model.zip && echo DONE" 2>/dev/null)
   local NP=$(echo "$R"|sed -n 1p)
   echo "$R"|grep -q DONE && return
-  G compute scp --project=proyecto-final-425415 --zone=us-west4-a --tunnel-through-iap kv-none-v2:'~/repo/runs/s_e10/probe_curve.csv' "$DATA/e10_seed0_probe.csv" 2>/dev/null
-  G compute scp --project=proyecto-final-425415 --zone=us-west4-a --tunnel-through-iap kv-none-v2:'~/repo/runs/s_e10/learning_curve.csv' "$DATA/e10_seed0_learning.csv" 2>/dev/null
+  G compute scp --project=proyecto-final-425415 --zone=us-west4-a --tunnel-through-iap kv-none-v2:'~/repo/runs/s_e10_warm/probe_curve.csv' "$DATA/e10_warm_probe.csv" 2>/dev/null
+  G compute scp --project=proyecto-final-425415 --zone=us-west4-a --tunnel-through-iap kv-none-v2:'~/repo/runs/s_e10_warm/learning_curve.csv' "$DATA/e10_warm_learning.csv" 2>/dev/null
   if [ "$NP" = "0" ]; then
-    G compute ssh kv-none-v2 --project=proyecto-final-425415 --zone=us-west4-a --tunnel-through-iap --ssh-flag="-o ConnectTimeout=25" --command="cd ~/repo && tmux kill-session -t e10 2>/dev/null; tmux new-session -d -s e10 'source .venv/bin/activate; export PYTHONPATH=~/repo/src; export MALLOC_MMAP_THRESHOLD_=1048576; python scripts/train.py --config configs/e10_passkey_rl.yaml --run-name s_e10 >> ~/e10.log 2>&1'" 2>/dev/null
+    G compute ssh kv-none-v2 --project=proyecto-final-425415 --zone=us-west4-a --tunnel-through-iap --ssh-flag="-o ConnectTimeout=25" --command="cd ~/repo && tmux kill-session -t e10 2>/dev/null; tmux new-session -d -s e10 'source .venv/bin/activate; export PYTHONPATH=~/repo/src; export MALLOC_MMAP_THRESHOLD_=1048576; python scripts/train.py --config configs/e10_passkey_warm.yaml --run-name s_e10_warm >> ~/e10.log 2>&1'" 2>/dev/null
     echo "$(date -u) kv-none-v2 relaunch E10 seed0" >>"$LOG"
   fi
 }
