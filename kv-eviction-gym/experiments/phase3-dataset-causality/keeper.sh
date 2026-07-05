@@ -3,7 +3,7 @@
 # KL reward on passkey, 3 hyperparameter configs) alive across preemption/proc
 # death, live-downloads probe curves into data/. NEVER stops a VM. flock guards
 # overlap.
-#   A = s_e11_klA  (kv-none-v2, LR=1e-4 ent=0.005 n_epochs=4)
+#   A = s_e11_klC_seed1  (kv-none-v2, LR=1e-4 ent=0.005 n_epochs=4)
 #   B = s_e11_klB  (kvp-ab SPOT, LR=5e-5 ent=0.003 n_epochs=4)
 #   C = s_e11_klC  (simcot-t4,   LR=1e-4 ent=0.01  n_epochs=10)
 PH=/home/anatissera/Documents/UDESA/4th-year/1er-Semestre/RL/tp-final-rl-kv-eviction/kv-eviction-gym/experiments/phase3-dataset-causality
@@ -17,11 +17,11 @@ RUNCMD='cd ~/repo && tmux kill-session -t RS 2>/dev/null; tmux new-session -d -s
 kvnone(){
   local ST=$(G compute instances describe kv-none-v2 --project=proyecto-final-425415 --zone=us-west4-a --format="value(status)" 2>/dev/null)
   [ "$ST" = "RUNNING" ] || { G compute instances start kv-none-v2 --project=proyecto-final-425415 --zone=us-west4-a --quiet 2>/dev/null; echo "$(date -u) kv-none-v2 start" >>"$LOG"; return; }
-  G compute scp --project=proyecto-final-425415 --zone=us-west4-a --tunnel-through-iap kv-none-v2:'~/repo/runs/s_e11_klA/probe_curve.csv' "$DATA/e11_klA_probe.csv" 2>/dev/null
-  G compute scp --project=proyecto-final-425415 --zone=us-west4-a --tunnel-through-iap kv-none-v2:'~/repo/runs/s_e11_klA/learning_curve.csv' "$DATA/e11_klA_learning.csv" 2>/dev/null
-  local NP=$(G compute ssh kv-none-v2 --project=proyecto-final-425415 --zone=us-west4-a --tunnel-through-iap --ssh-flag="-o ConnectTimeout=25" --command="pgrep -fc 'e11_klA'" 2>/dev/null | tr -dc 0-9)
+  G compute scp --project=proyecto-final-425415 --zone=us-west4-a --tunnel-through-iap kv-none-v2:'~/repo/runs/s_e11_klC_seed1/probe_curve.csv' "$DATA/e11_klC_seed1_probe.csv" 2>/dev/null
+  G compute scp --project=proyecto-final-425415 --zone=us-west4-a --tunnel-through-iap kv-none-v2:'~/repo/runs/s_e11_klC_seed1/learning_curve.csv' "$DATA/e11_klC_seed1_learning.csv" 2>/dev/null
+  local NP=$(G compute ssh kv-none-v2 --project=proyecto-final-425415 --zone=us-west4-a --tunnel-through-iap --ssh-flag="-o ConnectTimeout=25" --command="pgrep -fc 'e11_klC_seed1'" 2>/dev/null | tr -dc 0-9)
   if [ "${NP:-0}" = "0" ]; then
-    local c=${RUNCMD//RS/klA}; c=${c//CFG/e11_klA.yaml}; c=${c//RUN/s_e11_klA}
+    local c=${RUNCMD//RS/klA}; c=${c//CFG/e11_klC_seed1.yaml}; c=${c//RUN/s_e11_klC_seed1}
     G compute ssh kv-none-v2 --project=proyecto-final-425415 --zone=us-west4-a --tunnel-through-iap --ssh-flag="-o ConnectTimeout=25" --command="$c" 2>/dev/null
     echo "$(date -u) kv-none-v2 relaunch klA" >>"$LOG"
   fi
