@@ -15,6 +15,7 @@ All outputs are written to runs/<run-name>/:
 import argparse
 import csv
 import json
+import sys
 import yaml
 import torch
 from datetime import datetime
@@ -311,8 +312,18 @@ def main():
 
     # Load training + probe examples together from the train split so the probe
     # uses left-out training examples with guaranteed no overlap.
-    all_examples = load_gsm8k(n=n_examples + probe_n, seed=cfg.get("seed", 0), split="train",
-                              min_answer_words=cfg.get("min_answer_words", 0))
+    if cfg.get("dataset", "gsm8k") == "passkey":
+        # The RULER-style needle arena (FINDINGS 25): oracle-kv_norm = +0.43 vs
+        # GSM8K's +0.07 -- the regime with real learnable eviction signal. This
+        # re-runs online PPO (the exact same pipeline that plateaued on GSM8K)
+        # here, to test causally whether the dataset was the whole story.
+        sys.path.insert(0, str(Path(__file__).resolve().parent))
+        from eval_passkey import make_passkey_examples  # noqa: E402
+        all_examples = make_passkey_examples(n_examples + probe_n, seed=cfg.get("seed", 0),
+                                             n_filler=cfg.get("passkey_n_filler", 14))
+    else:
+        all_examples = load_gsm8k(n=n_examples + probe_n, seed=cfg.get("seed", 0), split="train",
+                                  min_answer_words=cfg.get("min_answer_words", 0))
     examples       = all_examples[:n_examples]
     # Phase 2 · E0 screen — probe_on_train makes the probe evaluate the TRAINING
     # examples themselves (pure overfit/capacity check: can the policy beat kv_norm

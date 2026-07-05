@@ -49,7 +49,13 @@ def format_gsm8k_chat(tokenizer, example: dict) -> tuple[str, int]:
     encode, so re-tokenizing this string is equivalent to
     ``apply_chat_template(tokenize=True)``.
     """
-    raw, max_new = format_gsm8k(example)
+    # raw_chat examples (e.g. the passkey arena, scripts/eval_passkey.py) are
+    # ALREADY a complete, self-contained instruction: skip the GSM8K
+    # "solve this math problem" wrapper and chat-template the text as-is.
+    if example.get("raw_chat", False):
+        raw, max_new = example["prompt_text"], GSM8K_MAX_NEW_TOKENS
+    else:
+        raw, max_new = format_gsm8k(example)
     text = tokenizer.apply_chat_template(
         [{"role": "user", "content": raw}],
         tokenize=False,

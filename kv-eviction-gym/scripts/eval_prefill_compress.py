@@ -57,8 +57,7 @@ def answer_in(pred: str, gold: str) -> float:
 def load_hotpot(n: int, seed: int, tokenizer, max_ctx: int):
     """n distractor-mode items, yes/no filtered, context capped at max_ctx tokens."""
     from datasets import load_dataset
-    ds = load_dataset("hotpot_qa", "distractor", split="validation",
-                      trust_remote_code=True)
+    ds = load_dataset("hotpotqa/hotpot_qa", "distractor", split="validation")
     ds = ds.shuffle(seed=seed)
     out = []
     for row in ds:
@@ -78,17 +77,23 @@ def load_hotpot(n: int, seed: int, tokenizer, max_ctx: int):
     return out
 
 
+def _get_kv(cache, l):
+    """Version-portable DynamicCache access (same pattern as batched_env)."""
+    if hasattr(cache, "layers"):
+        return cache.layers[l].keys, cache.layers[l].values
+    return cache.key_cache[l], cache.value_cache[l]
+
+
 @torch.no_grad()
 def compress_cache(past_kv, keep_idx_per_layer):
-    """Return a new DynamicCache-like with only the kept slots per layer."""
+    """Return a new DynamicCache with only the kept slots per layer."""
     from transformers import DynamicCache
     new = DynamicCache()
     L = len(keep_idx_per_layer)
     for l in range(L):
-        K = past_kv.key_cache[l]     # [1, H, T, D]
-        V = past_kv.value_cache[l]
+        K, V = _get_kv(past_kv, l)   # [1, H, T, D]
         idx = keep_idx_per_layer[l]
-        new.update(K[:, :, idx, :], V[:, :, idx, :], l)
+        new.update(K[:, :, idx, :].contiguous(), V[:, :, idx, :].contiguous(), l)
     return new
 
 
@@ -112,6 +117,7 @@ def decode(model, tokenizer, cache, next_tok, start_pos, max_new):
 
 
 def main():
+    torch.set_grad_enabled(False)   # pure-eval script
     p = argparse.ArgumentParser()
     p.add_argument("--n", type=int, default=96)
     p.add_argument("--budget", type=int, default=256)
@@ -177,9 +183,11 @@ def main():
                     keeps.append(torch.tensor(keep, device=device, dtype=torch.long))
                 return keeps
 
-            K_norms = [ (pre.past_key_values.key_cache[l][0].norm(dim=-1) +
-                         pre.past_key_values.value_cache[l][0].norm(dim=-1)
-                        ).mean(0).float().cpu().numpy() for l in range(L)]
+            K_norms = []
+            for l in range(L):
+                Kl, Vl = _get_kv(pre.past_key_values, l)
+                K_norms.append((Kl[0].norm(dim=-1) + Vl[0].norm(dim=-1))
+                               .mean(0).float().cpu().numpy())
             scores = {
                 "random":     [rng.random(T) for _ in range(L)],
                 "kv_norm":    K_norms,
