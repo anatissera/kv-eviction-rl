@@ -123,11 +123,18 @@ real eviction pressure. Two seeds (kv-none-v2, simcot-t4).
 **Question:** does online PPO beat kv_norm where a heuristic is beatable? A
 positive here is the report's constructive contribution; it also causally
 confirms the null was the dataset.
-Early signal (pre-retune, budget=340): training correctness climbed 0.80 -> 1.0
-(PPO learns the task) and the probe learned-accuracy OSCILLATED widely (0.06 to
-0.94, touching +0.06 over kv_norm) rather than staying pinned at kv_norm as on
-GSM8K, i.e. an exploitable signal is present but PPO was not yet converging
-stably. The retuned discriminative config is the clean re-measurement.
+**RESULT (seed1 cold, 28 probes over ~1.5M steps, budget=300):** the probe
+learned-accuracy oscillates across the ENTIRE range [0.06, 1.00], mean 0.53,
+std 0.26, versus kv_norm=0.688 and random=0.56. It reaches perfect 1.0 (a perfect
+eviction policy IS reachable, the signal is fully exploitable) and also collapses
+to 0.06, with NO convergence (mean slightly below kv_norm despite the peaks). The
+warm-start variant (BC-clone kv_norm then RL) starts at 0.625 but collapses to
+0.125 once RL begins and stays there; cold seed0 also collapses. Contrast with
+GSM8K, where learned stayed pinned AT kv_norm (std ~0.05) and never reached such
+peaks. Interpretation: online PPO from the sparse correctness reward CAN reach
+excellent eviction policies transiently in the signal-bearing arena (unlike
+GSM8K) but cannot converge or hold them, motivating offline supervision (the
+passkey_ranker result below, and Apple's KVP design). See Fig. 3.
 
 ### passkey_ranker - the KVP offline recipe, end-to-end  [RESULT: POSITIVE]
 `scripts/passkey_ranker.py` (kvp-ab, budget=176 = the +0.43 regime). Trains
