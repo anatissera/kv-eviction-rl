@@ -15,17 +15,17 @@ de la compresión. En la arena con señal, nuestra formulación online con la re
 causal muestra el primer desplazamiento sostenido por encima de la heurística, tocando la
 política de evicción perfecta (aún sin convergencia estable).
 
-**El informe completo:** [`informe/main.pdf`](informe/main.pdf).
+**El informe** (LaTeX) se entrega por separado y no vive en este repo; su documentación por
+experimento y sus figuras sí están acá, en `docs/`.
 
 ## Mapa del repo
 
 ```
-informe/                      El informe LaTeX + PDF compilado + scripts de figuras
-                              (figuras.py regenera las figuras desde los datos crudos).
 docs/                         Documentación por experimento:
   README.md                     índice experimento <-> sección del informe <-> datos
   METHOD.md                     diseño del entorno y la política
   runs/00..12                   un doc por experimento, con tablas de resultados
+  imgs/                         figuras del informe (PNG) + figuras.py que las regenera
 kv-eviction-gym/              NUESTRA CONTRIBUCIÓN: el entorno de evicción secuencial
                               (Gymnasium + SB3 MaskablePPO), políticas, scripts de
                               entrenamiento/eval, configs de todos los experimentos,
@@ -84,7 +84,7 @@ La repro de KVP se corre con `ml-learning-to-evict/run_experiment.sh` (ver su RE
 ### Regenerar las figuras del informe
 
 ```bash
-python informe/figuras.py                                        # figs 1-5, 8-10 del informe
+python docs/imgs/figuras.py                                      # figs 1-5, 8-10 del informe
 python kv-eviction-gym/experiments/phase3-dataset-causality/make_plots.py   # figs propias de fase 3
 ```
 

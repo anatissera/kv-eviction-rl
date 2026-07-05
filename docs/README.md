@@ -1,10 +1,10 @@
 # Documentación de experimentos
 
-Un documento por experimento, en el orden en que aparecen en el informe
-([`informe/main.pdf`](../informe/main.pdf), sección 4 "Desarrollo y Resultados"). Cada doc
-sigue el mismo formato: pregunta/hipótesis, setup, resultados (tablas con los números
-medidos), qué dice el informe, punteros a los datos crudos, y estado (válido / superseded /
-inválido y por qué).
+Un documento por experimento, en el orden en que aparecen en el informe (sección 4
+"Desarrollo y Resultados"; el informe LaTeX se entrega por separado, no vive en este repo).
+Cada doc sigue el mismo formato: pregunta/hipótesis, setup, resultados (tablas con los
+números medidos), qué dice el informe, punteros a los datos crudos, y estado (válido /
+superseded / inválido y por qué). Las figuras del informe están en [`imgs/`](imgs/).
 
 - [`METHOD.md`](METHOD.md): el diseño del entorno y de la política (qué hace el proyecto,
   cómo, y qué explícitamente no hace).
@@ -37,9 +37,10 @@ régimen" por backend/stack).
 | [12](runs/12-capstone-passkey.md) | Capstone: E11 online + referencia KVP offline | §4.16 | fig10 | `configs/e11_kl*`, `scripts/passkey_ranker.py` | `phase3.../data/e11_*`, `passkey_ranker_*` |
 
 Rutas relativas a `kv-eviction-gym/` salvo indicación. Las figuras `figN` del informe viven en
-`informe/Figures/1. Imgs/` y se regeneran con `informe/figuras.py`; las figuras propias de la
-fase 3 en `kv-eviction-gym/experiments/phase3-dataset-causality/plots/` se regeneran con
-`make_plots.py` en ese directorio.
+[`imgs/`](imgs/) y se regeneran con `imgs/figuras.py` (lee los datos crudos de
+`kv-eviction-gym/`); las figuras propias de la fase 3 en
+`kv-eviction-gym/experiments/phase3-dataset-causality/plots/` se regeneran con `make_plots.py`
+en ese directorio.
 
 ## La historia en cuatro líneas
 

@@ -66,7 +66,7 @@ ese momento debilitaba la contribución propuesta.
 
 - `kv-eviction-gym/ab_results/e0_{baseline,rich,rich_s4,rich_warm,attn}_{learning,probe}_curve.csv`
 - `kv-eviction-gym/ab_results/screen_verdict.txt`
-- Figura del informe: `informe/Figures/1. Imgs/fig1_screen.png` (regenerable con `informe/figuras.py`).
+- Figura del informe: `../imgs/fig1_screen.png` (regenerable con `../imgs/figuras.py`).
 
 ## Estado
 

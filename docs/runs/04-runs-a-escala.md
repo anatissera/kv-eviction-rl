@@ -54,7 +54,7 @@ aprovechar"). La figura 2 muestra las tres trayectorias oscilando alrededor o po
 - `kv-eviction-gym/ab_results/s_{rich,warm,attn}_{learning,probe}_curve.csv`
 - `kv-eviction-gym/ab_results/scaled_comparison.txt`, `scaled_retention.png`
 - Checkpoints finales (no trackeados, en `ab_results/checkpoints/` local): s_rich, s_warm, s_golden.
-- Figura del informe: `informe/Figures/1. Imgs/fig2_scaled_traj.png`.
+- Figura del informe: `../imgs/fig2_scaled_traj.png`.
 
 ## Estado
 
