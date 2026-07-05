@@ -43,7 +43,7 @@ shaping_mode:          none
 hidden: 64
 
 probe_n:                16
-probe_every_n_rollouts: 60
+probe_every_n_rollouts: 20
 probe_n_sinks:          4
 
 n_parallel:   2

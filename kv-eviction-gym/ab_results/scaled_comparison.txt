@@ -1,0 +1,22 @@
+################################################################
+# PHASE 2 — capacity experiments: does the policy beat kv_norm?
+################################################################
+
+== rich ==
+  probes=31 last_ts=1853740 (avg last 5)
+  learned=0.575  kv_norm=0.625  random=0.562  full=0.750  retention=0.633
+  PAIRED  learned − kv_norm = -0.050   ✗ below kv_norm
+  curve: has trajectory (retention pstd=0.061 over run)
+
+== warm_start ==
+  probes=10 last_ts=1958600 (avg last 5)
+  learned=0.606  kv_norm=0.625  random=0.562  full=0.750  retention=0.650
+  PAIRED  learned − kv_norm = -0.019   ≈ ties kv_norm
+  curve: has trajectory (retention pstd=0.057 over run)
+
+Traceback (most recent call last):
+  File "/home/anatissera/Documents/UDESA/4th-year/1er-Semestre/RL/tp-final-rl-kv-eviction/kv-eviction-gym/experiments/phase2-capacity/compare.py", line 95, in <module>
+    main()
+  File "/home/anatissera/Documents/UDESA/4th-year/1er-Semestre/RL/tp-final-rl-kv-eviction/kv-eviction-gym/experiments/phase2-capacity/compare.py", line 68, in main
+    label, path = a.split('=', 1)
+ValueError: not enough values to unpack (expected 2, got 1)

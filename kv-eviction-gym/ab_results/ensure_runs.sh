@@ -82,6 +82,16 @@ dl_e9(){
       kv-chat-v1:"~/repo/runs/s_e9/$f.csv" "$OUT/s_e9_$f.csv" 2>/dev/null
   done
 }
+dl_passkey(){
+  G compute scp --project=proyecto-final-425415 --zone=us-west1-a --tunnel-through-iap \
+    kv-chat-v1:'~/repo/runs/passkey_eval/passkey_results.jsonl' "$OUT/passkey_results.jsonl" 2>/dev/null
+}
+dl_ranker(){
+  G compute scp --project=tp-final-rl-kv-eviction --zone=asia-southeast1-a --tunnel-through-iap \
+    kvp-ab:'~/repo/runs/rank_pred/summary.json' "$OUT/rank_pred_summary.json" 2>/dev/null
+  G compute scp --project=tp-final-rl-kv-eviction --zone=asia-southeast1-a --tunnel-through-iap \
+    kvp-ab:'~/scaled/ranker.log' "$OUT/ranker.log" 2>/dev/null
+}
 dl_e9attn(){
   for f in probe_curve learning_curve; do
     G compute scp --project=tp-final-rl-kv-eviction --zone=asia-southeast1-a --tunnel-through-iap \
@@ -89,7 +99,7 @@ dl_e9attn(){
   done
 }
 
-ensure kv-chat-v1 proyecto-final-425415 us-west1-a '~/scaled/E9_DONE' e9 \
-  "bash ~/run_e9.sh" 'configs/e9_perlayer.yaml' e9.finished
-ensure kvp-ab tp-final-rl-kv-eviction asia-southeast1-a '~/scaled/E9ATTN_DONE' e9attn \
-  "bash ~/run_e9attn.sh" 'configs/e9_perlayer_attn' e9attn.finished
+ensure kv-chat-v1 proyecto-final-425415 us-west1-a '~/scaled/PASSKEY_DONE' passkey \
+  "bash ~/run_passkey.sh" 'eval_passke[y]' passkey.finished
+ensure kvp-ab tp-final-rl-kv-eviction asia-southeast1-a '~/scaled/RANKER_DONE' ranker \
+  "bash ~/run_ranker.sh" 'rank_predictabilit[y]' ranker.finished

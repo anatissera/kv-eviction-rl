@@ -77,3 +77,6 @@
 {"idx": 76, "skip": false, "T": 153, "steps_full": 450, "full": 1.0, "kv_norm": 0.0, "attn_cur": 0.0, "oracle_fut": 1.0, "trunc_kv": 0.0, "trunc_attn": 0.0, "trunc_orc": 0.0}
 {"idx": 77, "skip": false, "T": 144, "steps_full": 335, "full": 0.0, "kv_norm": 0.0, "attn_cur": 0.0, "oracle_fut": 0.0, "trunc_kv": 0.0, "trunc_attn": 0.0, "trunc_orc": 0.0}
 {"idx": 78, "skip": false, "T": 123, "steps_full": 356, "full": 1.0, "kv_norm": 0.0, "attn_cur": 0.0, "oracle_fut": 0.0, "trunc_kv": 0.0, "trunc_attn": 0.0, "trunc_orc": 0.0}
+{"idx": 79, "skip": false, "T": 130, "steps_full": 347, "full": 0.0, "kv_norm": 0.0, "attn_cur": 0.0, "oracle_fut": 0.0, "trunc_kv": 0.0, "trunc_attn": 0.0, "trunc_orc": 0.0}
+{"idx": 80, "skip": false, "T": 146, "steps_full": 170, "full": 1.0, "kv_norm": 1.0, "attn_cur": 1.0, "oracle_fut": 1.0, "trunc_kv": 0.0, "trunc_attn": 0.0, "trunc_orc": 0.0}
+{"idx": 81, "skip": false, "T": 151, "steps_full": 251, "full": 0.0, "kv_norm": 0.0, "attn_cur": 0.0, "oracle_fut": 0.0, "trunc_kv": 0.0, "trunc_attn": 0.0, "trunc_orc": 0.0}
