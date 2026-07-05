@@ -87,3 +87,10 @@
 {"idx": 86, "T": 276, "depth": 0.9285714285714286, "steps_full": 122, "full": 1.0, "random": 0.0, "kv_norm": 0.0, "attn_cur": 0.0, "oracle_fut": 1.0}
 {"idx": 87, "T": 275, "depth": 0.7142857142857143, "steps_full": 122, "full": 1.0, "random": 0.0, "kv_norm": 0.0, "attn_cur": 1.0, "oracle_fut": 1.0}
 {"idx": 88, "T": 278, "depth": 0.21428571428571427, "steps_full": 122, "full": 1.0, "random": 0.0, "kv_norm": 0.0, "attn_cur": 0.0, "oracle_fut": 1.0}
+{"idx": 89, "T": 281, "depth": 0.6428571428571429, "steps_full": 122, "full": 1.0, "random": 1.0, "kv_norm": 0.0, "attn_cur": 0.0, "oracle_fut": 1.0}
+{"idx": 90, "T": 277, "depth": 0.07142857142857142, "steps_full": 122, "full": 1.0, "random": 1.0, "kv_norm": 0.0, "attn_cur": 0.0, "oracle_fut": 1.0}
+{"idx": 91, "T": 268, "depth": 0.5, "steps_full": 122, "full": 1.0, "random": 0.0, "kv_norm": 0.0, "attn_cur": 0.0, "oracle_fut": 1.0}
+{"idx": 92, "T": 273, "depth": 0.8571428571428571, "steps_full": 122, "full": 1.0, "random": 0.0, "kv_norm": 0.0, "attn_cur": 0.0, "oracle_fut": 1.0}
+{"idx": 93, "T": 282, "depth": 0.21428571428571427, "steps_full": 122, "full": 1.0, "random": 0.0, "kv_norm": 0.0, "attn_cur": 0.0, "oracle_fut": 1.0}
+{"idx": 94, "T": 272, "depth": 0.2857142857142857, "steps_full": 116, "full": 1.0, "random": 0.0, "kv_norm": 0.0, "attn_cur": 0.0, "oracle_fut": 1.0}
+{"idx": 95, "T": 267, "depth": 0.9285714285714286, "steps_full": 161, "full": 1.0, "random": 0.0, "kv_norm": 0.0, "attn_cur": 0.0, "oracle_fut": 1.0}

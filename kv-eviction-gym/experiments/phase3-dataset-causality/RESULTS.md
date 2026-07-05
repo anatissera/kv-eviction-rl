@@ -90,13 +90,17 @@ needle is norm-indistinguishable (kv_norm below random there). The margin scales
 with how content-distinguishable the important tokens are: ~0 for GSM8K reasoning,
 small-but-real for real multi-hop retrieval, large for pure needle retrieval.
 
-The margin ALSO scales with the compression ratio (Fig. 6): on HotpotQA, going
-from 4-5x (budget 256) to 8-10x (budget 128), oracle-kv_norm grows from +0.094
-to **+0.188 (z=4.4, 19W/1L)**, because under aggressive compression kv_norm
+The margin ALSO scales with the compression ratio (Figs. 6, 7). On HotpotQA,
+going from 4-5x (budget 256) to 8-10x (budget 128), oracle-kv_norm grows from
++0.094 to **+0.188 (z=4.4, 19W/1L)**, because under aggressive compression kv_norm
 COLLAPSES to the random level (0.375 = 0.375) while the oracle holds near
-full-cache (0.562 vs full 0.552). Takeaway for practice: the harder you must
-compress, the more a smart (learned) eviction policy is worth over a norm
-heuristic, on real data.
+full-cache (0.562 vs full 0.552). The synthetic passkey arena shows the same law
+even more starkly: at budget=128 (harsher than the +0.43 budget=176 measurement)
+**oracle-kv_norm = +0.917 (z=32.3)**, with kv_norm crashing to 0.04 (it
+systematically evicts the low-norm needle) while the oracle holds at 0.96. So the
+learnable margin grows monotonically with compression on BOTH real and synthetic
+data (Fig. 7). Takeaway for practice: the harder you must compress, the more a
+smart (learned) eviction policy is worth over a norm heuristic.
 
 Caveat (honest, for the report): both columns are measured under EAGER attention
 (required to read attention weights). Eager+bf16 lowers absolute GSM8K accuracy
@@ -196,9 +200,14 @@ The narrative flips from a flat null to a localized, causally-supported finding:
 > there / the remaining gap]. The practical takeaway: learned eviction is worth
 > its complexity for long-context retrieval, not for short dense reasoning."
 
-Figures ready for the report: `plots/fig1_oracle_gap_bars.png` (headline),
-`fig2_regime_headroom.png`, `fig4_ranker_predictability.png`, and
-`fig3_e10_learning.png` (once E10 has probes).
+Figures ready for the report (all in `plots/`, regenerate with `make_plots.py`):
+- `fig1_oracle_gap_bars.png` - headline: GSM8K (+0.07) vs passkey (+0.43) oracle gap.
+- `fig2_regime_headroom.png` - the 3-dataset spectrum (GSM8K / HotpotQA / passkey).
+- `fig3_e10_learning.png` - online PPO oscillates, does not converge.
+- `fig4_ranker_predictability.png` - offline ranker predictability (recency caveat).
+- `fig5_learned_ranker_wins.png` - THE positive: learned +0.46 over kv_norm (2 seeds).
+- `fig6_hotpot_compression.png` - HotpotQA arms at 4-5x vs 8-10x.
+- `fig7_margin_vs_compression.png` - margin grows with compression, both datasets.
 
 ---
 
