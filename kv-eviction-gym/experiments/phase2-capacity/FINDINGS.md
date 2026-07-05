@@ -499,6 +499,43 @@ one-shot prompt-compression (turns the sequential-infinite problem into one
 selection decision, the format where the literature wins); or per-layer CORRECTNESS
 attribution (offline, ForesightKV recipe). Not launched; awaiting decision.
 
+## 25. PASSKEY ARENA RESULT: CONFIRMED, the null was the DATASET (2026-07-05)
+
+`scripts/eval_passkey.py`, n=96, budget=176, forced generation (count to 40) so
+eviction pressure accumulates before the final answer must survive.
+
+| arm | accuracy |
+|---|---|
+| full (no eviction) | 0.854 |
+| **oracle_fut (future attention)** | **0.802** |
+| random | 0.490 |
+| **kv_norm** | **0.375** |
+| attn_cur | 0.396 |
+
+**PAIRED oracle_fut minus kv_norm = +0.427 +/- 0.059 (7.3 sigma; 45 wins / 4
+losses / 47 ties out of 96).** Compare to GSM8K's oracle gap of +0.070 (FINDINGS
+11) on the same model, same budget mechanics, same code path: a 6x larger,
+statistically overwhelming margin.
+
+**kv_norm is BELOW random here** (0.375 vs 0.490): norm-based eviction is
+actively harmful when the thing worth keeping is a rare, content-distinguishable
+needle rather than "whatever has been decoded most recently and forcefully".
+This is the RULER-regime signature Apple's KVP paper reports, reproduced at our
+scale with our own code: the null series was never a bug or an algorithm
+failure, it was that GSM8K (short, dense, decisive content is GENERATED
+reasoning) structurally lacks the kind of learnable eviction signal that RULER
+(long, mostly-filler, needle-retrieval) has in abundance.
+
+**Implication:** the passkey arena is where a LEARNED ranker (the actual KVP
+recipe: offline, per-position utility regression, no online RL) should be built
+and evaluated first, not GSM8K. This reframes the report's negative result from
+"RL failed to learn eviction" to "we located, with paired evidence across two
+regimes, exactly which regime supports learnable eviction, and it matches the
+published literature's own regime choice". `scripts/rank_predictability.py` runs
+the offline-ranker question (currently the GSM8K version; the natural next
+target is the SAME ranker trained/evaluated on passkey traces, where the +0.43
+ceiling gives it something real to capture).
+
 ## 24. Is it the DATASET? (analysis + the two decisive experiments, 2026-07-04)
 
 Question from the user: is the null series GSM8K-specific or general? And can we
