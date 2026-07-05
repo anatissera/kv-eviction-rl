@@ -310,8 +310,48 @@ def fig6():
     print("wrote fig6_hotpot_compression.png")
 
 
+# ---------------------------------------------------------------- fig 7
+def fig7():
+    pk_mild = load_jsonl("passkey_oracle.jsonl")        # budget 176
+    pk_hard = load_jsonl("passkey_b128_results.jsonl")  # budget 128
+    hp_mild = load_jsonl("hotpot_results.jsonl")        # budget 256
+    hp_hard = load_jsonl("hotpot_b128_results.jsonl")   # budget 128
+    if not (pk_mild and pk_hard and hp_mild and hp_hard):
+        print("fig7: missing compression data"); return
+
+    def m(rows):
+        return paired_se(rows, "oracle_fut", "kv_norm")
+    groups = [("HotpotQA (real)", [("4-5x", *m(hp_mild)), ("8-10x", *m(hp_hard))],
+               PALETTE["blue"]),
+              ("Passkey (synthetic)", [("mild", *m(pk_mild)), ("aggressive", *m(pk_hard))],
+               PALETTE["accent"])]
+    fig, ax = plt.subplots(figsize=(7.0, 4.6))
+    x = 0.0; ticks = []; ticklabels = []; centers = []
+    for gname, pts, col in groups:
+        start = x
+        for i, (clabel, g, se) in enumerate(pts):
+            ax.bar(x, g, yerr=se, capsize=4, color=col, alpha=0.55 if i == 0 else 1.0,
+                   width=0.7, edgecolor="white", linewidth=1.2,
+                   error_kw=dict(ecolor=PALETTE["ink"], lw=1.0))
+            ax.text(x, g + se + 0.02, f"+{g:.2f}", ha="center", va="bottom",
+                    fontsize=10.5, weight="bold")
+            ticks.append(x); ticklabels.append(clabel); x += 1
+        centers.append((start + x - 1) / 2); x += 0.7
+    ax.set_xticks(ticks); ax.set_xticklabels(ticklabels, fontsize=9.5)
+    for (gname, _, col), c in zip(groups, centers):
+        ax.text(c, -0.15, gname, ha="center", transform=ax.get_xaxis_transform(),
+                fontsize=10, color=col, weight="bold")
+    ax.set_ylabel("Learnable margin  (oracle - kv_norm)")
+    ax.set_title("Harder compression -> bigger learned-eviction advantage")
+    ax.set_ylim(0, 1.05)
+    ax.axhline(0, color=PALETTE["ink"], lw=0.9)
+    fig.tight_layout()
+    fig.savefig(OUT / "fig7_margin_vs_compression.png")
+    print("wrote fig7_margin_vs_compression.png")
+
+
 if __name__ == "__main__":
-    for f in (fig1, fig2, fig3, fig4, fig5, fig6):
+    for f in (fig1, fig2, fig3, fig4, fig5, fig6, fig7):
         try:
             f()
         except Exception as e:  # noqa: BLE001
