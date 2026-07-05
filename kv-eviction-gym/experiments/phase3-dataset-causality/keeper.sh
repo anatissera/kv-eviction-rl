@@ -17,6 +17,7 @@ kvnone(){
   local NP=$(echo "$R"|sed -n 1p)
   G compute scp --project=proyecto-final-425415 --zone=us-west4-a --tunnel-through-iap kv-none-v2:'~/repo/runs/hotpot_b128/hotpot_results.jsonl' "$DATA/hotpot_b128_results.jsonl" 2>/dev/null
   echo "$R"|grep -q DONE && return
+  G compute scp --project=proyecto-final-425415 --zone=us-west4-a --tunnel-through-iap kv-none-v2:'~/repo/runs/passkey_b128/passkey_results.jsonl' "$DATA/passkey_b128_results.jsonl" 2>/dev/null
   if [ "$NP" = "0" ]; then
     G compute ssh kv-none-v2 --project=proyecto-final-425415 --zone=us-west4-a --tunnel-through-iap --ssh-flag="-o ConnectTimeout=25" --command="cd ~/repo && tmux kill-session -t hotpot 2>/dev/null; tmux new-session -d -s hotpot128 'source .venv/bin/activate; export PYTHONPATH=~/repo/src; export MALLOC_MMAP_THRESHOLD_=1048576; python scripts/eval_prefill_compress.py --n 96 --budget 128 --out-dir runs/hotpot_b128 >> ~/hotpot128.log 2>&1'" 2>/dev/null
     echo "$(date -u) kv-none-v2 relaunch HotpotQA" >>"$LOG"
