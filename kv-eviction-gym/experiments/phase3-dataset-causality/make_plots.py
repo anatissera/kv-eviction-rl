@@ -233,7 +233,7 @@ def fig5():
          "n_seeds": len(ds)}
     arms = ["full", "oracle", "learned", "random", "kv_norm"]
     labels = {"full": "Full cache", "oracle": "Oracle (future attn.)",
-              "learned": "Learned ranker\n(offline, ours)", "random": "Random",
+              "learned": "Learned ranker\n(offline, KVP ref.)", "random": "Random",
               "kv_norm": "kv_norm (heuristic)"}
     colors = {"full": PALETTE["grey"], "oracle": PALETTE["teal"],
               "learned": PALETTE["accent"], "random": PALETTE["slate_light"],
@@ -254,7 +254,7 @@ def fig5():
     ax.set_ylim(0, 1.12)
     ax.set_ylabel("Answer accuracy")
     g = d["learned_minus_kvnorm"]; w = d["wins"]; l = d["losses"]; n = d["n"]
-    ax.set_title("Learned eviction BEATS the heuristic where signal exists")
+    ax.set_title("Signal IS exploitable here: offline ranker (KVP ref.) beats kv_norm")
     # bracket learned vs kv_norm
     ik = arms.index("kv_norm")
     yb = max(vals[li], vals[ik]) + 0.10
