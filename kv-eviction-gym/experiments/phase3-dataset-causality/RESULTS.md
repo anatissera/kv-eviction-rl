@@ -90,6 +90,14 @@ needle is norm-indistinguishable (kv_norm below random there). The margin scales
 with how content-distinguishable the important tokens are: ~0 for GSM8K reasoning,
 small-but-real for real multi-hop retrieval, large for pure needle retrieval.
 
+The margin ALSO scales with the compression ratio (Fig. 6): on HotpotQA, going
+from 4-5x (budget 256) to 8-10x (budget 128), oracle-kv_norm grows from +0.094
+to **+0.188 (z=4.4, 19W/1L)**, because under aggressive compression kv_norm
+COLLAPSES to the random level (0.375 = 0.375) while the oracle holds near
+full-cache (0.562 vs full 0.552). Takeaway for practice: the harder you must
+compress, the more a smart (learned) eviction policy is worth over a norm
+heuristic, on real data.
+
 Caveat (honest, for the report): both columns are measured under EAGER attention
 (required to read attention weights). Eager+bf16 lowers absolute GSM8K accuracy
 (full=0.49 here vs 0.74 under sdpa on the same items) because eager computes
