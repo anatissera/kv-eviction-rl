@@ -131,34 +131,43 @@ def fig2():
 
 # ---------------------------------------------------------------- fig 3
 def fig3():
-    curves = sorted(DATA.glob("e10_*_probe.csv"))
-    if not curves:
-        print("fig3: no E10 probe curves yet"); return
     import csv
-    fig, ax = plt.subplots(figsize=(7.2, 4.4))
-    seed_colors = [PALETTE["accent"], PALETTE["blue"]]
-    kv_ref = None
-    for i, cf in enumerate(curves):
-        rows = list(csv.DictReader(open(cf)))
+    # explicit run -> (label, color) so the 3 curves are unambiguous
+    runs = [
+        ("e10_cold_seed0_probe.csv", "PPO cold (seed 0)", PALETTE["slate_light"]),
+        ("e10_seed1_probe.csv",      "PPO cold (seed 1)", PALETTE["blue"]),
+        ("e10_warm_probe.csv",       "PPO warm-start",    PALETTE["accent"]),
+    ]
+    present = [(f, l, c) for f, l, c in runs if (DATA / f).exists()
+               and sum(1 for _ in open(DATA / f)) > 1]
+    if not present:
+        print("fig3: no E10 probe curves yet"); return
+    fig, ax = plt.subplots(figsize=(7.6, 4.6))
+    kv_vals, rnd_vals = [], []
+    for f, lab, col in present:
+        rows = list(csv.DictReader(open(DATA / f)))
         ts = [int(r["timestep"]) / 1e6 for r in rows]
         learned = [float(r["correct_learned"]) for r in rows]
-        kv = [float(r["correct_kv_norm"]) for r in rows]
-        rnd = [float(r["correct_random"]) for r in rows]
-        seed = cf.stem.replace("e10_", "").replace("_probe", "")
-        ax.plot(ts, learned, "-o", ms=4, lw=1.8, color=seed_colors[i % 2],
-                label=f"Learned ({seed})")
-        kv_ref = (kv, rnd, ts)
-    if kv_ref:
-        kv, rnd, ts = kv_ref
-        ax.axhline(np.mean(kv), color=PALETTE["slate"], lw=1.6, ls="--",
-                   label="kv_norm (heuristic)")
-        ax.axhline(np.mean(rnd), color=PALETTE["slate_light"], lw=1.2, ls=":",
-                   label="random")
+        ax.plot(ts, learned, "-o", ms=4.5, lw=1.9, color=col, label=lab)
+        kv_vals += [float(r["correct_kv_norm"]) for r in rows]
+        rnd_vals += [float(r["correct_random"]) for r in rows]
+    kvm = float(np.mean(kv_vals)); rndm = float(np.mean(rnd_vals))
+    ax.axhline(kvm, color=PALETTE["slate"], lw=1.8, ls="--")
+    ax.axhline(rndm, color="#b9bfc7", lw=1.3, ls=":")
+    ax.text(ax.get_xlim()[1], kvm + 0.015, "kv_norm", ha="right", va="bottom",
+            fontsize=9.5, color=PALETTE["slate"], weight="bold")
+    ax.text(ax.get_xlim()[1], rndm + 0.015, "random", ha="right", va="bottom",
+            fontsize=9, color="#8a929c")
+    # shade the "beats kv_norm" band
+    ax.axhspan(kvm, 1.05, color=PALETTE["teal"], alpha=0.06)
+    ax.text(0.02, (kvm + 1.05) / 2, "beats kv_norm", transform=ax.get_yaxis_transform(),
+            fontsize=8.5, color=PALETTE["teal"], style="italic",
+            ha="left", va="center") if False else None
     ax.set_xlabel("Training steps  (millions)")
-    ax.set_ylabel("Probe accuracy")
-    ax.set_title("E10: online PPO in the passkey arena")
+    ax.set_ylabel("Held-out probe accuracy")
+    ax.set_title("E10: online PPO in the passkey arena (signal-bearing)")
     ax.set_ylim(0, 1.05)
-    ax.legend(loc="lower right", ncol=2)
+    ax.legend(loc="lower left", ncol=1)
     fig.tight_layout()
     fig.savefig(OUT / "fig3_e10_learning.png")
     print("wrote fig3_e10_learning.png")
