@@ -9,18 +9,17 @@ LOG=$PH/keeper.log
 exec 9>"$PH/.keeper.lock"; flock -n 9 || exit 0
 G(){ gcloud --account=atissera@udesa.edu.ar "$@"; }
 
-# --- E10 seed0 on kv-none-v2 (on-demand L4, IAP) ---
+# --- HotpotQA prefill-compression arena on kv-none-v2 (on-demand L4, IAP) ---
 kvnone(){
   local ST=$(G compute instances describe kv-none-v2 --project=proyecto-final-425415 --zone=us-west4-a --format="value(status)" 2>/dev/null)
   [ "$ST" = "RUNNING" ] || { G compute instances start kv-none-v2 --project=proyecto-final-425415 --zone=us-west4-a --quiet 2>/dev/null; echo "$(date -u) kv-none-v2 start" >>"$LOG"; return; }
-  local R=$(G compute ssh kv-none-v2 --project=proyecto-final-425415 --zone=us-west4-a --tunnel-through-iap --ssh-flag="-o ConnectTimeout=25" --command="pgrep -fc 'python scripts/train.py'; test -f ~/repo/runs/s_e10_warm/final_model.zip && echo DONE" 2>/dev/null)
+  local R=$(G compute ssh kv-none-v2 --project=proyecto-final-425415 --zone=us-west4-a --tunnel-through-iap --ssh-flag="-o ConnectTimeout=25" --command="pgrep -fc eval_prefill; test -f ~/repo/runs/hotpot_eval/HOTPOT_DONE && echo DONE" 2>/dev/null)
   local NP=$(echo "$R"|sed -n 1p)
+  G compute scp --project=proyecto-final-425415 --zone=us-west4-a --tunnel-through-iap kv-none-v2:'~/repo/runs/hotpot_eval/hotpot_results.jsonl' "$DATA/hotpot_results.jsonl" 2>/dev/null
   echo "$R"|grep -q DONE && return
-  G compute scp --project=proyecto-final-425415 --zone=us-west4-a --tunnel-through-iap kv-none-v2:'~/repo/runs/s_e10_warm/probe_curve.csv' "$DATA/e10_warm_probe.csv" 2>/dev/null
-  G compute scp --project=proyecto-final-425415 --zone=us-west4-a --tunnel-through-iap kv-none-v2:'~/repo/runs/s_e10_warm/learning_curve.csv' "$DATA/e10_warm_learning.csv" 2>/dev/null
   if [ "$NP" = "0" ]; then
-    G compute ssh kv-none-v2 --project=proyecto-final-425415 --zone=us-west4-a --tunnel-through-iap --ssh-flag="-o ConnectTimeout=25" --command="cd ~/repo && tmux kill-session -t e10 2>/dev/null; tmux new-session -d -s e10 'source .venv/bin/activate; export PYTHONPATH=~/repo/src; export MALLOC_MMAP_THRESHOLD_=1048576; python scripts/train.py --config configs/e10_passkey_warm.yaml --run-name s_e10_warm >> ~/e10.log 2>&1'" 2>/dev/null
-    echo "$(date -u) kv-none-v2 relaunch E10 seed0" >>"$LOG"
+    G compute ssh kv-none-v2 --project=proyecto-final-425415 --zone=us-west4-a --tunnel-through-iap --ssh-flag="-o ConnectTimeout=25" --command="cd ~/repo && tmux kill-session -t hotpot 2>/dev/null; tmux new-session -d -s hotpot 'source .venv/bin/activate; export PYTHONPATH=~/repo/src; export MALLOC_MMAP_THRESHOLD_=1048576; python scripts/eval_prefill_compress.py --n 96 --budget 256 --out-dir runs/hotpot_eval >> ~/hotpot.log 2>&1'" 2>/dev/null
+    echo "$(date -u) kv-none-v2 relaunch HotpotQA" >>"$LOG"
   fi
 }
 
