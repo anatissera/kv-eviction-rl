@@ -80,7 +80,7 @@ def make_passkey_examples(n: int, seed: int, n_filler: int = 14):
         # whole generation to be retrievable at the end (v1 with a short answer
         # gave everything=1.0: only ~15 evictions, needle always survived).
         prompt = (" ".join(sents)
-                  + " Task: first count from 1 to 80, writing every number. "
+                  + " Task: first count from 1 to 40, writing every number. "
                     "After the counting, write exactly one final sentence: "
                     "'The secret code is X.' where X is the secret code "
                     "mentioned above.")
