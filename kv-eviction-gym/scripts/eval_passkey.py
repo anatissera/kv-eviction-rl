@@ -74,10 +74,17 @@ def make_passkey_examples(n: int, seed: int, n_filler: int = 14):
         sents = [rng.choice(FILLER) for _ in range(n_filler)]
         depth = rng.randint(1, n_filler - 1)   # never first/last for uniformity
         sents.insert(depth, f"Remember this: the secret code is {code}.")
+        # Long forced generation BEFORE the answer: each decode step evicts one
+        # slot per layer, so eviction count ~ generation length. Counting to 40
+        # (~200 tokens) forces ~200 evictions/layer; the needle must SURVIVE the
+        # whole generation to be retrievable at the end (v1 with a short answer
+        # gave everything=1.0: only ~15 evictions, needle always survived).
         prompt = (" ".join(sents)
-                  + " What is the secret code mentioned above? "
-                    "Answer with just the number.")
-        out.append({"prompt_text": prompt, "gold_answers": [str(code)],
+                  + " Task: first count from 1 to 80, writing every number. "
+                    "After the counting, write exactly one final sentence: "
+                    "'The secret code is X.' where X is the secret code "
+                    "mentioned above.")
+        out.append({"prompt_text": prompt, "gold_answers": [str(code)], "raw_chat": True,
                     "depth_frac": depth / n_filler})
     return out
 

@@ -1,0 +1,72 @@
+# Phase 2 / Causal capstone (E10) - online PPO RE-RUN in the SIGNAL-BEARING arena.
+#
+# FINDINGS 25: the passkey arena has oracle-kv_norm = +0.427 (7.3 sigma) vs
+# GSM8K's +0.070 -- and kv_norm < random there (0.375 vs 0.490). This is the
+# causal test the user asked for: does the EXACT SAME online-PPO pipeline that
+# plateaued at parity across 9 formulations on GSM8K (s_rich, s_warm, s_attn,
+# S4, per-layer reward, ...) now beat kv_norm here, where a heuristic can be
+# beaten in principle? If yes: the whole null series WAS the dataset. If it
+# ALSO plateaus here: representation/credit-assignment fixes alone are not
+# enough even with signal present (a second, separate finding).
+#
+# dataset: passkey switches scripts/train.py to make_passkey_examples()
+# (scripts/eval_passkey.py) instead of GSM8K. Same rich-features policy as
+# s_rich (configs/e1_rich.yaml) -- this isolates the DATASET as the only
+# variable changed vs the original null result.
+#
+# budget=176 matches the FINDINGS-25 measurement exactly (same arena, same
+# baselines) so the probe's kv_norm/random/full columns are the SAME numbers
+# already measured -- a true apples-to-apples paired re-run.
+
+model_name: qwen-1.5b
+device:     auto
+
+dataset: passkey
+n_examples: 64
+seed: 1
+
+budget_min: 300
+budget_max: 300
+
+max_len:        320
+max_new_tokens: 450
+
+use_attention_shaping: false
+attention_weight:      0.0
+shaping_mode:          none
+
+hidden: 64
+
+probe_n:                16
+probe_every_n_rollouts: 10
+
+n_parallel:   2
+n_steps:      650
+batch_size:   512
+
+n_epochs:     4
+gamma:        1.0
+gae_lambda:   1.0
+clip_range:   0.2
+ent_coef:     0.01
+total_timesteps: 4000000
+
+n_sinks:  4
+n_recent: 32
+
+length_penalty_weight: 0.5
+truncation_penalty:    1.0
+
+entropy_reward_weight: 0.001
+
+repeats_per_problem: 5
+
+attn_implementation: sdpa
+
+free_growth_cache_dir: ~/.kv_eviction_cache
+
+protect_prompt: false
+
+rich_features: true
+
+checkpoint_freq: 900
