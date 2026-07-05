@@ -78,6 +78,18 @@ whole project:
   kv_norm in either regime (+0.02 GSM8K, +0.02 passkey). The +0.43 gap is
   specifically future-attention information.
 
+**Real-dataset confirmation (HotpotQA-distractor, n=96, budget=256, 4-5x
+compression, `scripts/eval_prefill_compress.py`, one-shot SnapKV-style prefill
+compression):** full=0.552, oracle=0.552, attn_pre=0.417, kv_norm=0.458,
+random=0.385. **oracle - kv_norm = +0.094 (z=2.4, 12W/3L).** The learnable margin
+is real and significant on a REAL retrieval dataset, and sits between GSM8K
+(+0.07) and synthetic passkey (+0.43): see Fig. 2. It is smaller than passkey
+because on real content kv_norm is a decent baseline (0.458 > random 0.385) - real
+gold paragraphs have somewhat norm-distinguishable K/V, whereas the synthetic
+needle is norm-indistinguishable (kv_norm below random there). The margin scales
+with how content-distinguishable the important tokens are: ~0 for GSM8K reasoning,
+small-but-real for real multi-hop retrieval, large for pure needle retrieval.
+
 Caveat (honest, for the report): both columns are measured under EAGER attention
 (required to read attention weights). Eager+bf16 lowers absolute GSM8K accuracy
 (full=0.49 here vs 0.74 under sdpa on the same items) because eager computes
