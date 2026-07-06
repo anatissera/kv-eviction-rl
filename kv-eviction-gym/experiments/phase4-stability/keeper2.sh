@@ -63,6 +63,11 @@ lane(){
     return   # next cycle launches the next queue item
   fi
 
+  # prune old checkpoints (keep newest 2; each is ~53 MB, a full run writes ~60)
+  G compute ssh "$VM" --project="$PROJ" --zone="$ZONE" $IAPFLAG \
+    --ssh-flag="-o ConnectTimeout=25" \
+    --command="ls -t ~/repo/runs/$RUN/checkpoints/*.zip 2>/dev/null | tail -n +3 | xargs -r rm -f" 2>/dev/null
+
   # process alive? (bracket trick so pgrep does not match this ssh command itself)
   local PAT="[s]${RUN#s}"
   local NP=$(G compute ssh "$VM" --project="$PROJ" --zone="$ZONE" $IAPFLAG \
