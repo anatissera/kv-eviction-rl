@@ -243,3 +243,5 @@ kv-eviction-gym/experiments/phase3-dataset-causality/data/*.log
 kv-eviction-gym/ab_results/*.log
 kv-eviction-gym/ab_results/.*.lock
 Informe/
+kv-eviction-gym/tb_all/
+kv-eviction-gym/experiments/phase4-stability/plots/
