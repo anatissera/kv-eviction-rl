@@ -498,6 +498,13 @@ def main():
     ppo_class = EpisodeMaskablePPO if n_parallel > 1 else MaskablePPO
     print(f"ppo: {ppo_class.__name__}")
 
+    # Guard: the episode buffer (_finalize_episode) computes per-layer returns as
+    # plain suffix sums, i.e. it assumes gamma == 1. A config with gamma != 1
+    # would be silently ignored by the return computation -> refuse loudly.
+    if n_parallel > 1 and float(cfg.get("gamma", 1.0)) != 1.0:
+        sys.exit("ERROR: gamma != 1.0 is not supported with EpisodeMaskablePPO "
+                 "(episode buffer hardcodes gamma=1 suffix-sum returns).")
+
     if args.resume_from:
         print(f"Resuming training from checkpoint: {args.resume_from}")
         ppo = ppo_class.load(args.resume_from, env=env, device=device)
@@ -521,6 +528,18 @@ def main():
             _extractor_cls = PerTokenMLP
             _extractor_kwargs = {"hidden": cfg.get("hidden", 64), "n_extra": _n_extra}
         print(f"policy_arch: {_arch}  (extractor={_extractor_cls.__name__}, n_extra={_n_extra})")
+
+        # lr_schedule: "constant" (default) keeps the float LR. "linear" decays
+        # the LR linearly to 0 over the training budget using SB3's native
+        # callable-schedule support (progress_remaining goes 1 -> 0). Because
+        # train.py passes the REMAINING budget on resume, progress is cumulative
+        # across resumes, and the pickled schedule is restored by load().
+        _lr = cfg.get("learning_rate", 3e-4)
+        if cfg.get("lr_schedule", "constant") == "linear":
+            _base_lr = float(_lr)
+            _lr = (lambda base: (lambda progress_remaining: base * progress_remaining))(_base_lr)
+            print(f"lr_schedule: linear (base={_base_lr}, decays to 0 at total_timesteps)")
+
         ppo = ppo_class(
             "MlpPolicy",
             env,
@@ -528,7 +547,7 @@ def main():
                 "features_extractor_class": _extractor_cls,
                 "features_extractor_kwargs": _extractor_kwargs,
             },
-            learning_rate=cfg.get("learning_rate", 3e-4),
+            learning_rate=_lr,
             n_steps=cfg.get("n_steps", 524),
             batch_size=cfg.get("batch_size", 1024),
             n_epochs=cfg.get("n_epochs", 4),

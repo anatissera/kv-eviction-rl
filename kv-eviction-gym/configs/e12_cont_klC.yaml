@@ -1,0 +1,43 @@
+# E12 stability sweep: continuation of s_e11_klC from its 3M final_model to 6M (does more training stabilize?)
+# Clone of e11_klC.yaml (the config whose seed-0 run crossed kv_norm).
+model_name: qwen-1.5b
+device:     auto
+dataset: passkey
+n_examples: 64
+seed: 0
+budget_min: 300
+budget_max: 300
+max_len:        320
+max_new_tokens: 300
+use_attention_shaping: false
+attention_weight:      0.0
+shaping_mode:          none
+hidden: 64
+probe_n:                16
+probe_every_n_rollouts: 8
+n_parallel:   2
+n_steps:      650
+batch_size:   512
+gamma:        1.0
+gae_lambda:   1.0
+clip_range:   0.2
+total_timesteps: 6000000
+n_sinks:  4
+n_recent: 32
+length_penalty_weight: 0.5
+truncation_penalty:    1.0
+entropy_reward_weight: 0.001
+repeats_per_problem: 5
+attn_implementation: sdpa
+free_growth_cache_dir: ~/.kv_eviction_cache
+protect_prompt: false
+rich_features: true
+checkpoint_freq: 900
+# --- dense causal KL reward (the report's FINAL proposal, sec 3.2) ---
+kl_shaping: true
+kl_mode:    exact
+kl_weight:  0.05
+kl_clip:    5.0
+learning_rate: 0.0001
+ent_coef: 0.01
+n_epochs: 10
