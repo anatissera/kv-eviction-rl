@@ -58,5 +58,7 @@ kvpab(){
   fi
 }
 
-kvnone; simcot; kvpab
+# simcot (klC) DONE at 3M (final +0.10). Removed from keeper so it is not re-run.
+# PHASE3 DONE 2026-07-06: all E11 runs complete. Relaunches disabled; phase4 keeper2 takes over.
+# kvnone; kvpab
 echo "$(date -u) keeper cycle done" >>"$LOG"
