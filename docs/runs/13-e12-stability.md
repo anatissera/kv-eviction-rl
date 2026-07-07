@@ -27,7 +27,7 @@ magnitude. E12 attacks exactly that.
 |---|---|---|---|
 | A. Seeds | s_e12_seed2, s_e12_seed3 | with 4 total seeds (0,1,2,3), how many cross kv_norm in a sustained way? | report x/4; >=3/4 strengthens the positive, <=1/4 degrades it to anecdote |
 | B. LR decay | s_e12_lrdecay_s0, s_e12_lrdecay_s1 | does linear LR decay turn the oscillation into sustained convergence? | if the last quarter stays above kv_norm with lower variance than klC: a stabilization result (new report headline) |
-| C. Continuation | s_e12_cont_klC | does training klC from 3M to 6M stabilize it? (the user's direct question) | if the 3M-6M stretch sustains mean > kv_norm with fewer drops: "more steps help"; if it keeps oscillating the same: plateau |
+| C. Continuation | s_e12_cont_klC | does training klC beyond 3M stabilize it? (the user's direct question) | see "automatic extension" below: while it keeps beating kv_norm over its whole history, it keeps extending (10M cap) instead of stopping at a fixed number |
 | D. Epochs mechanism | s_e12_epochs4 | is n_epochs=10 THE driver? (klA/klB differ from klC in epochs AND ent_coef; this isolates epochs) | no shift => epochs is the driver; shift => it was ent_coef or something else |
 | E. kl_weight | s_e12_klw15 | does raising the dense-reward weight (0.05 -> 0.15) improve the coupling with correctness? | compare trajectory vs klC |
 
@@ -46,14 +46,25 @@ objective, not just the optimization: it stays as future work, not for a 48 h wi
 lanes, and the continuation is MORE comparable running on the same T4 that trained
 s_e11_klC.
 
+**Automatic extension (added 2026-07-06 at the user's request).** When a run reaches its
+configured `total_timesteps`, `should_extend.py` evaluates its WHOLE probe history (not a
+segment): if it beats `kv_norm` on average (with an absolute floor of 0.5 so degenerate
+anchors like kv_norm=0 in some seeds cannot fool it) and in >=50% of the probes,
+`keeper2.sh` adds +3M steps (10M cap) and relaunches it with `--resume-from` the latest
+checkpoint in the SAME cycle, instead of moving on to the next queue item.
+`s_e12_cont_klC` has already been extended once (6M -> 9M) on 2026-07-07 by this
+mechanism. The "3M" numbers in the timeline below are each run's starting point, not
+necessarily where it ends.
+
 ## Timeline (T0 = 2026-07-06 ~12:00 ART)
 
-Estimaciones: 3M pasos ~ 16 h en L4, ~ 23 h en T4 (medido en E11).
+Estimates: 3M steps ~ 16 h on L4, ~ 23 h on T4 (measured in E11). With automatic
+extension, a run can take longer than estimated here.
 
 ```
 kv-none-v2 (L4)   |smoke| lrdecay_s0 (16h) | lrdecay_s1 (16h) | epochs4 (16h) |  ~T+48.5h
-kvp-ab (L4 SPOT)  | seed2 (16h + prempt) | seed3 (16h + prempt) | libre/slack |  ~T+36-40h
-simcot-t4 (T4)    | cont_klC 3M->6M (23h)      | klw15 (23h)             |      ~T+46h
+kvp-ab (L4 SPOT)  | seed2 (16h + prempt) | seed3 (16h + prempt) | free/slack  |  ~T+36-40h
+simcot-t4 (T4)    | cont_klC 3M->6M, extended to 9M (23h+) | klw15 (23h)     |  ~T+46h+
 ```
 
 kvp-ab's slack absorbs preemptions (now cheap: keeper2 resumes from the latest checkpoint
