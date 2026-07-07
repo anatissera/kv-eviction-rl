@@ -22,6 +22,7 @@
 PH=/home/anatissera/Documents/UDESA/4th-year/1er-Semestre/RL/tp-final-rl-kv-eviction/kv-eviction-gym/experiments/phase4-stability
 DATA=$PH/data
 LOG=$PH/keeper2.log
+SCRIPTS="${PH%/experiments/*}/scripts"
 mkdir -p "$DATA"
 exec 9>"$PH/.keeper2.lock"; flock -n 9 || exit 0
 G(){ timeout 120 gcloud --account=atissera@udesa.edu.ar "$@"; }
@@ -58,9 +59,29 @@ lane(){
     --ssh-flag="-o ConnectTimeout=25" \
     --command="test -f ~/repo/runs/$RUN/final_model.zip && echo YES" 2>/dev/null | tr -dc 'A-Z')
   if [ "$DONE" = "YES" ]; then
-    touch "$DATA/$RUN.done"
-    echo "$(date -u) $VM $RUN COMPLETE -> next in queue on next cycle" >>"$LOG"
-    return   # next cycle launches the next queue item
+    # extend-if-promising: a run that is beating kv_norm gets +3M steps (capped
+    # at 10M) instead of being handed off to the next item in the queue.
+    local CURTOT=$(grep -oP '^total_timesteps:\s*\K\d+' "$SCRIPTS/../configs/$CFG")
+    local DECISION="STOP"
+    if [ -n "$CURTOT" ] && [ -f "$DATA/${RUN}_probe.csv" ]; then
+      DECISION=$(python3 "$SCRIPTS/should_extend.py" "$DATA/${RUN}_probe.csv" "$CURTOT" 2>/dev/null)
+      [ -z "$DECISION" ] && DECISION="STOP"
+    fi
+    if [[ "$DECISION" == EXTEND:* ]]; then
+      local NEWTOT="${DECISION#EXTEND:}"
+      sed -i "s/^total_timesteps:.*/total_timesteps: $NEWTOT/" "$SCRIPTS/../configs/$CFG"
+      G compute scp --project="$PROJ" --zone="$ZONE" $IAPFLAG \
+        "$SCRIPTS/../configs/$CFG" "$VM:~/repo/configs/$CFG" 2>/dev/null
+      G compute ssh "$VM" --project="$PROJ" --zone="$ZONE" $IAPFLAG \
+        --ssh-flag="-o ConnectTimeout=25" \
+        --command="rm -f ~/repo/runs/$RUN/final_model.zip" 2>/dev/null
+      echo "$(date -u) $VM $RUN EXTENDED $CURTOT -> $NEWTOT (beating kv_norm)" >>"$LOG"
+      # fall through to the relaunch block below (same cycle, resumes from ckpt)
+    else
+      touch "$DATA/$RUN.done"
+      echo "$(date -u) $VM $RUN COMPLETE ($DECISION) -> next in queue on next cycle" >>"$LOG"
+      return   # next cycle launches the next queue item
+    fi
   fi
 
   # prune old checkpoints (keep newest 2; each is ~53 MB, a full run writes ~60)
@@ -93,6 +114,12 @@ lane simcot-t4 tp-final-nlp us-central1-a 0 \
 
 # mirror all CSV curves into TensorBoard event files (tb_all/) after downloads,
 # so a locally-running `tensorboard --logdir tb_all` shows E12 growing live.
-python3 "$PH/csv_to_tb.py" >>"$LOG" 2>&1
+python3 "$SCRIPTS/csv_to_tb.py" >>"$LOG" 2>&1
+
+# regenerate progress plots for active phase4 runs
+python3 "$SCRIPTS/plot_progress.py" >>"$LOG" 2>&1
+
+# regenerate docs/imgs/ figures that depend on active runs (E12)
+python3 "$SCRIPTS/figures.py" >>"$LOG" 2>&1
 
 echo "$(date -u) keeper2 cycle done" >>"$LOG"
