@@ -99,6 +99,7 @@ lane(){
   # (re)launch: own latest ckpt > INIT_FROM (continuation) > fresh
   local INIT=""
   [ "$RUN" = "s_e12_cont_klC" ] && INIT="runs/s_e11_klC/final_model.zip"
+  [ "$RUN" = "s_e12_cont_klC_seed1" ] && INIT="runs/s_e11_klC_seed1_final_model.zip"
   local LAUNCH="cd ~/repo && CKPT=\$(ls -t runs/$RUN/checkpoints/*.zip 2>/dev/null | head -1); RES=''; if [ -n \"\$CKPT\" ]; then RES=\"--resume-from \$CKPT\"; elif [ -n '$INIT' ] && [ -f '$INIT' ]; then RES='--resume-from $INIT'; fi; tmux kill-session -t e12 2>/dev/null; tmux new-session -d -s e12 \"source .venv/bin/activate; export PYTHONPATH=~/repo/src; export MALLOC_MMAP_THRESHOLD_=1048576; python scripts/train.py --config configs/$CFG --run-name $RUN \$RES >> ~/$RUN.log 2>&1\"; echo LAUNCHED \$RES"
   local OUT=$(G compute ssh "$VM" --project="$PROJ" --zone="$ZONE" $IAPFLAG \
     --ssh-flag="-o ConnectTimeout=25" --command="$LAUNCH" 2>/dev/null | tail -1)
@@ -108,7 +109,7 @@ lane(){
 lane kv-none-v2 proyecto-final-425415 us-west4-a 1 \
   "e12_lrdecay_s0.yaml:s_e12_lrdecay_s0,e12_lrdecay_s1.yaml:s_e12_lrdecay_s1,e12_epochs4.yaml:s_e12_epochs4"
 lane kvp-ab tp-final-rl-kv-eviction asia-southeast1-a 1 \
-  "e12_seed2.yaml:s_e12_seed2,e12_seed3.yaml:s_e12_seed3"
+  "e12_seed2.yaml:s_e12_seed2,e12_seed3.yaml:s_e12_seed3,e12_cont_klC_seed1.yaml:s_e12_cont_klC_seed1"
 lane simcot-t4 tp-final-nlp us-central1-a 0 \
   "e12_cont_klC.yaml:s_e12_cont_klC,e12_klw15.yaml:s_e12_klw15"
 
