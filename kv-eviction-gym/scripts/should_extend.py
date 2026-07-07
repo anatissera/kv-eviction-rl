@@ -16,10 +16,24 @@ All three must hold, and there must be >= 6 probes to judge from.
 Extension step: +3,000,000, capped at MAX_TOTAL. No extension if already there.
 """
 import csv
+import io
 import sys
 
 MAX_TOTAL = 10_000_000
 STEP = 3_000_000
+
+
+def read_rows(path):
+    # strip stray NUL bytes: an interrupted scp mid-write onto a CSV being
+    # concurrently appended to remotely can leave a run of NUL bytes, which
+    # crashes csv's C parser outright (_csv.Error: line contains NUL). This
+    # runs live inside keeper2.sh on every completion check, so it must never
+    # crash on a transiently corrupted download.
+    text = io.open(path, "rb").read().replace(b"\x00", b"").decode("utf-8", "replace")
+    rows = list(csv.DictReader(io.StringIO(text)))
+    return [r for r in rows
+            if r.get("correct_learned") not in (None, "")
+            and r.get("correct_kv_norm") not in (None, "")]
 
 
 def main():
@@ -28,7 +42,7 @@ def main():
         print("STOP")
         return
 
-    rows = list(csv.DictReader(open(probe_csv)))
+    rows = read_rows(probe_csv)
     n = len(rows)
     if n < 6:
         print("STOP")

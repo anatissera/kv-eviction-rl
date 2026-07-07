@@ -51,10 +51,14 @@ configured `total_timesteps`, `should_extend.py` evaluates its WHOLE probe histo
 segment): if it beats `kv_norm` on average (with an absolute floor of 0.5 so degenerate
 anchors like kv_norm=0 in some seeds cannot fool it) and in >=50% of the probes,
 `keeper2.sh` adds +3M steps (10M cap) and relaunches it with `--resume-from` the latest
-checkpoint in the SAME cycle, instead of moving on to the next queue item.
-`s_e12_cont_klC` has already been extended once (6M -> 9M) on 2026-07-07 by this
-mechanism. The "3M" numbers in the timeline below are each run's starting point, not
-necessarily where it ends.
+checkpoint in the SAME cycle, instead of moving to the next queue item.
+`s_e12_cont_klC` was extended automatically once (6M -> 9M) on 2026-07-07. At 9M the
+automatic criterion said STOP by a hair (mean_learned 0.597 > kv_norm 0.562, but only 48%
+of probes above the 50% floor); at the user's explicit request the last stretch was
+forced manually up to the 10M cap (kill + relaunch with --resume-from the latest
+checkpoint, config bumped by hand), without waiting for the automatic decision.
+The "3M" numbers in the timeline below are each run's starting point, not necessarily
+where it ends.
 
 ## Timeline (T0 = 2026-07-06 ~12:00 ART)
 
