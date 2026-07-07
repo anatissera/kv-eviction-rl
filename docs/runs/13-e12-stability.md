@@ -97,12 +97,21 @@ runs, each slot starts as soon as the previous one finishes.
 
 (filled in as runs finish; `plot_progress.py` generates the grid)
 
-| run | estado | 1a mitad | 2a mitad | kv_norm | veredicto |
+| run | status | mean | kv_norm | % above | verdict |
 |---|---|---|---|---|---|
-| s_e12_lrdecay_s0 | | | | | |
-| s_e12_lrdecay_s1 | | | | | |
-| s_e12_seed2 | | | | | |
-| s_e12_seed3 | | | | | |
-| s_e12_cont_klC | | | | | |
-| s_e12_epochs4 | | | | | |
-| s_e12_klw15 | | | | | |
+| s_e12_lrdecay_s0 | DONE (3M) | 0.32 | 0.69 | 0/55 (0%) | never crossed; the LR-decay hypothesis is not confirmed with this seed |
+| s_e12_lrdecay_s1 | DONE (3M) | 0.51 | 0.62 | 15/54 (28%) | strong final streak but insufficient, STOP by a small margin (0.5 floor) |
+| s_e12_seed2 | DONE (3M) | 0.44 | 0.25 | 20/36 (56%) | positive on average but declines over time, not extended |
+| s_e12_seed3 | DONE (3M) | 0.25 | 0.00 | 21/44 (48%) | degenerate kv_norm anchor (almost 0), not conclusive |
+| s_e12_cont_klC | DONE (10M, extended 6M->9M auto + 9M->10M manual) | 0.58 (full 0->10M) | 0.56 | 89/186 (48%) | very slight positive in the aggregate (+0.02); real high peaks (touches 1.0) but they dilute over the full history, not sustained convergence |
+| s_e12_cont_klC_seed1 | DONE (6M, extended 3M->6M auto) | own stretch (3M-6M): 0.43 vs kv 0.50 | 0.50-0.57 | own stretch: 8/36 (22%) | the extension did NOT reproduce cont_klC's improvement; it ends below |
+| s_e12_epochs4 | running (~96% of 3M) | ~0.44 (2nd half) | 0.69 | low, no sustained crossing | weak signal so far, similar to lrdecay_s0/klA/klB (n_epochs=4) |
+| s_e12_klw15 | running (~7% of 3M) | - | 0.56 | - | far too early |
+| s_e12_seed4 | just launched | - | - | - | bonus, at the user's request after freeing kvp-ab |
+
+**Aggregate reading of the continuation arm (C):** extending training beyond 3M DOES
+produce higher and more frequent peaks (cont_klC touches 1.0 several times), but in the
+two seeds where it was tried, the final result over the full history is parity (+0.02) or
+negative, not clear, sustained convergence above kv_norm. The "more steps stabilize"
+hypothesis is confirmed partially: it improves the magnitude of the peaks, not the
+consistency.
