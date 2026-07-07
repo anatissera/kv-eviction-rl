@@ -27,7 +27,7 @@ consistente en direccion y fragil en magnitud. E12 ataca exactamente eso.
 |---|---|---|---|
 | A. Seeds | s_e12_seed2, s_e12_seed3 | con 4 seeds totales (0,1,2,3), cuantas cruzan kv_norm de forma sostenida? | reportar x/4; >=3/4 refuerza el positivo, <=1/4 lo degrada a anecdota |
 | B. LR decay | s_e12_lrdecay_s0, s_e12_lrdecay_s1 | el decaimiento lineal del LR convierte la oscilacion en convergencia sostenida? | si el ultimo cuarto queda sobre kv_norm con varianza menor que klC: resultado de estabilizacion (titular nuevo del informe) |
-| C. Continuacion | s_e12_cont_klC | seguir entrenando klC de 3M a 6M la estabiliza? (pregunta directa del usuario) | si el tramo 3M-6M sostiene media > kv_norm con menos caidas: "mas pasos ayudan"; si sigue oscilando igual: plateau |
+| C. Continuacion | s_e12_cont_klC | seguir entrenando klC mas alla de 3M la estabiliza? (pregunta directa del usuario) | ver "extension automatica" abajo: mientras siga superando a kv_norm en su historial completo, se sigue extendiendo (tope 10M) en vez de cortar en un numero fijo |
 | D. Mecanismo epochs | s_e12_epochs4 | n_epochs=10 es EL driver? (klA/klB difieren de klC en epochs Y ent_coef; esto aisla epochs) | sin desplazamiento => epochs es el driver; con desplazamiento => era ent_coef u otra cosa |
 | E. kl_weight | s_e12_klw15 | subir el peso de la recompensa densa (0.05 -> 0.15) mejora el acople con correccion? | comparar trayectoria vs klC |
 
@@ -47,14 +47,26 @@ introduce el problema de "cambios de regimen" que el informe documenta. El plan
 entra en 48 h con las 3 lanes existentes, y la continuacion es MAS comparable
 corriendo en la misma T4 que entreno a s_e11_klC.
 
+**Extension automatica (agregada 2026-07-06 a pedido del usuario).** Cuando un
+run llega a su `total_timesteps` configurado, `should_extend.py` evalua su
+historial COMPLETO de probes (no un tramo): si supera a `kv_norm` en promedio
+(con un piso absoluto de 0.5 para no dejarse enganar por anchors degenerados
+tipo kv_norm=0 en algunas semillas) y en >=50% de los probes, `keeper2.sh` le
+suma +3M pasos (tope 10M) y lo relanza con `--resume-from` el ultimo
+checkpoint en el MISMO ciclo, en vez de pasar al siguiente item de la cola.
+`s_e12_cont_klC` ya se extendio una vez (6M -> 9M) el 2026-07-07 por este
+mecanismo. Los numeros de "3M" en el cronograma de abajo son el punto de
+partida de cada run, no necesariamente donde termina.
+
 ## Cronograma (T0 = 2026-07-06 ~12:00 ART)
 
-Estimaciones: 3M pasos ~ 16 h en L4, ~ 23 h en T4 (medido en E11).
+Estimaciones: 3M pasos ~ 16 h en L4, ~ 23 h en T4 (medido en E11). Con
+extension automatica, un run puede tomar mas tiempo del estimado aca.
 
 ```
 kv-none-v2 (L4)   |smoke| lrdecay_s0 (16h) | lrdecay_s1 (16h) | epochs4 (16h) |  ~T+48.5h
 kvp-ab (L4 SPOT)  | seed2 (16h + prempt) | seed3 (16h + prempt) | libre/slack |  ~T+36-40h
-simcot-t4 (T4)    | cont_klC 3M->6M (23h)      | klw15 (23h)             |      ~T+46h
+simcot-t4 (T4)    | cont_klC 3M->6M, extendido a 9M (23h+) | klw15 (23h)   |      ~T+46h+
 ```
 
 El slack de kvp-ab absorbe preemptions (ahora baratas: el keeper2 resume desde
