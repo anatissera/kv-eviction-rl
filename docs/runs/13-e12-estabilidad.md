@@ -54,9 +54,14 @@ historial COMPLETO de probes (no un tramo): si supera a `kv_norm` en promedio
 tipo kv_norm=0 en algunas semillas) y en >=50% de los probes, `keeper2.sh` le
 suma +3M pasos (tope 10M) y lo relanza con `--resume-from` el ultimo
 checkpoint en el MISMO ciclo, en vez de pasar al siguiente item de la cola.
-`s_e12_cont_klC` ya se extendio una vez (6M -> 9M) el 2026-07-07 por este
-mecanismo. Los numeros de "3M" en el cronograma de abajo son el punto de
-partida de cada run, no necesariamente donde termina.
+`s_e12_cont_klC` se extendio automaticamente una vez (6M -> 9M) el 2026-07-07.
+Al llegar a 9M el criterio automatico daba STOP por muy poco (mean_learned
+0.597 > kv_norm 0.562, pero solo 48% de los probes por encima del piso de
+50%); a pedido explicito del usuario se forzo manualmente el ultimo tramo
+hasta el tope de 10M (kill + relanzamiento con --resume-from el ultimo
+checkpoint, config bumpeado a mano), sin esperar la decision automatica.
+Los numeros de "3M" en el cronograma de abajo son el punto de partida de cada
+run, no necesariamente donde termina.
 
 ## Cronograma (T0 = 2026-07-06 ~12:00 ART)
 
