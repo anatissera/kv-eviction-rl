@@ -102,12 +102,22 @@ entre corridas, cada slot arranca apenas termina el anterior.
 
 (se completa a medida que terminan los runs; `plot_progress.py` genera el grid)
 
-| run | estado | 1a mitad | 2a mitad | kv_norm | veredicto |
+| run | estado | media | kv_norm | % arriba | veredicto |
 |---|---|---|---|---|---|
-| s_e12_lrdecay_s0 | | | | | |
-| s_e12_lrdecay_s1 | | | | | |
-| s_e12_seed2 | | | | | |
-| s_e12_seed3 | | | | | |
-| s_e12_cont_klC | | | | | |
-| s_e12_epochs4 | | | | | |
-| s_e12_klw15 | | | | | |
+| s_e12_lrdecay_s0 | DONE (3M) | 0.32 | 0.69 | 0/55 (0%) | nunca cruzo; hipotesis LR-decay no confirmada con esta semilla |
+| s_e12_lrdecay_s1 | DONE (3M) | 0.51 | 0.62 | 15/54 (28%) | racha final fuerte pero insuficiente, STOP por poco (piso 0.5) |
+| s_e12_seed2 | DONE (3M) | 0.44 | 0.25 | 20/36 (56%) | positivo en promedio pero declina en el tiempo, no extendido |
+| s_e12_seed3 | DONE (3M) | 0.25 | 0.00 | 21/44 (48%) | anchor kv_norm degenerado (casi 0), no concluyente |
+| s_e12_cont_klC | DONE (10M, extendido 6M->9M auto + 9M->10M manual) | 0.58 (0->10M completo) | 0.56 | 89/186 (48%) | positivo muy leve en el agregado (+0.02); picos altos reales (toca 1.0) pero se diluyen en la historia completa, no es una convergencia sostenida |
+| s_e12_cont_klC_seed1 | DONE (6M, extendido 3M->6M auto) | tramo propio (3M-6M): 0.43 vs kv 0.50 | 0.50-0.57 | tramo propio: 8/36 (22%) | la extension NO reprodujo la mejora de cont_klC; termina por debajo |
+| s_e12_epochs4 | en curso (~96% de 3M) | ~0.44 (2a mitad) | 0.69 | bajo, sin cruzar de forma sostenida | señal debil hasta ahora, similar a lrdecay_s0/klA/klB (n_epochs=4) |
+| s_e12_klw15 | en curso (~7% de 3M) | - | 0.56 | - | muy temprano |
+| s_e12_seed4 | recien lanzado | - | - | - | bonus, a pedido del usuario tras liberar kvp-ab |
+
+**Lectura agregada del brazo de continuacion (C):** extender el entrenamiento
+mas alla de 3M SI produce picos mas altos y mas frecuentes (cont_klC llega a
+tocar 1.0 varias veces), pero en las dos semillas donde se probo, el resultado
+final sobre la historia completa es paridad (+0.02) o negativo, no una
+convergencia clara y sostenida por encima de kv_norm. La hipotesis "mas pasos
+estabiliza" se confirma parcialmente: mejora la magnitud de los picos, no la
+consistencia.
