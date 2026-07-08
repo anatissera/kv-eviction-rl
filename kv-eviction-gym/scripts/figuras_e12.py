@@ -226,8 +226,81 @@ def fig13_epocas():
     plt.close(fig)
 
 
+# ---------------------------------------------------------------------------
+# Figura 14: precision en el probe a lo largo del entrenamiento (una por brazo)
+# ---------------------------------------------------------------------------
+def fig14_precision():
+    """Precision cruda del probe vs pasos, un panel por brazo.
+
+    En paneles y no superpuesto porque cada corrida tiene su PROPIO kv_norm
+    (0.375 a 0.688 segun VM y semilla: los mismos 16 ejemplos dan precisiones
+    absolutas distintas en L4 vs T4). Superponer precisiones crudas contra una
+    sola referencia sugeriria comparaciones que no son validas; cada panel
+    lleva su propia linea de kv_norm.
+    """
+    # (run, etiqueta, origen a anteponer para que el eje arranque en 0)
+    arms = [
+        ("s_e12_cont_klC",   "Config base extendida a 10M pasos",
+         P3 / "e11_klC_probe.csv"),
+        ("s_e12_seed5",      "Config base (semilla 5)", None),
+        ("s_e12_targetkl",   "Recorte y KL objetivo más conservadores", None),
+        ("s_e12_entcoef",    "Menos exploración (coef. de entropía)", None),
+        ("s_e12_epochs15",   "15 épocas por rollout", None),
+        ("s_e12_epochs4",    "4 épocas por rollout", None),
+        ("s_e12_lrdecay_s0", "Decaimiento de LR (semilla 0)", None),
+        ("s_e12_lrdecay_s1", "Decaimiento de LR (semilla 1)", None),
+        ("s_e12_klw15",      "Recompensa densa más fuerte", None),
+    ]
+    MIN_PROBES = 3
+    present = [(r, l, o) for r, l, o in arms
+               if (D4 / f"{r}_probe.csv").exists()
+               and len(read(D4 / f"{r}_probe.csv")) >= MIN_PROBES]
+    if not present:
+        print("fig14: sin datos todavia")
+        return
+
+    ncols = 3
+    nrows = (len(present) + ncols - 1) // ncols
+    fig, axes = plt.subplots(nrows, ncols, figsize=(4.9 * ncols, 3.5 * nrows),
+                             squeeze=False)
+    for ax in axes.flat:
+        ax.set_visible(False)
+
+    for i, (run, lab, origin) in enumerate(present):
+        ax = axes[i // ncols][i % ncols]
+        ax.set_visible(True)
+        ts, learned, kv = series(run, origin)
+        ax.plot(ts, learned, "o", ms=3.0, color=C["blue"], alpha=0.32)
+        idx, trend = smooth(learned)
+        if trend is not None:
+            ax.plot(ts[idx], trend, "-", lw=2.2, color=C["blue"])
+        ax.axhline(kv, color=C["slate"], ls="--", lw=1.5)
+        ax.axhline(1.0, color=C["teal"], ls=":", lw=1.1, alpha=0.65)
+        estado = "" if done(run) else "  (en curso)"
+        ax.set_title(f"{lab}{estado}\nkv_norm = {kv:.2f}  (n={len(learned)})",
+                     fontsize=12)
+        ax.set_ylim(-0.05, 1.10)
+        ax.set_xlim(0, None)
+        ax.set_xlabel("Pasos de entrenamiento (millones)", fontsize=11)
+        if i % ncols == 0:
+            ax.set_ylabel("Precisión en el probe", fontsize=11)
+
+    fig.suptitle("Precisión en el probe a lo largo del entrenamiento",
+                 fontsize=17, weight="bold", y=1.005)
+    fig.text(0.5, -0.015,
+             "Puntos: evaluaciones individuales (16 ejemplos cada una). Líneas: "
+             "tendencia (media móvil). Guiones: kv_norm de esa misma corrida. "
+             "Punteada: política perfecta.",
+             ha="center", fontsize=11, color="#6b7480")
+    fig.tight_layout()
+    fig.savefig(OUT / "fig14_e12_precision.png")
+    print("fig14_e12_precision.png:", [r for r, _, _ in present])
+    plt.close(fig)
+
+
 if __name__ == "__main__":
     fig11_resumen()
     fig12_estabilidad()
     fig13_epocas()
+    fig14_precision()
     print("\nFiguras E12 escritas en", OUT)
