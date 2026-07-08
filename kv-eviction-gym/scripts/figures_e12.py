@@ -69,26 +69,32 @@ def smooth(y, w=5):
 # ---------------------------------------------------------------------------
 # Figure 11: final paired gap per arm (finished, valid runs only)
 # ---------------------------------------------------------------------------
-def fig11_resumen():
-    # (run, etiqueta legible, que knob cambia respecto de la config base)
-    # ordenadas de peor a mejor: la lectura va de abajo hacia arriba
+def fig11_summary():
+    # (run, readable label, which knob changes vs the base config)
+    # Readable labels. Final order is computed from the gap (worst at the
+    # bottom), so adding a new arm here is enough for it to enter the figure.
     arms = [
-        ("s_e12_lrdecay_s0", "Decaimiento de LR (semilla 0)"),
-        ("s_e12_epochs4",    "4 épocas por rollout"),
-        ("s_e12_lrdecay_s1", "Decaimiento de LR (semilla 1)"),
-        ("s_e12_klw15",      "Recompensa densa más fuerte"),
-        ("s_e12_cont_klC",   "Config base extendida a 10M pasos"),
-        ("s_e12_seed5",      "Config base (semilla 5)"),
+        # killed at 33%: entropy collapsed and everything truncated. Flagged
+        # because the other bars average their full 3M runs.
+        ("s_e12_entcoef",    "Less exploration (coef. 0.003)\nkilled at 33%"),
+        ("s_e12_lrdecay_s0", "LR decay (seed 0)"),
+        ("s_e12_epochs4",    "4 epochs per rollout"),
+        ("s_e12_lrdecay_s1", "LR decay (seed 1)"),
+        ("s_e12_klw15",      "Stronger dense reward"),
+        ("s_e12_cont_klC",   "Base config extended to 10M steps"),
+        ("s_e12_seed5",      "Base config (seed 5)"),
     ]
-    labels, gaps, colors = [], [], []
+    rows = []
     for run, lab in arms:
         if not (D4 / f"{run}_probe.csv").exists() or not done(run):
             continue
         origin = P3 / "e11_klC_probe.csv" if run == "s_e12_cont_klC" else None
         _, learned, kv = series(run, origin)
-        gap = learned.mean() - kv
-        labels.append(lab); gaps.append(gap)
-        colors.append(C["accent"] if gap > 0 else C["slate_light"])
+        rows.append((learned.mean() - kv, lab))
+    rows.sort()                                  # worst first => bottom of axis
+    gaps = [g for g, _ in rows]
+    labels = [l for _, l in rows]
+    colors = [C["accent"] if g > 0 else C["slate_light"] for g in gaps]
 
     # horizontal bars: the labels are long and collide when vertical
     fig, ax = plt.subplots(figsize=(7.8, 4.6))
@@ -126,13 +132,14 @@ def fig11_resumen():
 # ---------------------------------------------------------------------------
 def fig12_stability():
     arms = [
-        ("s_e12_targetkl", "More conservative\nclipping and target KL", C["accent"]),
-        ("s_e12_entcoef",  "Less exploration\n(entropy coef.)", C["teal"]),
-        ("s_e12_epochs15", "15 epochs\nper rollout", C["blue"]),
+        ("s_e12_targetkl",  "More conservative\nclipping and target KL", C["accent"]),
+        ("s_e12_entcoef",   "Less exploration\n(coef. 0.003, collapses)", C["teal"]),
+        ("s_e12_entcoef6",  "Less exploration\n(coef. 0.006)", C["teal_light"]),
+        ("s_e12_epochs15",  "15 epochs\nper rollout", C["blue"]),
     ]
     # an arm with 1-2 probes draws no trend: it would enter the legend as an
-    # invisible line. It is only shown once it has enough points.
-    MIN_PROBES = 4
+    # invisible line. It only shows once it has enough points.
+    MIN_PROBES = 3
     present = []
     for r, l, c in arms:
         p = D4 / f"{r}_probe.csv"
@@ -232,8 +239,8 @@ def fig13_epochs():
 def fig14_accuracy():
     """Raw probe accuracy vs steps, one panel per arm.
 
-    In panels rather than overlaid because each run has its OWN kv_norm
-    (0.375 to 0.688 depending on VM and seed: the same 16 examples give
+    Panels rather than an overlay because each run has its OWN kv_norm
+    (0.375 to 0.688 depending on VM and seed: the same 16 examples yield
     different absolute accuracies on L4 vs T4). Overlaying raw accuracies
     against a single reference would suggest comparisons that are not valid;
     each panel carries its own kv_norm line.
@@ -244,7 +251,8 @@ def fig14_accuracy():
          P3 / "e11_klC_probe.csv"),
         ("s_e12_seed5",      "Base config (seed 5)", None),
         ("s_e12_targetkl",   "More conservative clipping and target KL", None),
-        ("s_e12_entcoef",    "Less exploration (entropy coef.)", None),
+        ("s_e12_entcoef",    "Less exploration (coef. 0.003)", None),
+        ("s_e12_entcoef6",   "Less exploration (coef. 0.006)", None),
         ("s_e12_epochs15",   "15 epochs per rollout", None),
         ("s_e12_epochs4",    "4 epochs per rollout", None),
         ("s_e12_lrdecay_s0", "LR decay (seed 0)", None),
