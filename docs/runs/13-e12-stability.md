@@ -106,10 +106,12 @@ runs, each slot starts as soon as the previous one finishes.
 | s_e12_cont_klC | DONE (10M, extended 6M->9M auto + 9M->10M manual) | 0.58 (full 0->10M) | 0.56 | 89/186 (48%) | VALID (simcot-t4, 16/16 probes). Very slight positive in the aggregate (+0.02); real high peaks (touches 1.0) but they dilute over the full history, not sustained convergence |
 | s_e12_cont_klC_seed1 | **INVALID** (ran on kvp-ab) | - | 0.50 (broken probe, n=2) | - | the earlier conclusion ("the extension did NOT reproduce the improvement") is NOT sustainable: it compared against a kv_norm measured on 2 examples |
 | s_e12_epochs4 | DONE (3M) | 0.37 | 0.69 | 2/55 (4%) | VALID (kv-none-v2, 16/16 probes). **Confirms n_epochs=10 is the driver**: with n_epochs=4 it behaves as poorly as lrdecay_s0/klA/klB |
-| s_e12_klw15 | running (simcot-t4) | - | 0.56 | - | VALID (16/16). Oscillates in a reasonable range, far too early for a verdict |
+| s_e12_klw15 | DONE (3M) | 0.494 | 0.562 | 19/55 (35%) | VALID (16/16). **Arm E negative**: raising kl_weight 0.05->0.15 never beat the heuristic. A stronger dense reward does not fix its decoupling from final correctness. |
 | s_e12_seed4 | **INVALID / KILLED** | - | 0.00 (broken probe, n=1) | - | its "degenerate anchor" was the bug, not seed bad luck |
-| s_e12_seed5 | running (kv-none-v2) | - | 0.375 | - | VALID (16/16). Mixed, no clear trend yet |
-| s_e12_targetkl | RELAUNCHED clean | - | - | - | **arm F**: clip_range 0.2->0.1 + target_kl=0.03 (the rest identical to klC). Attacks the "touches the optimum and falls" pattern: with n_epochs=10 confirmed as the driver, a more conservative update should keep 10 epochs of gradient from overshooting. Required threading `target_kl` into train.py's PPO constructor (it was not). The first attempt ran with the broken probe and was discarded. |
+| s_e12_seed5 | DONE (3M) | 0.439 | 0.375 | 32/54 (59%) | VALID (16/16). Gap +0.064 but mean below the 0.5 floor -> STOP. FLAT trend (1st 0.444 -> 2nd 0.433), final stretch the weakest. Same pattern as seed2/cont_klC: real peaks, no sustained convergence. |
+| s_e12_entcoef | running (kv-none-v2) | - | 0.688 | - | **arm G**: ent_coef 0.01->0.003 isolated. Less exploration noise might stop undoing the peaks the policy already reaches. |
+| s_e12_epochs15 | running (simcot-t4) | - | - | - | **arm H**: n_epochs 10->15 isolated. epochs4 showed 10>>4; the open question is whether it is monotonic or whether 10 is already the sweet spot. |
+| s_e12_targetkl | RELAUNCHED clean, running | - | 0.688 | - | **arm F**: clip_range 0.2->0.1 + target_kl=0.03 (the rest identical to klC). Attacks the "touches the optimum and falls" pattern: with n_epochs=10 confirmed as the driver, a more conservative update should keep 10 epochs of gradient from overshooting. Required threading `target_kl` into train.py's PPO constructor (it was not). The first attempt ran with the broken probe and was discarded. |
 
 ### kvp-ab probe bug (found 2026-07-08, invalidates 4 runs)
 

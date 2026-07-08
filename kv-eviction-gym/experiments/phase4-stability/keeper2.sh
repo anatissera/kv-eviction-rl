@@ -111,7 +111,7 @@ lane kv-none-v2 proyecto-final-425415 us-west4-a 1 \
 lane kvp-ab tp-final-rl-kv-eviction asia-southeast1-a 1 \
   "e12_seed2.yaml:s_e12_seed2,e12_seed3.yaml:s_e12_seed3,e12_cont_klC_seed1.yaml:s_e12_cont_klC_seed1,e12_seed4.yaml:s_e12_seed4,e12_targetkl.yaml:s_e12_targetkl"
 lane simcot-t4 tp-final-nlp us-central1-a 0 \
-  "e12_cont_klC.yaml:s_e12_cont_klC,e12_klw15.yaml:s_e12_klw15"
+  "e12_cont_klC.yaml:s_e12_cont_klC,e12_klw15.yaml:s_e12_klw15,e12_epochs15.yaml:s_e12_epochs15"
 
 # mirror all CSV curves into TensorBoard event files (tb_all/) after downloads,
 # so a locally-running `tensorboard --logdir tb_all` shows E12 growing live.
