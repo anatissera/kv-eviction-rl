@@ -105,9 +105,10 @@ runs, each slot starts as soon as the previous one finishes.
 | s_e12_seed3 | DONE (3M) | 0.25 | 0.00 | 21/44 (48%) | degenerate kv_norm anchor (almost 0), not conclusive |
 | s_e12_cont_klC | DONE (10M, extended 6M->9M auto + 9M->10M manual) | 0.58 (full 0->10M) | 0.56 | 89/186 (48%) | very slight positive in the aggregate (+0.02); real high peaks (touches 1.0) but they dilute over the full history, not sustained convergence |
 | s_e12_cont_klC_seed1 | DONE (6M, extended 3M->6M auto) | own stretch (3M-6M): 0.43 vs kv 0.50 | 0.50-0.57 | own stretch: 8/36 (22%) | the extension did NOT reproduce cont_klC's improvement; it ends below |
-| s_e12_epochs4 | running (~96% of 3M) | ~0.44 (2nd half) | 0.69 | low, no sustained crossing | weak signal so far, similar to lrdecay_s0/klA/klB (n_epochs=4) |
-| s_e12_klw15 | running (~7% of 3M) | - | 0.56 | - | far too early |
-| s_e12_seed4 | just launched | - | - | - | bonus, at the user's request after freeing kvp-ab |
+| s_e12_epochs4 | DONE (3M) | 0.37 | 0.69 | 2/55 (4%) | **confirms n_epochs=10 is the driver**: with n_epochs=4 it behaves as poorly as lrdecay_s0/klA/klB |
+| s_e12_klw15 | running (~14% of 3M) | - | 0.56 | - | far too early |
+| s_e12_seed4 | running (~11% of 3M) | - | 0.00 (degenerate anchor, like seed3) | - | far too early |
+| s_e12_seed5 | just launched | - | - | - | bonus, at the user's request after freeing kv-none-v2 |
 
 **Aggregate reading of the continuation arm (C):** extending training beyond 3M DOES
 produce higher and more frequent peaks (cont_klC touches 1.0 several times), but in the
