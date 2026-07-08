@@ -1,0 +1,66 @@
+\vspace{0.5cm}
+
+\begin{abstract}
+
+The KV cache of a transformer grows linearly with context length, and becomes the
+main memory bottleneck when the model reasons through long chains of thought.
+An alternative to fixed \textit{eviction} heuristics (recency, attention sinks, key
+norm) is to \emph{learn} which tokens to discard. Starting from Apple's approach
+(KVP), which keeps the language model frozen and trains an external policy with a
+bespoke trainer, this work proposes reformulating \textit{eviction} as a sequence of
+discrete decisions, one per decoding step, so that the problem becomes expressible as
+a Gymnasium environment and trainable with standard masked PPO. On GSM8K, the learned
+policy systematically lands at \emph{parity} with the key-norm heuristic
+(\texttt{kv\_norm}), despite exploring richer representations, different
+architectures, \textit{warm-start} and corrections to credit assignment.
+Measured against a future-attention oracle, we show that this null result is a
+property of the dataset and not of the method. On that other dataset, our online
+formulation shows preliminary evidence of being able to beat
+\texttt{kv\_norm}, something that never happened on GSM8K.
+
+\vspace{0.5mm}
+\noindent \textbf{Keywords:} \textit{KV cache}, \textit{reinforcement learning},
+\textit{eviction}, \textit{PPO}, \textit{transformers}.
+
+
+\end{abstract}
+
+
+\section{Introduction} \label{section: introduction}
+
+Transformer-based language models generate text \emph{autoregressively}. To produce the token at position $t$, the model conditions on the whole sequence of tokens already generated. In each layer, this conditioning is implemented through the \emph{attention} mechanism \cite{vaswani2017attention}, where every token computes, from its own internal representation, three vectors called \emph{query}, \emph{key} and \emph{value}. To decide how much to ``look at'' each previous token, the \emph{query} of the current token is compared against the \emph{key} of every previous token through an inner product; those scores are normalised with a \textit{softmax} into a distribution of weights summing to $1$, and the layer's output is a weighted average of the \emph{values} of all previous tokens, using those weights. This operation is repeated in parallel across several attention \emph{heads} per layer, each with its own projection of $Q$, $K$ and $V$.
+
+The \emph{key} and \emph{value} vectors of an already-processed token do not change: they depend only on that token and the ones before it, never on future tokens.
+Recomputing them at every new step would be redundant, so the standard practice is to compute them once and store them in a cache (\textbf{KV cache}), to be reused in subsequent steps. This way, generating token $t+1$ only requires computing the \emph{query}, \emph{key} and \emph{value} of the new token, and comparing it against the stored \emph{keys} of all the previous ones, instead of recomputing the full sequence.
+
+The cost of that cache, however, grows linearly with sequence length, so the longer the context or the reasoning chain, the more memory is required. In models that reason through \textit{chain-of-thought}, where the answer may depend on a great many intermediate tokens, the KV cache ends up being one of the main limitations to scaling context \cite{li2026ngc}.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.75\textwidth]{figures/fig_attn_kvcache.png}
+    \caption{The attention mechanism inside a transformer layer. The \textit{query} of the token being generated is compared against the \textit{key} of every previous token; \textit{softmax} turns those scores into weights summing to $1$, and the layer's output is a weighted average of the \textit{values}.}
+    \label{fig: attn_kvcache}
+\end{figure}
+
+The classical way to contain that growth is \emph{eviction}, that is, discarding the least useful tokens from the cache in order to keep memory within a reduced budget. There are different approaches to deciding which tokens to keep. The most widespread techniques use fixed rules, such as keeping the most recent tokens and the first \textit{attention sink}\footnote{The first tokens of the sequence (usually between 1 and 4) receive, in almost every head and layer, a disproportionate amount of attention mass regardless of their semantic content: since the softmax must always sum to 1, the model uses them as a place to ``dump'' leftover attention when no other token is relevant. Evicting them from the cache degrades performance abruptly.} tokens \cite{xiao2024streamingllm}, prioritising \textit{heavy hitters}\footnote{The tokens that accumulate, over the whole generation (not just the current step), the largest summed attention weight. The heuristic identifies them and keeps them together with a window of the most recent tokens.} by accumulated attention weight \cite{zhang2023h2o}, or selecting by the attention of a recent window \cite{li2024snapkv}. While these strategies are cheap, they hand-code what is supposed to be important, instead of learning it from the task.
+
+
+The alternative is to \emph{learn} the \textit{eviction} policy. Two recent works explore this path from different angles. Apple, in \emph{Learning to Evict from Key-Value Cache} (KVP) \cite{moschella2026kvp}, keeps the language model frozen and trains lightweight RL agents (one per attention head) that learn to rank cache entries by their future utility. Stanford, on the other hand, in \emph{Neural Garbage Collection} (NGC) \cite{li2026ngc}, fixes the form of the policy (it reuses the model's own attention mechanism as the \textit{scoring} function) and trains the language model to learn to reason and to forget simultaneously, with a single correctness reward signal. Both approaches are described in more detail in \cref{section: antecedentes}.
+
+Our starting point is Apple's approach: keeping the language model frozen and training an external, lightweight policy to decide which entries to remove from the KV cache of an already-trained model.
+
+The question motivating this work is whether that idea can be reformulated so that it can be trained with PPO \cite{schulman2017ppo}, over a Gymnasium environment \cite{brockman2016gym} and using Stable-Baselines3 \cite{raffin2021sb3}, instead of depending on a specific implementation like Apple's.
+
+The difficulty motivating the reformulation is that in KVP the action does not fit that framework. Ranking or selecting a subset of the cache is a distribution over permutations (or over subsets) of variable size, and that is neither a discrete action (\texttt{Discrete}) nor a continuous one (\texttt{Box}). It therefore cannot be described as a Gymnasium space and, consequently, Stable-Baselines3's PPO, which assumes a simple parametric distribution (categorical, Gaussian or Bernoulli) over a fixed-shape space, cannot train it. This is why Apple resorts to its own trainer (RLOO with the Gumbel-top-$k$ trick\footnote{The Gumbel-top-$k$ trick makes it possible to sample, differentiably, an ordered subset of size $k$ from importance scores: independent Gumbel noise is added to them and the top $k$ are taken, which also gives the exact log-probability of that subset in closed form. RLOO (\textit{REINFORCE Leave-One-Out}) is the policy gradient estimator that uses that sample to train. Both are described in more detail in \cref{subsec: kvp}.}).
+
+The central idea of this work is to \textbf{reformulate \textit{eviction} as a sequential decision so as to adapt it to PPO}. Instead of ranking the whole cache in one pass, the agent discards \emph{one} token per decoding step. The action at each step is a single \texttt{Discrete} choice over cache positions,
+but not all of them are evictable at all times (attention sink, recent window) and the set of occupied positions changes as tokens are evicted and generated.
+To solve this we used \emph{action masking}\footnote{At each step, before sampling the action, zero probability is assigned to invalid positions (protected or non-existent at that moment) and the categorical distribution is renormalised over those that remain. The policy can therefore never choose a forbidden position, without needing to change the size of the action space.}. This was implemented with \texttt{MaskablePPO}, a PPO variant included in the \texttt{sb3-contrib} library.
+
+
+
+This reformulation has two main advantages. First, the problem becomes expressible in the standard reinforcement learning framework and can be trained using an existing PPO implementation. Second, instead of taking a single decision over the whole episode, the agent takes a decision at each generation step. This means obtaining a gradient signal at every step, which is especially useful when the reward is based solely on the final correctness of the answer.
+
+Concretely, a policy was trained over Qwen2.5-1.5B-Instruct \cite{qwen2025}, frozen, to solve GSM8K problems \cite{cobbe2021gsm8k} under a fixed cache budget. \textit{Eviction} is performed \emph{online} while the model generates the answer. In other words, the episode coincides with the generation itself and the agent must preserve the reasoning tokens that will be needed later, not only those that look important in the static prompt.
+
+A Gymnasium-compatible environment was developed in which a single shared policy decides, independently for each layer, which token to discard at each decoding step. Finally, the performance of the learned policy was evaluated on GSM8K and compared against several reference heuristics (key norm, recency with attention sinks, random selection), as well as the ideal case in which there is no memory constraint.

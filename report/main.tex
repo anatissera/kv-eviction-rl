@@ -1,0 +1,36 @@
+% I404 - Reinforcement Learning, Universidad de San Andres, 2026
+% Sequential KV-cache eviction with PPO
+%
+% Build with:  latexmk -pdf main.tex
+
+\documentclass[a4paper, table]{article}
+\input{preamble}
+\input{settings}
+
+\begin{document}
+\pagenumbering{roman} % Front matter uses roman numerals
+
+\input{sections/00-titlepage}
+\newpage
+\setcounter{page}{2} % \end{titlepage} resets the counter; bump it
+
+\setcounter{tocdepth}{3}
+{\hypersetup{linkcolor=black}
+\tableofcontents\thispagestyle{empty}}
+\newpage
+
+% Arabic numbering must start before the introduction: cleveref/hyperref
+% cannot create a \label while roman numbering is still active
+\pagenumbering{arabic}
+\input{sections/01-introduction}
+
+\input{sections/02-background}
+\input{sections/03-proposed-directions}
+\input{sections/04-results}
+\input{sections/05-conclusion}
+
+\bibliographystyle{plain}
+\bibliography{references.bib}
+\newpage
+
+\end{document}

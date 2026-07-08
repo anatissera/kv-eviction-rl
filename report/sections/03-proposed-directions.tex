@@ -1,0 +1,71 @@
+\section{Proposed Directions} \label{section: dir_propuestas}
+
+This section describes the main ideas this work started from, building on Apple's KVP repository. From the beginning, the approach was shaped by two goals. The first was to reformulate the \textit{eviction} problem so that it could be represented as a sequential environment and trained with PPO. The second was to define an evaluation methodology based on paired comparisons and on experiments designed to answer concrete questions about the policy's behaviour.
+
+The third decision, concerning the reward used to train the policy, was not settled from the outset. KVP starts from a dense signal (future attention), and at an early stage we replaced it with a correctness reward so as to be able to use the fast attention backends, which introduced the problem of reward sparsity.
+Only later in the project did we arrive at a dense, causal signal that recovers that density without paying the cost of explicit attention.
+
+\cref{section: resultados} presents the experiments that grew out of these design decisions.
+
+
+\subsection{Sequential environment}
+
+As anticipated in \cref{section: introduction}, the main idea of this work is to turn the \textit{eviction} decision into a sequence of discrete actions, one per decoding step. This way, the problem can be represented as a Gymnasium environment and trained using Stable-Baselines3's \texttt{MaskablePPO}.
+
+The episode coincides with the generation of an answer. First the prompt is \textit{prefilled}\footnote{\textit{Prefill} is the initial stage of inference in which the model processes all the tokens of the input prompt to build the KV cache. From that state, autoregressive generation begins, adding one new token at each step.} and, from that moment on, the model generates one token at a time. When the KV cache exceeds the fixed memory \textit{budget}, the agent has to decide which token to remove before generating the next one. The cache size therefore stays constant throughout generation.
+
+Unlike KVP, where the decision is taken once over the contents of a precomputed cache, in this environment \textit{eviction} happens while the model is generating the answer. As a consequence, the policy has to learn to preserve the tokens that will still be useful later in the reasoning, and not only those that look important in the initial prompt.
+
+The transformer has 28 layers and the environment exposes each (episode, layer) pair as a sub-environment. A \emph{single} shared policy decides independently which token to discard in each layer, this being the finest granularity the standard KV-cache implementation allows.
+
+The reward is assigned when the episode ends (because it relates to the correctness of the answer) and training uses Monte Carlo returns ($\gamma=1$, $\lambda=1$). Without discounting, each decoding step contributes equally to the outcome. Which signal to use as the reward is a decision described in the next section.
+
+Compared with KVP, where the policy takes a single decision per episode, this reformulation yields a decision, and therefore a gradient signal, at every generation step.
+
+
+\subsection{Reward design} \label{subsec: recompensa}
+
+With the environment defined, the next question was which reward to optimise. This decision kept changing over the course of the project as new experiments were run.
+
+At first we followed KVP's proposal and used a reward based on future attention (\cref{subsec: kvp}). However, this approach forced us to use the \texttt{eager} attention backend, since explicit access to the attention weights was needed. That prevented us from taking advantage of optimised implementations such as \textit{FlashAttention} or \texttt{sdpa}, considerably increasing the computational cost.
+
+For this reason we replaced that reward with one based on the correctness of the final answer on GSM8K ($1$ or $0$). This change allowed us to use the fast backend, but introduced problems of its own. This reward is extremely sparse, since it is only known at the end of the episode and, using Monte Carlo returns, the same return is assigned to every decision taken during generation (hundreds of steps and 28 layers). As a consequence, temporal credit assignment is very weak, since every eviction receives exactly the same training signal regardless of the effect it had on the generation.
+
+To improve credit assignment we explored several alternatives, first incorporating penalties related to generation length and truncation.
+
+With pure correctness, when the model never managed to emit the end-of-sequence token within the step budget, every episode in a batch truncated and correctness was $0$ in all cases alike. In that regime, PPO had no gradient to learn from. To avoid this, a dense reward based on generation length and on whether the episode truncated was added:
+\[
+    \mathrm{score} = \mathrm{correctness} - w_\ell\cdot\frac{\mathrm{steps}}{\mathrm{max\_new\_tokens}} - w_t\cdot \mathds{1} [\text{truncated without EOS}],
+\]
+with $w_\ell=0.5$ and $w_t=1.0$ (set from knowing that the average GSM8K answer length with Qwen-1.5B was 500-700 tokens). Between two equally incorrect episodes, the shorter one is penalised less than the longer one, giving PPO a signal to shorten generation before it ever finds a correct answer. The truncation term penalises going round in circles without finishing, so that it is clearly worse than any \textit{eviction} strategy that lets the model reach the end.
+
+The final proposal of this work is a dense, causal reward that evaluates, at each step, the immediate effect of the \textit{eviction} on the model's predictions.
+
+The idea is to compare, at each generation step, the next-token distribution obtained using the evicted cache with the distribution produced by a ``shadow'' cache that never evicts. The latter acts as a reference and makes it possible to measure how much each decision changes the model's behaviour. The per-step reward is defined as
+
+\[
+    r_{\text{step}} = -\,w \cdot \mathrm{clip}\big(\, \mathrm{KL}(p_{\text{full}} \,\|\, p_{\text{evict}}),\; 0,\; c \,\big).
+\]
+
+Each decision is thus rewarded or penalised according to the immediate effect it has on the probability distribution of the next token, without waiting for the episode's final outcome and without needing an attention-based signal. Moreover, this reward is compatible with the fast \texttt{sdpa} backend, since it only requires the model's output probabilities.
+
+The motivation behind this proposal is that a denser training signal should ease temporal credit assignment and allow more effective \textit{eviction} policies to be learned than with final correctness alone. In \cref{section: resultados} we evaluate this hypothesis experimentally.
+
+
+
+\subsection{Experiment design}
+
+
+The second design decision concerned how to evaluate the learned policies. Instead of comparing only the accuracy obtained by each method, we use as our main metric the paired contrast between the learned policy and the \texttt{kv\_norm} heuristic,
+\[
+\mathrm{correct_{learned}} - \mathrm{correct_{kv\_norm}},
+\]
+computed over the same examples and with the same \textit{anchors} (baselines) per run.
+
+
+The main reference is \texttt{kv\_norm}, the heuristic that removes the token with the lowest value of $\lVert K\rVert + \lVert V\rVert$. In addition, each experiment includes two further references: \texttt{full}, which uses the complete cache and represents the best possible performance under this configuration, and \texttt{random}, which removes tokens at random and acts as a lower reference.
+
+The paired comparison reduces the effect of each example's intrinsic difficulty and avoids comparing raw numbers across runs that may have evaluated on different subsets.
+
+
+On this basis, the experiments were designed to answer concrete questions. Instead of modifying several aspects of the system at once, each experiment evaluates a specific hypothesis about the policy's possible limitations, such as state representation, exploration, architecture or the reward used. \cref{section: resultados} follows that path and presents the experiments in the order they were carried out.

@@ -1,0 +1,338 @@
+\section{Development and Results} \label{section: resultados}
+
+This section presents the experiments carried out and the results obtained. The experiments are shown in the order in which they arose during the development of the work, since each one motivated the next.
+
+
+\subsection{Metric and baselines} \label{subsec: metrica}
+
+Every number that follows is on GSM8K with Qwen2.5-1.5B-Instruct and a cache budget of $256$ tokens (unless stated otherwise). As anticipated in \cref{section: dir_propuestas}, the main metric is the paired contrast $\mathrm{correct_{learned}} - \mathrm{correct_{kv\_norm}}$ over a held-out \textit{probe} of examples, with the fixed baselines \texttt{full} (complete cache, no eviction, the ceiling), \texttt{kv\_norm} (best heuristic) and \texttt{random} (floor) evaluated on the same examples.
+
+We say the learned policy reaches \textbf{parity} with \texttt{kv\_norm} when the paired contrast is statistically indistinguishable from zero, that is, the policy gets \emph{the same number} of problems right as the heuristic on the same examples, within measurement noise. Since the goal of the work was to \emph{beat} \texttt{kv\_norm}, parity is a negative result with respect to that goal, and much of this section consists of understanding why the policy systematically stayed there. One \textit{probe} example is worth $1/128 \approx 0.008$ on this scale, so a gap of, say, $-0.02$ means ``two or three problems below \texttt{kv\_norm} out of 128''.
+
+An important detail is that the raw numbers depend on the software \textit{stack} (\texttt{torch}/\texttt{transformers}) and on the concrete subset of GSM8K, so \emph{only the paired contrast within a single run is comparable}. Over the course of the project we saw up to five ``regime shifts'' where the same model and the same examples gave different absolute accuracies depending on the attention backend; this is why raw numbers are never compared across runs, only paired gaps within each one.
+If the policy-independent baselines (\texttt{kv\_norm}, \texttt{random}) do not agree between two runs one wants to compare, that alone is enough to know they are not evaluating under the same conditions, and any raw difference between policies stops being interpretable.
+
+\subsection{Starting point: reimplementing KVP} \label{subsec: kvp_repro}
+
+The work began by reproducing Apple's method (KVP) on Qwen2-1.5B-Instruct. While Apple trains and evaluates on Qwen2.5-7B-Instruct, we used a smaller model from the previous generation so as to validate the implementation with reasonable training times on one GPU (they use 8 H100s). The goal of this stage was to verify that the reproduction of the method was correct, not to obtain results directly comparable with the original work.
+
+To that end, we trained the offline rankers per (layer, head) pair with RLOO and the Gumbel-top-$k$ trick, and evaluated across different cache sizes.
+This first reproduction was done, as in KVP, on \textbf{RULER}: a synthetic long-context benchmark where the prompt contains a specific fact hidden (a ``needle'') in the middle of a lot of irrelevant text, and the task is to retrieve that fact at the end. RULER is a good test bench for KVP's future-attention reward (\cref{subsec: kvp}) because the right datum gives a clear answer about which prompt positions \emph{should} receive attention (those of the needle) and which should not (the filler).
+
+When reformulating the problem as a sequential task trainable with PPO we also changed datasets. Instead of RULER we used \textbf{GSM8K}, a set of maths problems that require a step-by-step reasoning chain to reach the answer. The change was motivated by the reward we wanted to optimise. In KVP the training signal evaluates how well the ranking predicts future attention, a dense but indirect reward, independent of whether the final answer is correct. We wanted to train directly against the correctness of the answer, for which we needed a task whose result could be verified automatically.
+
+Moreover, the kind of information that has to be preserved also changes. In RULER the important information is already present in the prompt, whereas in GSM8K it appears during generation, as the model builds the reasoning chain. This made GSM8K look like a better choice for studying eviction policies during generation and not only over a fixed context. Later on (\cref{subsec: dataset}) this very choice turned out to have a consequence we had not anticipated.
+
+The next step was to develop the reformulation proposed in this work (\cref{section: introduction}). Instead of ranking the whole cache at once, turn eviction into a \emph{sequence} of decisions, one per decoding step, each one a \texttt{Discrete} choice with \textit{action masking}. That reformulation is what makes the problem trainable with \texttt{sb3-contrib}'s \texttt{MaskablePPO}, and is the object of all the experiments that follow.
+
+From this point on, every experiment was carried out using Qwen2.5-1.5B-Instruct.
+A newer architecture such as Qwen3.5 was not a viable option for this formulation, since they use a hybrid design in which only one layer in four has standard full attention, while the other three use \emph{Gated DeltaNet}, a linear attention mechanism that computes neither \textit{softmax} attention weights nor a token-indexed KV cache, but a fixed-size recurrent state \cite{qwen35blog}. Qwen2.5 uses standard full attention in all 28 layers, uniformly.
+
+
+\subsection{Building the environment and first experiments} \label{subsec: primeras}
+
+The next step was to implement the environment proposed in \cref{section: introduction,section: dir_propuestas}. Building it took several iterations before we had something trainable.
+Starting from a routine that runs the prompt's \textit{prefill} over the frozen model and extracts the resulting KV cache (\texttt{capture.py}), the environment was built as a Gymnasium class compatible with Stable-Baselines3's \texttt{VecEnv}.
+At each step, the environment takes care of automatically resetting the episodes that have already finished (because the model generated an EOS token or hit the step limit) and of updating the valid-action mask used by \texttt{MaskablePPO}.
+
+An architectural detail is that Qwen2.5-1.5B-Instruct uses \textit{grouped-query attention} (GQA): twelve \textit{query} heads but only two \textit{key/value} heads per layer (six \textit{query} heads share a single physical cache, \cref{fig: gqa}). Since the KV cache exists only for the latter, the eviction decision has to be taken at the KV-head level, not the \textit{query}-head level.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.8\textwidth]{figures/fig_gqa.png}
+    \caption{\textit{Grouped-query attention} in Qwen2.5-1.5B-Instruct. The twelve \textit{query} heads of a layer are grouped in sixes; each group shares a single \textit{key/value} head, and therefore a single physical KV cache.
+    \textit{Eviction} can only be decided at the level of those two physical caches per layer, not per \textit{query} head.}
+    \label{fig: gqa}
+\end{figure}
+
+The first version of the environment considered one sub-environment per (layer, \textit{query} head) combination, that is, $28\times12=336$ in total. However, since Qwen uses GQA, there are only $28\times2=56$ independent key/value caches on which eviction can actually be performed. Correcting this reduced the environment to those 56 sub-environments. Later, moving from one policy per head to one policy per layer simplified the number of decisions even further.
+
+Another problem appeared when the model generated an EOS token before the cache exceeded the budget. In those cases no eviction ever took place, but Stable-Baselines3 still recorded a transition with an observation, an action and a reward. Since that action never had any effect on the model, it ended up adding noise to training. To avoid this, the environment detects these episodes and discards them before they reach PPO.
+
+Eviction was implemented by directly modifying \texttt{transformers}'s \texttt{DynamicCache} (Hugging Face's standard structure for the KV cache) layer by layer, instead of using \textit{hooks} on attention, and updating the \texttt{position\_ids} to keep the positional encoding (RoPE) consistent after removing a token.
+
+It was also necessary to define what information the policy would observe. The first version used only three features per token: $\|K\|$, $\|V\|$ and the relative position $t/\texttt{max\_len}$. Later this representation was replaced with the full $K$ and $V$ vectors (the entire \texttt{head\_dim}, not just their norm), and the explicit position feature was dropped because the RoPE rotation is already in $K$.
+This was done on the hypothesis that a richer representation would make it possible to learn strategies going beyond the \texttt{kv\_norm} heuristic. As will be presented in \cref{subsec: d1d4}, this decision also introduced an unexpected effect. Normalising those vectors in the network's first layer destroyed precisely the magnitude information that heuristic uses, and it had to be reintroduced explicitly as a separate feature (\texttt{kvz}) only at the scaling phase.
+
+With the environment built, the first family of experiments explored which reward to use. We initially tried three signals: \texttt{none} (terminal correctness only, $1$ or $0$), \texttt{recency} (a dense per-step reward that rewards keeping recent tokens) and a \emph{per-step attention} one (rewarding the eviction of tokens with low accumulated attention).
+
+The main result of this stage was identifying a failure mode common to all these variants. When the policy could remove any token from the cache, training quickly collapsed towards strategies that discarded essential information and the generation degraded into repetitive text. To avoid this behaviour, protection of the \textit{attention sinks} and of a window of recent tokens was added, following the idea of StreamingLLM (\cref{subsec: heuristicas}) and H2O. This change stabilised training and left a first version of the environment ready for the comparative experiments of the following sections.
+
+
+\subsection{The \textit{chat template} problem} \label{subsec: chattemplate}
+
+Before being able to trust any number, a problem that invalidated all the initial runs had to be solved. The model is Qwen2.5-1.5B-\textbf{Instruct}, trained to receive its prompts in a specific conversation format known as a \textit{chat template}. Passing it the GSM8K question as plain text, without that format, meant the model
+\textbf{never emitted the end-of-sequence token} (EOS): it kept generating indefinitely until hitting the \texttt{max\_new\_tokens} limit. As a consequence, \emph{every} episode ended by truncation and the correctness-based reward was always zero, which left PPO with no gradient to learn from. It took a while to detect this problem. At first we attributed it to a policy ``cold start'' problem, so we tried different alternatives, such as training only with easy examples or protecting the entire prompt from eviction. Only afterwards did we see that none of those changes attacked the real cause.
+
+
+
+
+\subsection{Why the policy did not beat kv\_norm} \label{subsec: d1d4}
+
+
+With the environment built and the \textit{chat template} problem solved,
+we trained a first policy at scale with the correctness reward and measured its performance with the paired metric of \cref{subsec: metrica}. The result was that the policy stayed at levels similar to \texttt{kv\_norm}, with no consistent improvement over the heuristic. Instead of continuing to tune hyperparameters, we reviewed the implementation of the environment and the policy to understand what was limiting learning, and several possible causes appeared.
+
+The first is that the policy loses magnitude information when a \texttt{LayerNorm} is applied over $K$ and $V$ as the network's first step, which removes the scale that \texttt{kv\_norm} uses ($\lVert K\rVert + \lVert V\rVert$). The second is that there is no explicit position representation, and one depends solely on the information implicit in RoPE inside $K$, which is not always enough for the policy's architecture (a network that processes each token separately after normalising). The third is that the decision is taken independently per token, which limits the ability to capture relations between positions (for example, redundancy between tokens). The fourth is that training starts entirely from scratch, without any initialisation close to a reasonable policy, which makes exploration inefficient.
+
+
+The work plan (\cref{section: dir_propuestas}) was to isolate each of these possible limitations and evaluate its impact separately. The following sections follow exactly that path.
+
+
+
+\subsection{A first capacity screen} \label{subsec: e0}
+
+Before spending GPU-days on scaling, we ran a cheap \textit{screen} of each variant over the same set of 16 examples, evaluating on \emph{those same} examples. It is a \emph{capacity} test to find out whether that variant \textit{can} beat \texttt{kv\_norm} on data it has seen. \cref{fig: screen} summarises the best gap reached by each one.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.55\textwidth]{figures/fig1_screen.png}
+    \caption{Capacity screen (16 examples, \textit{overfit}). The paired contrast $\mathrm{correct_{learned}} - \mathrm{correct_{kv\_norm}}$ is shown for different policy variants. The base version (without magnitude features) stays at levels similar to \texttt{kv\_norm}. Adding richer features shows a marked improvement in peak performance. Adding the dense reward on top of an already expressive policy does not improve results in this configuration and tends to reduce performance.}
+    \label{fig: screen}
+\end{figure}
+
+Directionally, representation was still the main axis. We had two observations. The signal was fairly noisy and spiky, with jumps between $0$ and $0.25$. Moreover, adding the dense reward did not help even an already capable policy. With rich features + dense reward we obtained $+0.06$, below using rich features alone. At that point our contribution was starting to lose weight and become less clear.
+
+\subsection{Scaling the system: features, warm-start and attention} \label{subsec: escala}
+
+The \textit{screen} essentially told us what was worth scaling and what was not. From there we ran three arms at scale (2M steps, 1000 training examples and a held-out \textit{probe} of 32), each one to isolate a different hypothesis. One variant with more informative features (to attack the absence of signal about norm and position), another with warm-start (cloning \texttt{kv\_norm} via \textit{behaviour cloning} before doing RL, to see whether the problem was the cold start), and a third with cross-token attention (to see whether introducing interaction between tokens helped capture relations that do not appear when each token is processed in isolation). \Cref{fig: scaled} shows the paired gap over the course of training.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.58\textwidth]{figures/fig2_scaled_traj.png}
+    \caption{Runs at scale (2M steps). Paired contrast
+    $\mathrm{correct_{learned}}-\mathrm{correct_{kv\_norm}}$ vs.\ \textit{timesteps}.
+    The three arms oscillate around or below $0$.
+    The warm-start variant starts \emph{at} \texttt{kv\_norm} (the clone worked) but RL does not push it beyond; the attention variant stays systematically below.}
+    \label{fig: scaled}
+\end{figure}
+
+
+The variant with more informative features closed at $-0.044$ on average (\textit{last-5} $-0.050$), meaning they took the policy from $\approx$ random \emph{up to} \texttt{kv\_norm} (real progress on representation) but did not push it beyond. When we include the exact \texttt{kv\_norm} signal (\texttt{kvz}) as a feature, the easiest thing for the policy is to imitate it, and there it stalls.
+
+The warm-start variant isolates the cold-start hypothesis. Instead of starting from scratch, we first clone \texttt{kv\_norm} with behaviour cloning and then do PPO. If the problem were insufficient exploration, this should unblock it. The clone worked (the first \textit{probe} has learned $\geq$ \texttt{kv\_norm}), but even so adding 2M of PPO finds nothing better (it ends at $-0.019$).
+
+The cross-token attention variant behaves worst, closing at $-0.111$. The positive peak we had seen in the \textit{screen} (+0.19 on an overfit of 16 examples) does not appear here. It seems, rather, to introduce complexity that PPO cannot exploit.
+
+
+\subsection{Wide eval and regime analysis} \label{subsec: wide}
+
+Since the three arms lived on different \textit{stacks}, the decisive number came from a wide evaluation: 128 new examples, taken from the stretch of the GSM8K shuffle after the training set and the 32-example \textit{probe} used during training (that is, disjoint from everything any of the \textit{checkpoints} saw), with the three final \textit{checkpoints} evaluated on the \emph{same} VM with the same \textit{anchors} (\cref{fig: wide}).
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.55\textwidth]{figures/fig3_wide_eval.png}
+    \caption{\textit{Wide eval} ($n=128$, a single \textit{stack}). The per-token arms (rich features, warm-start) land $2$ to $3$ examples from \texttt{kv\_norm} (parity within noise). The attention variant is consistently worse. The arrow marks the regime insight: $\mathrm{full}-\mathrm{random}=0.039$.}
+    \label{fig: wide}
+\end{figure}
+
+
+This experiment turned out to be the most important discovery of the whole phase, and not because of the policies but because of the \textbf{regime}. That is, with this budget and these prompt lengths, evicting at random costs only $\sim$4pp relative to not evicting, and \texttt{kv\_norm} captures barely $\sim$20\% of that already tiny margin. This puts a very low ceiling on any possible improvement. The terminal reward is nearly flat as a function of the policy, so PPO has no gradient to follow, and even a perfect oracle would win at most $\sim$3pp.
+
+This is, in part, an \textbf{architectural} limitation of the \emph{training} environment. To train at a reasonable speed, the environment packs $N$ episodes into a single \textit{tensor} and does one forward pass of the model per step instead of $N$ separate ones; for that to work, all the episodes of a batch have to share the same cache size, fixed at \texttt{budget}$+1$. Since eviction only acts on tokens generated during decoding (never on the prompt during \textit{prefill}), an example is only trainable if its entire prompt fits within that budget; if it is longer, the environment simply discards it. In practice, this sets a floor on the budget usable during training, since it cannot go below the length of the prompts one wants to keep training on. This restriction belongs to the batched training environment; the single-episode-at-a-time evaluations we use later do not have it, and this is why there we can measure budgets below the prompt length. We call this unfiltered GSM8K \textit{setup}, the one we had been using by default until now, the \textbf{low-difficulty regime}. \cref{fig: regime} contrasts it with the long-generation one: the same GSM8K but filtered to the examples with the longest reasoning, where the learnable margin is larger.
+
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.42\textwidth]{figures/fig5_regime.png}
+    \caption{The learnable \textit{headroom} depends on the regime (both on GSM8K). In the simple regime (budget $\geq$ prompt) $\mathrm{full}-\mathrm{random}\approx0.04$; in the filtered long-generation one, $\approx0.45$, and there \texttt{kv\_norm} does not even beat chance. The arena where eviction really matters is the second one.}
+    \label{fig: regime}
+\end{figure}
+
+
+
+\subsection{A policy with future information} \label{subsec: oracle}
+
+
+If the low-difficulty regime has little \textit{headroom}, the question is how much can be improved in principle. For that we built an ideal eviction with future information. Over the full generation trace, at each step the token with the lowest maximum future attention is discarded, a decision that is only possible with access to the future (\cref{fig: oracle}).
+
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.62\textwidth]{figures/fig4_oracle.png}
+    \caption{Eviction with future information ($n=128$, \textit{eager}) (oracle). The future-attention-based policy beats \texttt{kv\_norm} by $+0.070$ ($2.8\sigma$) and even beats the full cache. Present-time attention (\texttt{attn\_cur}) does not beat \texttt{kv\_norm}. The margin exists but depends on future information.}
+    \label{fig: oracle}
+\end{figure}
+
+There are three key points. First, the learnable margin exists ($\approx +7$pp) but it is future information. Present attention does not beat \texttt{kv\_norm}.
+This explains the pattern that repeats through the rest of this phase, \emph{on GSM8K in this regime}: since no online policy (learned or heuristic) has access to the future, they are all bounded by the same effective ceiling, which is \texttt{kv\_norm}.
+
+This policy with future information is not, however, a ceiling that real supervision can reach, but an upper bound computed with \emph{hindsight information}, looking at the complete generation trace before deciding what to evict at each past step. Later we found that this was specific to this dataset. In the \textit{passkey} setting (\cref{subsec: dataset}), \texttt{kv\_norm} stops being a ceiling and falls below even chance.
+
+Second, the method with future information even beats the full cache ($0.516 > 0.492$), which suggests that a good eviction not only preserves information but can improve reasoning by discarding the right tokens.
+
+Third, another regime shift appears. With \texttt{eager} attention the full cache scores $0.49$ against $0.74$ under \texttt{sdpa} (bf16), so the gap depends heavily on the attention regime.
+
+\subsection{Future attention is unpredictable from the present} \label{subsec: e5}
+
+The natural next step, and the literature's recipe, was to distil that oracle through behaviour cloning over the future-attention rankings, followed by a short RL fine-tune. The concrete question is whether a policy that only observes the present ($K$, $V$ and derived features) can anticipate which token it is best to evict according to future information.
+
+To measure this we used the \texttt{match\_oracle} rate, defined as the fraction of steps in which the policy's action coincides with the oracle's. \textit{Behaviour cloning} shows no convergence on this objective: \texttt{match\_oracle} stays between $0.018$ and $0.036$ over the 3000 cloning steps. By contrast, the same recipe applied to \texttt{kv\_norm} reached almost perfect agreement ($\approx 1.0$), which indicates that the cloning procedure is stable when the signal is accessible from the present.
+The $+7$pp margin is therefore made of information that is not contained in the observation of the present state, which makes the problem effectively one of partial observability with respect to that criterion.
+(In the literature they add attention-history features or other additional inputs that our \texttt{sdpa} environment does not expose, and even in those cases they require pairwise ranking schemes.)
+
+\subsection{Long generations and the exploration limit} \label{subsec: longgen}
+
+The \textit{wide eval} had already shown where the \textit{headroom} was: it actually appears only in long generations under cache pressure (\cref{fig: regime}). We moved the environment to that setting (\texttt{min\_answer\_words}$=60$ filter, budget $256$), where $\mathrm{full}-\mathrm{random}=0.45$ and \texttt{kv\_norm} falls below or level with \texttt{random}. At that point, any real improvement should be obvious.
+
+Before getting there we tried more aggressive budgets (160, 192) that overshot the useful point. With that much cache pressure the model solved nothing, correctness was $0$ in every episode and PPO was left without a gradient again. This shows that the useful window is quite narrow. \textbf{The task has to remain solvable under eviction, but be hard enough that the eviction strategy still makes a difference.}
+
+In the calibrated configuration the most interesting behaviour appears. The task becomes solvable, but only if the correct reasoning chain is preserved, and at the same time the space of eviction decisions is enormous. That creates a very marked exploration problem. Finding a consistent sequence of $\sim$350 evictions (with $\sim$220 options per step across $\times28$ layers) is out of reach for online exploration from scratch.
+
+Even artificially increasing the number of exposures per example and normalising the terminal reward with a \textit{regret} baseline (to give PPO many more samples and remove the difficulty variance between examples), the \textit{probes} show no learning. Training found correct episodes only by chance ($\sim$4 in 235 \textit{rollouts}) and PPO never turned them into a policy.
+
+The bottleneck appears to be in the reward signal, which is too sparse to guide effective exploration in this regime.
+
+\subsection{The causal dense reward at scale} \label{subsec: e8}
+
+The exploration problem suggested that a dense reward (\cref{subsec: recompensa}) could help, since it assigns credit at every step without depending on correctly completing the whole episode. Recall how it is defined. At each step, the next-token distribution of the evicted cache is compared with that of a ``shadow'' cache that never evicts, and the divergence is penalised,
+\[
+r_{\text{step}} = -w\,\mathrm{clip}\!\left(\mathrm{KL}(p_{\text{full}}\,\|\,p_{\text{evict}}),\,0,\,c\right).
+\]
+
+This was the first experiment where we evaluated it in a genuinely favourable scenario. The policy already had more informative features and training was done in the regime where there really was room to improve.
+
+However, the result was parity again. Neither the MLP policy ($+0.021\pm0.014$, n.s.) nor the attention policy ($+0.016\pm0.018$, n.s.) shows a significant improvement over \texttt{kv\_norm}.
+
+The most interesting part appears when looking at what training is actually optimising. The per-step $\mathrm{KL}$ divergence does decrease steadily, that is, the dense reward is indeed being optimised. But that improvement never translates into higher \textit{correctness} on the \textit{probe}. In this regime, minimising the $\mathrm{KL}$ divergence between the next-token distribution of the full cache and that of the evicted cache is not enough to improve performance. The policy learns to keep similar next-token distributions, even when the evictions have already broken the reasoning chain and end up leading to truncated or incorrect answers. In other words, the reward stops being aligned with the final objective.
+
+
+\subsection{Per-layer credit} \label{subsec: rootcause}
+
+After all these results we went back over the implementation and there the explanation appeared for why every variant ended in parity. The problem was not in the representation, the architecture or the reward, but in how the environment assigned credit.
+
+The environment exposes \texttt{n\_envs}$=N\times28$, so the policy takes \textbf{28 eviction decisions per step}, one per layer. However, the reward is a single scalar per episode assigned equally to all 28 layers. With the terminal reward this happens directly, but even with the dense reward the KL is computed over the model's final distribution, which depends jointly on the evictions performed in all 28 layers.
+
+PPO therefore sees 28 different (state, action) pairs sharing a single return. The effect of changing the decision in one layer is mixed with the effect of the other 27, so the algorithm never receives information about which layer was really responsible for the outcome. In that scenario, the only thing it can learn over an action space of $220^{28}$ is a reasonable rule that works, on average, for every layer, which ends up looking very much like \texttt{kv\_norm}. This explains why every variant ended at practically the same point.
+
+\begin{table}[H]
+\rowcolors{2}{gray!10}{white}
+\centering
+\caption{None of the axes we attacked touched per-layer credit.}
+\begin{tabular}[t]{lll}
+\toprule
+\textbf{What we tried} & \textbf{What it improved} & \textbf{Did it touch per-layer credit?}\\
+\midrule
+more informative features & representation & no\\
+warm-start (cloning \texttt{kv\_norm}) & initialisation & no\\
+cross-token attention & architecture & no\\
+causal dense reward & temporal credit (per step) & no (KL is joint)\\
+50 repetitions + \textit{regret} & samples + variance reduction & no\\
+\bottomrule
+\end{tabular}
+\label{tab: root_cause}
+\end{table}
+
+Looking back, having taken each variant to the end turned out to be important. Each experiment isolated a different hypothesis and allowed it to be ruled out with evidence. Only after going through all those possibilities did the cause appear, and it was in the environment itself.
+
+
+\subsection{Per-layer reward and a second bottleneck} \label{subsec: e9}
+
+
+The solution to the credit assignment problem was fairly direct. Instead of using a single reward for all the layers, each one receives its own dense reward, computed from the marginal divergence of the \textit{hidden state} that its eviction decision produces relative to a shadow cache that never evicts. Specifically,
+\[
+    \mathrm{damage}_l = \mathrm{relu}(\mathrm{div}_{l+1}-\mathrm{div}_l),
+\]
+which isolates the contribution of layer \(l\). The terminal reward is still shared by all the layers, but now a dense signal specific to each one is added.
+
+We verified that the change was working as expected. Before, all 28 layers received exactly the same reward; after this modification, each one received a different value.
+
+However, the results landed at parity again. Neither the MLP policy ($+0.021\pm0.035$) nor the attention policy ($+0.038\pm0.022$) showed a significant improvement over \texttt{kv\_norm}. The only \textit{probe} that reached $+0.19$ was an isolated peak that disappeared in the following evaluations.
+
+
+This ends up showing that there were two overlapping problems. The first was per-layer credit assignment. But once that problem was solved another appeared. \textbf{The dense rewards we can compute online, whether the joint KL divergence or the per-layer hidden-state divergence, stop being aligned with the final objective under the truncation regime.}
+
+Taken together, the results point to the same conclusion. Online PPO is limited by the training signal. First, the original reward could not assign credit correctly across layers. And even after fixing that point, the dense rewards available online still do not reflect faithfully enough which eviction decisions preserve the correct answer, while the terminal reward remains too sparse to learn from directly.
+This also explains why recent works such as KVP and ForesightKV resort to offline supervision with future information instead of depending on online RL.
+
+
+\subsection{The dataset as the limiting factor} \label{subsec: dataset}
+
+Up to this point every experiment pointed in the same direction, but an important question remained. Were the results really due to our online training method, or could they have something to do with the dataset we were using?
+
+Comparing our setup in detail with KVP's revealed a difference we had not isolated until then.
+
+\begin{table}[H]
+\rowcolors{2}{gray!10}{white}
+\centering
+\caption{Apple/KVP vs.\ our setup.}
+\begin{tabular}[t]{lll}
+\toprule
+ & \textbf{Apple / KVP (RULER)} & \textbf{Ours (GSM8K)}\\
+\midrule
+task & long-context retrieval & short dense reasoning\\
+useless filler & most of the prompt & almost none (dense)\\
+decisive content & in the prompt (a ``needle'') & generated while decoding\\
+future utility predictable? & yes (by content) & no (depends on the reasoning)\\
+\bottomrule
+\end{tabular}
+\label{tab: apple_vs_ours}
+\end{table}
+
+GSM8K is, structurally, a very hard case for learning an eviction policy. The prompts are short and dense, there is practically no surplus information and the most important content appears during generation. As we saw in the previous section, that future utility cannot be inferred from the available features either, which is reflected in an agreement with the oracle of barely 3\%. In RULER, by contrast, most of the context is filler and the \textit{needle} can be told apart by its content before generation even starts (there future utility \emph{is} predictable).
+
+
+To check whether that difference was enough to explain the results, we built a reduced version of the RULER scenario called \texttt{passkey}. The dataset consists of a synthetic \textit{needle-in-a-haystack} problem, with filler text, a secret code buried at a random depth and a task that forces the model to generate before retrieving it. On this dataset we ran exactly the same analysis with the future-attention oracle.
+
+The behaviour changes very markedly (\cref{fig: dataset_spectrum}). On \texttt{passkey}, the oracle beats \texttt{kv\_norm} by $+0.43$ ($7.3\sigma$, 45 wins, 4 losses and 47 ties over 96 examples), whereas on GSM8K the difference was barely $+0.07$, using the same model, the same budget and exactly the same code. Moreover, \texttt{kv\_norm} falls below \texttt{random} ($0.375 < 0.490$), which indicates that keeping the highest-norm tokens stops being a good strategy when what matters is preserving information that is distinguishable by content.
+
+
+\begin{figure}[H]
+    \centering
+
+    \begin{subfigure}{0.48\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{figures/fig8_dataset_spectrum.png}
+        \caption{The learnable margin as a spectrum across datasets. Difference between the future-attention oracle and \texttt{kv\_norm}, with the same model, budget and implementation.}
+        \label{fig: dataset_spectrum}
+    \end{subfigure}
+    \hfill
+    \begin{subfigure}{0.48\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{figures/fig9_margin_vs_compression.png}
+        \caption{The learnable margin grows with the aggressiveness of the compression. Oracle minus \texttt{kv\_norm} as a function of the cache budget, on HotpotQA and \texttt{passkey}.}
+        \label{fig: compression}
+    \end{subfigure}
+
+    \caption{The learnable margin depends on the dataset and on the compression regime.}
+    \label{fig: dataset_phase}
+\end{figure}
+
+This result changes the interpretation of the whole series of experiments. The results on GSM8K may not be due to a problem with the algorithm, but to that dataset offering very little signal for learning an eviction policy.
+From this comparison, several characteristics that favour learning eviction policies emerge: a high effective compression (ratio $\geq3$--$4\times$), plenty of dispensable content, utility distinguishable by content rather than by reasoning, relatively short generations and an easily verifiable answer.
+
+To check that this behaviour was not exclusive to the synthetic dataset, we repeated the same analysis on HotpotQA-distractor (multi-hop questions over Wikipedia paragraphs, with distractor paragraphs). There the oracle's margin is $+0.09$ ($z=2.4$) at $4$-$5\times$ compression, and grows to $+0.19$ ($z=4.4$) at $8$-$10\times$ compression. As cache pressure increases, \texttt{kv\_norm} degrades until it approaches chance while the oracle keeps a clear advantage. On \texttt{passkey} the same effect is even more pronounced ($+0.43$ up to $+0.92$).
+In other words, the learnable margin \emph{grows} with the aggressiveness of the compression (\cref{fig: compression}), on both real and synthetic data, which confirms that the result depends on the structural properties of the dataset.
+
+The three datasets can be arranged along a single spectrum (\cref{fig: dataset_phase}). At one end is GSM8K, dense reasoning where there is practically no margin. In the middle is HotpotQA, real retrieval where the margin is small but not zero and also grows with compression. And at the other end is \texttt{passkey}, pure synthetic retrieval where the margin is large.
+
+Taken together, the learnable margin appears to depend on how distinguishable by content the information worth preserving is. It is almost nil when that information coincides with the very reasoning the model generates, and it grows when it is a specific datum hidden among filler text.
+
+\subsection{Our method on a dataset with signal} \label{subsec: capstone}
+
+Once a dataset where learned eviction has room to improve had been found, the question becomes whether our method (sequential online PPO) can exploit that signal or whether the offline training proposed by the literature is needed.
+
+As a reference, we first reimplemented Apple's recipe on \textit{passkey}: future-attention rankers trained offline over traces, with no online RL. In this scenario, it beats \texttt{kv\_norm} by $+0.46$ (two seeds, 49 wins and 3 losses over 100 examples). This confirms that the task contains a learnable signal and serves as a reference for what can be captured on this dataset.
+
+We then evaluated our online formulation. The first attempt, using only the terminal correctness reward, showed interesting behaviour. The policy reached, at moments, a perfect eviction policy (getting $100\%$ of the \textit{probe} right, something that had never happened on GSM8K), but that performance was not sustained. Training oscillated continuously, alternating between peaks above \texttt{kv\_norm} and drops to values close to zero. Since the signal demonstrably exists, this pointed to a training \emph{stability} problem.
+
+The next step was to train with the causal dense reward proposed in \cref{subsec: recompensa} and to try different configurations of learning rate, exploration and number of optimisation epochs per \textit{rollout}. Every run uses the same \textit{setup}: the \texttt{passkey} dataset with a cache budget of $300$ tokens, forced generation of up to $300$ tokens so that the \textit{needle} is under real eviction pressure, the causal dense reward with weight $0.05$ and clip $5.0$, and $3$M training steps. The only thing that changes between configurations is PPO's hyperparameters.
+
+With one of those configurations (learning rate $10^{-4}$ and $10$ optimisation epochs per \textit{rollout}) a different behaviour starts to appear (\cref{fig: capstone}). During the first half of training the policy oscillates between $0$ and \texttt{kv\_norm}, with a mean of $0.36$. In the second half, the centre of that oscillation shifts upwards and the mean rises to $0.67$, above \texttt{kv\_norm} ($0.56$). Two thirds of the evaluations in that second half land above the heuristic and the best \textit{probe} reaches a perfect policy ($100\%$ correct).
+
+In other words, as training advances the policy starts spending more time above \texttt{kv\_norm}, something we had observed neither on GSM8K nor on this same task using only the terminal reward.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.68\textwidth]{figures/fig10_capstone.png}
+    \caption{Sequential PPO with the causal dense reward on \texttt{passkey}. Accuracy of the learned policy on the \textit{probe} over the course of training; points are individual evaluations and the line is the trend. In the second half the centre of the oscillation shifts above \texttt{kv\_norm} and the policy reaches the optimum ($1.0$), though it still oscillates.}
+    \label{fig: capstone}
+\end{figure}
+
+It is important to make clear that this is not yet a stable convergence. Even in the second half of training the policy keeps oscillating and evaluations appear that fall back to \texttt{kv\_norm} or even below. The improvement appears as a shift in average behaviour and not as a convergence. For the first time the policy manages to stay above \texttt{kv\_norm} for several consecutive evaluations, even reaching a perfect eviction policy.
+
+
+
+This result also has two important limitations. The first is sensitivity to hyperparameters. Of the three configurations we tried, only this one shows the upward shift. The second is that, for now, the evidence rests on a single seed. More iterations and additional configurations would be needed to validate the stability of the phenomenon.
+
+More runs are needed before asserting a firm conclusion. But the available evidence suggests that the online reformulation proposed in this work, which on GSM8K remained systematically at parity with \texttt{kv\_norm}, can beat that heuristic when the dataset offers a learnable signal.

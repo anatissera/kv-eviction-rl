@@ -167,6 +167,13 @@ class EvalProbeCallback(BaseCallback):
                 start_idx = 0
                 self._probes, full_vals, rand_vals, kvn_vals = [], [], [], []
 
+        # Track prompts dropped by the T-vs-budget filter so a silently-shrunk
+        # probe can never masquerade as a valid one (a stale prompts.py on one VM
+        # once inflated passkey prompts past the budget, leaving probes with 1-3
+        # of 16 examples and anchors like kv_norm=0.00 or 1.00 that looked like
+        # unlucky seeds rather than a bug).
+        _skipped_len: list[tuple[int, int]] = []
+
         for ex_i, ex in enumerate(self.probe_examples):
             if ex_i < start_idx:
                 continue
@@ -185,6 +192,7 @@ class EvalProbeCallback(BaseCallback):
 
                 # Skip prompts that can't be evicted (too long, or already <= budget).
                 if T > self.max_len or T >= ex_budget:
+                    _skipped_len.append((T, ex_budget))
                     continue
 
                 per_layer_imp = capture_per_layer_attention(
@@ -237,6 +245,24 @@ class EvalProbeCallback(BaseCallback):
             logger.warning("EvalProbeCallback: no usable probe examples "
                            "(all skipped for prompt_len vs budget). Probe disabled.")
             return
+
+        # A probe built from a handful of examples yields meaningless anchors
+        # (kv_norm can only be 0.0/1.0 with n=1, multiples of 0.5 with n=2, ...)
+        # and its paired gaps are pure noise. Refuse to run rather than emit
+        # numbers that look real. Set probe_min_frac: 0 to opt out.
+        n_kept, n_want = len(self._probes), len(self.probe_examples)
+        min_frac = getattr(self, "probe_min_frac", 0.5)
+        if min_frac > 0 and n_kept < min_frac * n_want:
+            dropped = ", ".join(f"T={t}>=budget={b}" for t, b in _skipped_len[:4])
+            raise RuntimeError(
+                f"EvalProbeCallback: only {n_kept}/{n_want} probe examples survived "
+                f"the prompt_len-vs-budget filter (need >= {min_frac:.0%}). Anchors "
+                f"from so few examples are meaningless (kv_norm={np.mean(kvn_vals):.3f}). "
+                f"First drops: {dropped}. Usually this means prompts are longer than "
+                f"expected for this budget: check that src/ on THIS machine is current "
+                f"(a stale vendor/prompts.py that ignores raw_chat inflates passkey "
+                f"prompts by ~31 tokens), or raise budget_min/budget_max."
+            )
 
         self._correct_full_mean   = float(np.mean(full_vals))
         self._correct_random_mean = float(np.mean(rand_vals))

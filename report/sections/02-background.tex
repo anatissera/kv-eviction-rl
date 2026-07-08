@@ -1,0 +1,43 @@
+\section{Background} \label{section: antecedentes}
+
+This work takes as its reference two recent proposals that address the problem of learned KV-cache \textit{eviction}. Both seek to solve the same problem: deciding which tokens to keep when the memory available for the cache is limited. Apple's work keeps the language model frozen and learns an external policy to decide \textit{eviction} (\cref{subsec: kvp}), while Stanford's keeps the policy fixed and trains the model itself to learn simultaneously to reason and to discard information (\cref{subsec: ngc}). Our work builds on the former; the latter is the counterpoint that delimits the design space.
+Finally, we describe the main \textit{eviction} heuristics, used as baselines in the experimental evaluation (\cref{subsec: heuristicas}).
+
+\subsection{Learning to Evict from Key-Value Cache (Apple, KVP)} \label{subsec: kvp}
+
+Moschella \textit{et al.} \cite{moschella2026kvp} propose KVP (\textit{KV Policy}), a framework of lightweight RL agents that learn to rank KV-cache entries by their future utility, without modifying the language model or adding inference cost. Instead of retraining the model, it stays frozen and only a policy that decides which entries to keep in the KV cache is learned. Since this approach is the starting point of our work, in this section we describe the most relevant aspects of its formulation.
+
+One characteristic of KVP is that it does not use a single policy for the whole cache. Instead, it trains \emph{one agent per (layer, KV head) pair}. For Qwen2.5-7B-Instruct, with 28 layers and 4 KV heads, that is 112 agents; for the smaller 1.5B model, with 2 KV heads per layer, it is 56. Each agent is a small MLP that receives only the key and value vectors ($K$, $V$) of the cached positions (it uses neither the \textit{queries} nor the hidden states) and produces an importance score per position. The agents are trained \emph{offline}. First the model is run and the $Q/K/V$ activations per layer and head are saved to disk; then the policy is trained using only that data, without loading the language model again.
+
+The reward used by KVP does not depend on whether the final answer is correct. Instead, it measures how well the policy manages to identify the tokens that will receive attention in future steps (\emph{future attention}). To do this, it compares the ranking produced by the agent with the attention observed afterwards and computes a score similar to the area under the curve (AUC), evaluated across different cache budgets. The policy therefore receives a dense training signal instead of a single reward at the end of the episode.
+
+The key point for this work is how the environment is formulated. In KVP, the \textit{eviction} decision is taken \textbf{all at once}.
+Given the set of cached positions, the agent decides in a single pass which subset of size $K$ to keep.
+From a probabilistic standpoint, this amounts to defining a distribution over the possible rankings of the positions, modelled with a Plackett-Luce distribution \cite{plackett1975analysis} over permutations. In practice, this corresponds to sampling an ordered subset of size $K$ without replacement.
+To make it differentiable and admit policy gradients, KVP samples that subset with the \emph{Gumbel-top-$k$} trick \cite{kool2019gumbeltopk}, which yields the exact log-probability of the ordered subset in closed form, and trains with RLOO (\textit{REINFORCE Leave-One-Out}) \cite{ahmadian2024rloo}\footnote{RLOO samples several trajectories for the same input and, for each one, uses as a \emph{baseline} the average of the rewards of the \emph{other} samples in the group (leaving its own out). This reduces the variance of the REINFORCE gradient without having to train a separate critic network.}.
+
+This formulation means the problem cannot be represented directly with the action spaces available in Gymnasium and, therefore, cannot be trained with Stable-Baselines3's PPO implementation. First, the action consists neither of choosing a single position nor of producing a continuous vector, but of selecting an ordered subset of positions. Moreover, the decisions are not independent of one another, since the probability assigned to a position depends on which ones were chosen before. Finally, the number of available positions changes during generation, whereas Gymnasium requires fixed-size action spaces.
+
+Our goal is to bring KVP's idea into a Gymnasium-compatible environment that can be trained using PPO. The proposed reformulation is described in \cref{section: dir_propuestas}.
+
+\subsection{Neural Garbage Collection (Stanford, NGC)} \label{subsec: ngc}
+
+Li \textit{et al.} \cite{li2026ngc} approach the problem from a different angle and, for that reason, it serves to delimit the central design decision of this work. Instead of freezing the language model and training an external policy, their \emph{Neural Garbage Collection} (NGC) method \textbf{keeps the form of the policy fixed and trains the language model itself}. They teach the model to ``forget while it learns to reason'': as it generates its chain of thought, the model periodically enters an \textit{eviction} round, scores the cache entries, discards part of them and continues reasoning conditioned only on what remains.
+
+This contrast is what justifies our choice of starting from KVP and not from NGC. Training the model end-to-end as NGC does requires backpropagating through the whole language model at every step, which demands that the model be trainable and carries a much higher compute cost. KVP's route, by contrast, keeps the model \emph{frozen} and as a black-box oracle, and only trains a small policy: it is cheaper and, above all, applicable to any already-trained model without touching its weights. Our work follows that decision, and this is why the model stays frozen in every experiment.
+
+
+\subsection{\textit{Eviction} heuristics as baselines} \label{subsec: heuristicas}
+
+Both KVP and NGC compare their learned policies against fixed heuristics, that is, rules that decide which tokens to keep without any training. In this work we use the same heuristics as a reference to evaluate whether a learned policy really offers an improvement.
+
+One of them is \emph{StreamingLLM} \cite{xiao2024streamingllm}, which keeps the first tokens of the sequence (the \textit{attention sinks}, towards which the model tends to direct attention systematically) together with a window of the most recent tokens, and discards everything else.
+
+The main baseline used in this work, and the one we aim to beat in the experiments (\cref{section: resultados}), is the \emph{key norm} heuristic (\textit{kv-norm}). At each generation step, this heuristic discards the cache entry whose value of $\lVert K\rVert + \lVert V\rVert$ is smallest, that is, the one with the lowest combined magnitude between its key vector and its value vector. It is a simple heuristic, it requires no attention signal, and it turned out to be very hard to beat.
+
+\emph{H2O} \cite{zhang2023h2o} identifies the \textit{heavy hitters}, which are the tokens that accumulate, over the \emph{whole} generation, the largest summed attention weight, and discards the rest. This heuristic was implemented as an accumulated-attention oracle and measured on GSM8K, but it was found not to beat \textit{kv-norm} in a statistically significant way (\cref{subsec: oracle}). The reason is that attention over the question does not anticipate what needs to be kept from the reasoning that has not been generated yet. For this reason it is not considered the heuristic to beat in this work.
+
+\emph{SnapKV} \cite{li2024snapkv} assigns scores to positions using the attention of a recent window of \textit{queries}. In this work we do not use SnapKV as a baseline, but we adopt an aggregation criterion from KVP for models with grouped-query attention (GQA)\footnote{In GQA, several \textit{query} heads share a single key/value head, and therefore a single physical KV cache (see \Cref{fig: gqa} in \cref{subsec: primeras}, which shows the concrete case of Qwen2.5-1.5B-Instruct).
+When computing an importance score per position, the \textit{query} heads of the group must be combined into a single number.}: instead of averaging, KVP takes the maximum over the \textit{query} heads within each group, and we apply that same rule to our own importance \textit{proxies}.
+
+In summary, these heuristics require no training and are computationally cheap, but they embed a fixed notion of importance.

@@ -17,12 +17,24 @@ reward shows the first sustained shift above the heuristic, touching the perfect
 policy (though without stable convergence); a follow-up 48h stability sweep isolates the
 number of optimization epochs per rollout as the driver of that shift.
 
-**The report** (LaTeX, in Spanish) is delivered separately and does not live in this
-repo; its per-experiment documentation and its figures do, under `docs/`.
+## 📄 The report
+
+<a href="report/main.pdf"><img src="docs/imgs/report-cover.jpg" align="right" width="200" alt="First page of the report"></a>
+
+**[→ Read the full report (PDF, 21 pages)](report/main.pdf)**
+
+The complete write-up: the sequential reformulation, the reward design, every
+experiment in the order it was run, and the dataset analysis that reframes the
+result. The LaTeX source it is built from is in [`report/`](report/), and the
+per-experiment documentation behind each section is under [`docs/`](docs/).
+
+<br clear="right">
 
 ## Repo map
 
 ```
+report/                       The report: LaTeX source + compiled main.pdf.
+LICENSE, NOTICE.md            MIT for our code; Apple's keeps its own licence.
 docs/                         Per-experiment documentation:
   README.md                     index: experiment <-> report section <-> data
   METHOD.md                     environment and policy design
@@ -95,6 +107,12 @@ python kv-eviction-gym/experiments/phase3-dataset-causality/make_plots.py    # p
 
 All of them read the versioned raw data in `kv-eviction-gym/ab_results/` and
 `kv-eviction-gym/experiments/*/data/`.
+
+## Licence
+
+Our code is [MIT](LICENSE). **`ml-learning-to-evict/` is Apple's and stays under
+the Apple Sample Code License**, which is more restrictive; see
+[`NOTICE.md`](NOTICE.md) for exactly what is covered by what.
 
 ## Authors
 
