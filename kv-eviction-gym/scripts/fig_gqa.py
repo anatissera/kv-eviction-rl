@@ -1,29 +1,16 @@
 """Diagrama esquematico de Grouped-Query Attention en Qwen2.5-1.5B.
 12 cabezas de query agrupadas de a 6 -> 2 cabezas KV -> 2 caches fisicas.
 Estilo del informe (Latin Modern, paleta cohesiva)."""
-import glob
-import matplotlib as mpl
-import matplotlib.font_manager as fm
 import matplotlib.pyplot as plt
 from matplotlib.patches import FancyBboxPatch
 from pathlib import Path
 
-for _f in glob.glob("/usr/share/texmf/fonts/opentype/public/lm/lmroman*.otf"):
-    try:
-        fm.fontManager.addfont(_f)
-    except Exception:
-        pass
+from plot_style import apply_style, PALETTE as C
 
-C = {"teal": "#2a9d8f", "blue": "#457b9d", "slate": "#3d5a80",
-     "slate_light": "#98a6b8", "grey": "#c9ccd1", "accent": "#e76f51",
-     "ink": "#22303c"}
-mpl.rcParams.update({
-    "font.family": "serif", "font.serif": ["Latin Modern Roman", "DejaVu Serif"],
-    "mathtext.fontset": "cm", "savefig.dpi": 300, "savefig.bbox": "tight",
-    "text.color": C["ink"],
-})
+apply_style(serif=True)
 
-OUT = Path(__file__).resolve().parent
+REPO = Path(__file__).resolve().parent.parent          # kv-eviction-gym/
+OUT = REPO.parent / "docs" / "imgs"
 
 fig, ax = plt.subplots(figsize=(7.2, 4.6))
 ax.set_xlim(0, 12); ax.set_ylim(0, 10); ax.axis("off")

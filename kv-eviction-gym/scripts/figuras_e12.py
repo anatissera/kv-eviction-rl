@@ -71,8 +71,12 @@ def smooth(y, w=5):
 # ---------------------------------------------------------------------------
 def fig11_resumen():
     # (run, etiqueta legible, que knob cambia respecto de la config base)
-    # ordenadas de peor a mejor: la lectura va de abajo hacia arriba
+    # Etiquetas legibles. El orden final se calcula por gap (peor abajo), asi
+    # que agregar un brazo nuevo aca alcanza para que entre en la figura.
     arms = [
+        # cortada al 33%: la entropia colapso y todo truncaba. Se marca porque
+        # las demas barras promedian los 3M completos.
+        ("s_e12_entcoef",    "Menos exploración (coef. 0.003)\ncortada al 33%"),
         ("s_e12_lrdecay_s0", "Decaimiento de LR (semilla 0)"),
         ("s_e12_epochs4",    "4 épocas por rollout"),
         ("s_e12_lrdecay_s1", "Decaimiento de LR (semilla 1)"),
@@ -80,15 +84,17 @@ def fig11_resumen():
         ("s_e12_cont_klC",   "Config base extendida a 10M pasos"),
         ("s_e12_seed5",      "Config base (semilla 5)"),
     ]
-    labels, gaps, colors = [], [], []
+    rows = []
     for run, lab in arms:
         if not (D4 / f"{run}_probe.csv").exists() or not done(run):
             continue
         origin = P3 / "e11_klC_probe.csv" if run == "s_e12_cont_klC" else None
         _, learned, kv = series(run, origin)
-        gap = learned.mean() - kv
-        labels.append(lab); gaps.append(gap)
-        colors.append(C["accent"] if gap > 0 else C["slate_light"])
+        rows.append((learned.mean() - kv, lab))
+    rows.sort()                                  # peor primero => abajo del eje
+    gaps = [g for g, _ in rows]
+    labels = [l for _, l in rows]
+    colors = [C["accent"] if g > 0 else C["slate_light"] for g in gaps]
 
     # barras horizontales: las etiquetas son largas y en vertical se pisan
     fig, ax = plt.subplots(figsize=(7.8, 4.6))
@@ -126,13 +132,14 @@ def fig11_resumen():
 # ---------------------------------------------------------------------------
 def fig12_estabilidad():
     arms = [
-        ("s_e12_targetkl", "Recorte y KL objetivo\nmás conservadores", C["accent"]),
-        ("s_e12_entcoef",  "Menos exploración\n(coef. de entropía)", C["teal"]),
-        ("s_e12_epochs15", "15 épocas\npor rollout", C["blue"]),
+        ("s_e12_targetkl",  "Recorte y KL objetivo\nmás conservadores", C["accent"]),
+        ("s_e12_entcoef",   "Menos exploración\n(coef. 0.003, colapsa)", C["teal"]),
+        ("s_e12_entcoef6",  "Menos exploración\n(coef. 0.006)", C["teal_light"]),
+        ("s_e12_epochs15",  "15 épocas\npor rollout", C["blue"]),
     ]
     # un brazo con 1-2 probes no dibuja tendencia: entraria a la leyenda como
     # una linea invisible. Se muestra recien con suficientes puntos.
-    MIN_PROBES = 4
+    MIN_PROBES = 3
     present = []
     for r, l, c in arms:
         p = D4 / f"{r}_probe.csv"
@@ -244,7 +251,8 @@ def fig14_precision():
          P3 / "e11_klC_probe.csv"),
         ("s_e12_seed5",      "Config base (semilla 5)", None),
         ("s_e12_targetkl",   "Recorte y KL objetivo más conservadores", None),
-        ("s_e12_entcoef",    "Menos exploración (coef. de entropía)", None),
+        ("s_e12_entcoef",    "Menos exploración (coef. 0.003)", None),
+        ("s_e12_entcoef6",   "Menos exploración (coef. 0.006)", None),
         ("s_e12_epochs15",   "15 épocas por rollout", None),
         ("s_e12_epochs4",    "4 épocas por rollout", None),
         ("s_e12_lrdecay_s0", "Decaimiento de LR (semilla 0)", None),
