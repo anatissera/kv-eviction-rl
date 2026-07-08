@@ -1,14 +1,28 @@
 """Shared paper-style matplotlib config + a cohesive tonal palette.
 
+Located in scripts/. Import once and call ``apply_style()`` (or
+``apply_style(serif=True)`` for report-matching Latin Modern Roman text).
+
 Design goals (per the report's requested look):
   - standard paper figure conventions: clean, light gridlines, no chartjunk,
-    serif-free readable labels, tight bounding box, 300 dpi.
+    readable labels, tight bounding box, 300 dpi.
   - a single cohesive palette in a narrow tonal range (deep teal -> slate blue),
     with ONE warm accent reserved for the "oracle / learned" hero series so the
     key comparison pops without clashing.
-Import `apply_style()` once, then use PALETTE / SERIES_COLORS.
+
+Parameters
+----------
+serif : bool, default False
+    When *False* (default) use DejaVu Sans with compact sizes (font.size 11).
+    When *True*  register Latin Modern Roman (like ``figuras.py``) and switch
+    to serif family with larger sizes suitable for the report.
+
+Import ``apply_style()`` once, then use PALETTE / SERIES_COLORS.
 """
+import glob
+
 import matplotlib as mpl
+import matplotlib.font_manager as fm
 import matplotlib.pyplot as plt
 
 # Cohesive cool palette (teal -> blue), ordered light->dark, plus a warm accent.
@@ -48,16 +62,49 @@ SERIES_LABELS = {
 }
 
 
-def apply_style():
+def apply_style(serif=False):
+    """Apply paper-quality matplotlib style.
+
+    Parameters
+    ----------
+    serif : bool, default False
+        Use Latin Modern Roman serif fonts with larger sizes (report mode).
+    """
+    if serif:
+        # Register Latin Modern Roman OTF fonts shipped by TeX Live so the
+        # figures match the report body text (mlmodern / Computer Modern).
+        for _f in glob.glob(
+            "/usr/share/texmf/fonts/opentype/public/lm/lmroman*.otf"
+        ):
+            try:
+                fm.fontManager.addfont(_f)
+            except Exception:
+                pass
+        font_params = {
+            "font.family":     "serif",
+            "font.serif":      ["Latin Modern Roman", "CMU Serif", "DejaVu Serif"],
+            "font.size":       15,
+            "axes.titlesize":  17,
+            "axes.labelsize":  15,
+            "xtick.labelsize": 13,
+            "ytick.labelsize": 13,
+            "legend.fontsize": 13,
+            "mathtext.fontset": "cm",
+        }
+    else:
+        font_params = {
+            "font.family":     "DejaVu Sans",
+            "font.size":       11,
+            "axes.titlesize":  13,
+            "axes.labelsize":  11,
+            "legend.fontsize": 9.5,
+        }
+
     mpl.rcParams.update({
         "figure.dpi":        120,
         "savefig.dpi":       300,
         "savefig.bbox":      "tight",
-        "font.family":       "DejaVu Sans",
-        "font.size":         11,
-        "axes.titlesize":    13,
         "axes.titleweight":  "bold",
-        "axes.labelsize":    11,
         "axes.edgecolor":    PALETTE["ink"],
         "axes.linewidth":    0.9,
         "axes.spines.top":   False,
@@ -70,17 +117,10 @@ def apply_style():
         "ytick.color":       PALETTE["ink"],
         "text.color":        PALETTE["ink"],
         "legend.frameon":    False,
-        "legend.fontsize":   9.5,
+        **font_params,
     })
 
 
 if __name__ == "__main__":
-    apply_style()
-    import numpy as np
-    fig, ax = plt.subplots(figsize=(5, 1.4))
-    for i, (k, c) in enumerate(PALETTE.items()):
-        ax.bar(i, 1, color=c)
-        ax.text(i, -0.15, k, ha="center", va="top", rotation=45, fontsize=7)
-    ax.set_axis_off()
-    fig.savefig("plots/_palette.png")
-    print("palette preview -> plots/_palette.png")
+    for name, hexcode in PALETTE.items():
+        print(f"  {name:14s}  {hexcode}")

@@ -1,11 +1,11 @@
 """Genera todas las figuras del capitulo de Resultados (titulos en espanol).
 
-Cada celda produce una figura del informe y la guarda junto a este script (docs/imgs/).
+Cada celda produce una figura del informe y la guarda en docs/imgs/.
 Los datos crudos viven en kv-eviction-gym/ (ab_results/ y
 experiments/phase3-dataset-causality/data/). Todas las figuras usan una paleta
 cohesiva fria (teal -> pizarra) con un acento calido para la comparacion clave.
 
-Correr:  python docs/imgs/figuras.py
+Correr:  python scripts/figuras.py
 """
 # %% [markdown]
 # # Figuras del capitulo de Resultados
@@ -13,57 +13,21 @@ Correr:  python docs/imgs/figuras.py
 
 # %%
 import csv
-import glob
 import json
 from pathlib import Path
 
 import numpy as np
-import matplotlib as mpl
-import matplotlib.font_manager as fm
 import matplotlib.pyplot as plt
 
-REPO = Path(__file__).resolve().parents[2] / "kv-eviction-gym"
+from plot_style import apply_style, PALETTE as C
+
+apply_style(serif=True)
+
+REPO = Path(__file__).resolve().parent.parent          # kv-eviction-gym/
 AB = REPO / "ab_results"
 D3 = REPO / "experiments" / "phase3-dataset-causality" / "data"
-OUT = Path(__file__).resolve().parent
+OUT = REPO.parent / "docs" / "imgs"
 OUT.mkdir(parents=True, exist_ok=True)
-
-# --- Fuente del informe -------------------------------------------------------
-# El informe usa mlmodern (una variante de Computer Modern). Registramos las
-# Latin Modern Roman OTF de TeX Live, visualmente identicas, para que la letra
-# de los graficos coincida con el cuerpo del texto. Fallback a serif generica.
-for _f in glob.glob("/usr/share/texmf/fonts/opentype/public/lm/lmroman*.otf"):
-    try:
-        fm.fontManager.addfont(_f)
-    except Exception:
-        pass
-_SERIF = ["Latin Modern Roman", "CMU Serif", "DejaVu Serif"]
-
-# Paleta cohesiva (frio teal->pizarra) + un acento calido para la comparacion clave
-C = {
-    "teal": "#2a9d8f",       # oraculo / heroe positivo
-    "blue": "#457b9d",       # aprendida / atencion
-    "slate": "#3d5a80",      # kv_norm (la barra a superar)
-    "slate_light": "#98a6b8",  # random
-    "grey": "#c9ccd1",       # full-cache (techo)
-    "accent": "#e76f51",     # acento calido: el gap / el ganador
-    "ink": "#22303c",
-}
-
-# Tamanos grandes para que se lean bien reducidos en el informe.
-mpl.rcParams.update({
-    "figure.dpi": 120, "savefig.dpi": 300, "savefig.bbox": "tight",
-    "font.family": "serif", "font.serif": _SERIF, "font.size": 15,
-    "mathtext.fontset": "cm",
-    "axes.titlesize": 17, "axes.titleweight": "bold", "axes.labelsize": 15,
-    "axes.edgecolor": C["ink"], "axes.linewidth": 1.0,
-    "axes.spines.top": False, "axes.spines.right": False,
-    "axes.grid": True, "axes.axisbelow": True,
-    "grid.color": "#e6e8eb", "grid.linewidth": 0.8,
-    "xtick.labelsize": 13, "ytick.labelsize": 13,
-    "xtick.color": C["ink"], "ytick.color": C["ink"], "text.color": C["ink"],
-    "legend.frameon": False, "legend.fontsize": 13,
-})
 
 
 def read_probe(path):

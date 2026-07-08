@@ -1,0 +1,44 @@
+# E12 continuation of s_e11_klC_seed1: it showed a rising direction (thirds
+# 0.33/0.35/0.47 vs kv_norm 0.62, never crossed) but never got past 3M. Same
+# treatment as cont_klC (which crossed after extension): resume and let
+# should_extend.py keep it going if it stays promising.
+model_name: qwen-1.5b
+device: auto
+dataset: passkey
+n_examples: 64
+seed: 1
+budget_min: 300
+budget_max: 300
+max_len: 320
+max_new_tokens: 300
+use_attention_shaping: false
+attention_weight: 0.0
+shaping_mode: none
+hidden: 64
+probe_n: 16
+probe_every_n_rollouts: 8
+n_parallel: 2
+n_steps: 650
+batch_size: 512
+gamma: 1.0
+gae_lambda: 1.0
+clip_range: 0.2
+total_timesteps: 6000000
+n_sinks: 4
+n_recent: 32
+length_penalty_weight: 0.5
+truncation_penalty: 1.0
+entropy_reward_weight: 0.001
+repeats_per_problem: 5
+attn_implementation: sdpa
+free_growth_cache_dir: ~/.kv_eviction_cache
+protect_prompt: false
+rich_features: true
+checkpoint_freq: 900
+kl_shaping: true
+kl_mode: exact
+kl_weight: 0.05
+kl_clip: 5.0
+learning_rate: 0.0001
+ent_coef: 0.01
+n_epochs: 10
