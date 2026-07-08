@@ -110,9 +110,10 @@ entre corridas, cada slot arranca apenas termina el anterior.
 | s_e12_seed3 | DONE (3M) | 0.25 | 0.00 | 21/44 (48%) | anchor kv_norm degenerado (casi 0), no concluyente |
 | s_e12_cont_klC | DONE (10M, extendido 6M->9M auto + 9M->10M manual) | 0.58 (0->10M completo) | 0.56 | 89/186 (48%) | positivo muy leve en el agregado (+0.02); picos altos reales (toca 1.0) pero se diluyen en la historia completa, no es una convergencia sostenida |
 | s_e12_cont_klC_seed1 | DONE (6M, extendido 3M->6M auto) | tramo propio (3M-6M): 0.43 vs kv 0.50 | 0.50-0.57 | tramo propio: 8/36 (22%) | la extension NO reprodujo la mejora de cont_klC; termina por debajo |
-| s_e12_epochs4 | en curso (~96% de 3M) | ~0.44 (2a mitad) | 0.69 | bajo, sin cruzar de forma sostenida | señal debil hasta ahora, similar a lrdecay_s0/klA/klB (n_epochs=4) |
-| s_e12_klw15 | en curso (~7% de 3M) | - | 0.56 | - | muy temprano |
-| s_e12_seed4 | recien lanzado | - | - | - | bonus, a pedido del usuario tras liberar kvp-ab |
+| s_e12_epochs4 | DONE (3M) | 0.37 | 0.69 | 2/55 (4%) | **confirma que n_epochs=10 es el driver**: con n_epochs=4 se comporta igual de mal que lrdecay_s0/klA/klB |
+| s_e12_klw15 | en curso (~14% de 3M) | - | 0.56 | - | muy temprano |
+| s_e12_seed4 | en curso (~11% de 3M) | - | 0.00 (anchor degenerado, como seed3) | - | muy temprano |
+| s_e12_seed5 | recien lanzado | - | - | - | bonus, a pedido del usuario tras liberar kv-none-v2 |
 
 **Lectura agregada del brazo de continuacion (C):** extender el entrenamiento
 mas alla de 3M SI produce picos mas altos y mas frecuentes (cont_klC llega a
