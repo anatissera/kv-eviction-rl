@@ -221,7 +221,8 @@ def fig13_epocas():
     ax.set_title("Épocas de optimización por rollout")
     ax.set_ylim(0, max(fracs + [0.6]) * 1.28)
     n_shown = len(labels)
-    nota = ("Todo lo demás idéntico entre las corridas."
+    nota = ("Todo lo demás idéntico. La corrida de 15 épocas se cortó "
+            "antes (1.15M pasos vs 3M): tendencia, no valor final."
             if n_shown >= 3 else
             "Todo lo demás idéntico entre las corridas. "
             "La variante de 15 épocas todavía no tiene suficientes evaluaciones.")
