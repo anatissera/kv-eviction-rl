@@ -5,6 +5,7 @@
 .secrets.json
 data/*
 /evaluations/data
+/diagramas_presentacion
 
 wandb/*
 
@@ -245,3 +246,4 @@ kv-eviction-gym/ab_results/.*.lock
 Informe/
 kv-eviction-gym/tb_all/
 kv-eviction-gym/experiments/phase4-stability/plots/
+kv-eviction-gym/experiments/phase4-stability/.keeper2.lock
