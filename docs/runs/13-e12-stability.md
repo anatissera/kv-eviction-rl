@@ -101,15 +101,45 @@ runs, each slot starts as soon as the previous one finishes.
 |---|---|---|---|---|---|
 | s_e12_lrdecay_s0 | DONE (3M) | 0.32 | 0.69 | 0/55 (0%) | never crossed; the LR-decay hypothesis is not confirmed with this seed |
 | s_e12_lrdecay_s1 | DONE (3M) | 0.51 | 0.62 | 15/54 (28%) | strong final streak but insufficient, STOP by a small margin (0.5 floor) |
-| s_e12_seed2 | DONE (3M) | 0.44 | 0.25 | 20/36 (56%) | positive on average but declines over time, not extended |
-| s_e12_seed3 | DONE (3M) | 0.25 | 0.00 | 21/44 (48%) | degenerate kv_norm anchor (almost 0), not conclusive |
-| s_e12_cont_klC | DONE (10M, extended 6M->9M auto + 9M->10M manual) | 0.58 (full 0->10M) | 0.56 | 89/186 (48%) | very slight positive in the aggregate (+0.02); real high peaks (touches 1.0) but they dilute over the full history, not sustained convergence |
-| s_e12_cont_klC_seed1 | DONE (6M, extended 3M->6M auto) | own stretch (3M-6M): 0.43 vs kv 0.50 | 0.50-0.57 | own stretch: 8/36 (22%) | the extension did NOT reproduce cont_klC's improvement; it ends below |
-| s_e12_epochs4 | DONE (3M) | 0.37 | 0.69 | 2/55 (4%) | **confirms n_epochs=10 is the driver**: with n_epochs=4 it behaves as poorly as lrdecay_s0/klA/klB |
-| s_e12_klw15 | running | - | 0.56 | - | oscillates in a reasonable range, far too early for a verdict |
-| s_e12_seed4 | KILLED (57%, unfinished) | - | 0.00 (degenerate anchor, like seed3) | - | a kv_norm=0 anchor made "beats kv_norm" pointless to evaluate; cut to free kvp-ab |
-| s_e12_seed5 | running | - | 0.375 | - | mixed, no clear trend yet |
-| s_e12_targetkl | running (just launched) | - | - | - | **new arm F**: clip_range 0.2->0.1 + target_kl=0.03 (the rest identical to klC), on kvp-ab (replaces seed4). Attacks head-on the "touches the optimum and falls" pattern: with n_epochs=10 confirmed as the driver, a more conservative policy update could keep 10 epochs of gradient from overshooting and undoing a good policy. Required threading `target_kl` into train.py's PPO constructor (it was not; only clip_range/ent_coef were). |
+| s_e12_seed2 | **INVALID** (ran on kvp-ab) | - | 0.25 (broken probe) | - | see "kvp-ab probe bug" below: probe built on 1-3 of 16 examples |
+| s_e12_seed3 | **INVALID** (ran on kvp-ab) | - | 0.00 (broken probe) | - | same |
+| s_e12_cont_klC | DONE (10M, extended 6M->9M auto + 9M->10M manual) | 0.58 (full 0->10M) | 0.56 | 89/186 (48%) | VALID (simcot-t4, 16/16 probes). Very slight positive in the aggregate (+0.02); real high peaks (touches 1.0) but they dilute over the full history, not sustained convergence |
+| s_e12_cont_klC_seed1 | **INVALID** (ran on kvp-ab) | - | 0.50 (broken probe, n=2) | - | the earlier conclusion ("the extension did NOT reproduce the improvement") is NOT sustainable: it compared against a kv_norm measured on 2 examples |
+| s_e12_epochs4 | DONE (3M) | 0.37 | 0.69 | 2/55 (4%) | VALID (kv-none-v2, 16/16 probes). **Confirms n_epochs=10 is the driver**: with n_epochs=4 it behaves as poorly as lrdecay_s0/klA/klB |
+| s_e12_klw15 | running (simcot-t4) | - | 0.56 | - | VALID (16/16). Oscillates in a reasonable range, far too early for a verdict |
+| s_e12_seed4 | **INVALID / KILLED** | - | 0.00 (broken probe, n=1) | - | its "degenerate anchor" was the bug, not seed bad luck |
+| s_e12_seed5 | running (kv-none-v2) | - | 0.375 | - | VALID (16/16). Mixed, no clear trend yet |
+| s_e12_targetkl | RELAUNCHED clean | - | - | - | **arm F**: clip_range 0.2->0.1 + target_kl=0.03 (the rest identical to klC). Attacks the "touches the optimum and falls" pattern: with n_epochs=10 confirmed as the driver, a more conservative update should keep 10 epochs of gradient from overshooting. Required threading `target_kl` into train.py's PPO constructor (it was not). The first attempt ran with the broken probe and was discarded. |
+
+### kvp-ab probe bug (found 2026-07-08, invalidates 4 runs)
+
+`kvp-ab` carried an old copy of `src/kv_gym/vendor/prompts.py` **without the `raw_chat`
+handling**. Passkey prompts received GSM8K's instruction wrapper ("solve this math
+problem"), which inflated `T` from ~285 to ~316 tokens. Since the probe discards any
+example with `T >= budget` (=300) and that `continue` logged nothing, **13-15 of the 16
+probe examples disappeared silently**.
+
+The symptom we had been misreading: "degenerate anchors" (kv_norm = 0.00, 0.25, 1.00)
+that we attributed to seed bad luck. In reality `kv_norm` can only be 0.0/1.0 with n=1,
+multiples of 0.5 with n=2, of 0.333 with n=3.
+
+| VM | prompts.py | real probes | affected runs |
+|---|---|---|---|
+| simcot-t4 | correct | **16/16** | klC, cont_klC, klw15 -> **healthy** |
+| kv-none-v2 | correct | **16/16** | lrdecay_s0/s1, epochs4, seed5 -> **healthy** |
+| kvp-ab | **STALE** | 1-3/16 | seed2, seed3, seed4, cont_klC_seed1, targetkl(1st attempt) -> **invalid** |
+
+**The report's central result (klC, cont_klC) is NOT compromised:** it ran on simcot-t4
+with all 16 probes.
+
+Fixes applied:
+1. Full `src/` synced to kvp-ab (verified: `T` back to 267-286, 16/16 survive).
+2. Prefill cache (`~/.kv_eviction_cache`) purged on that VM: it held captures with the
+   malformed prompt.
+3. **Guard in `probe.py`**: aborts with a `RuntimeError` if fewer than 50% of the probe
+   examples survive, instead of emitting meaningless anchors. This failure mode can never
+   be silent again.
+4. Corrupt CSVs backed up to scratchpad; `targetkl` relaunched from scratch.
 
 **Aggregate reading of the continuation arm (C):** extending training beyond 3M DOES
 produce higher and more frequent peaks (cont_klC touches 1.0 several times), but in the
