@@ -16,11 +16,13 @@ Robust to missing inputs (skips a figure if its data is absent).
 """
 import json
 import math
+import sys
 from pathlib import Path
 
 import numpy as np
 import matplotlib.pyplot as plt
 
+sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "scripts"))
 from plot_style import apply_style, PALETTE, SERIES_COLORS, SERIES_LABELS
 
 apply_style()
