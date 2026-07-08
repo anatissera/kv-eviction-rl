@@ -1,54 +1,56 @@
-# 07 · E5 Golden-BC: la atención futura es impredecible desde el presente
+# 07 · E5 Golden-BC: future attention is unpredictable from the present
 
-**Sección del informe:** §4.10 "La atención futura es impredecible desde el presente".
-**Config:** `kv-eviction-gym/configs/e5_golden.yaml`. **Trazas:** `scripts/trace_gen.py`.
+**Report section:** §4.10 "Future attention is unpredictable from the present".
+**Config:** `kv-eviction-gym/configs/e5_golden.yaml`. **Traces:** `scripts/trace_gen.py`.
 
-## Pregunta
+## Question
 
-El paso natural (y la receta de la literatura, ForesightKV) tras medir el oráculo
-([06](06-oraculo-atencion-futura.md)): destilarlo. ¿Puede una política que solo observa el
-presente (K, V y features derivadas) aprender por behavior cloning a imitar la decisión del
-oráculo de atención futura?
+The natural step (and the literature's recipe, ForesightKV) after measuring the oracle
+([06](06-future-attention-oracle.md)): distill it. Can a policy that only observes the
+present (K, V and derived features) learn by behavior cloning to imitate the
+future-attention oracle's decision?
 
 ## Setup
 
-- Trazas full-cache de ~400 ejemplos de train (atención eager para capturar los scores), ~35 min.
-- BC denso de los logits del actor hacia el score de atención futura, 3000 pasos, con la misma
-  receta de MSE denso que clonó exitosamente a kv_norm ([03](03-screen-capacidad.md)).
-- Métrica: `match_oracle` = fracción de pasos donde la acción de la política coincide con la
-  del oráculo. Después, PPO corto encima (run `s_golden`).
+- Full-cache traces of ~400 train examples (eager attention to capture the scores), ~35 min.
+- Dense BC of the actor's logits toward the future-attention score, 3000 steps, with the
+  same dense-MSE recipe that successfully cloned kv_norm ([03](03-capacity-screen.md)).
+- Metric: `match_oracle` = fraction of steps where the policy's action matches the
+  oracle's. Then a short PPO on top (run `s_golden`).
 
-## Resultado
+## Result
 
-- **El BC nunca convergió: `match_oracle` se mantuvo entre 0.018 y 0.036** durante los 3000
-  pasos (loss 9.0 → 8.4, plana). Apenas ~8x sobre el azar (1/220 slots). En contraste, la
-  MISMA receta clonando kv_norm alcanza match ≈ 1.0: el procedimiento es estable cuando la
-  señal es accesible desde el presente.
-- Conclusión: **el margen de +7pp del oráculo está hecho de información que NO existe en la
-  observación presente**. El problema es de observabilidad parcial respecto de ese criterio.
-  (La literatura lo esquiva metiendo features de historia de atención que nuestro entorno
-  `sdpa` no expone, y aun así necesita esquemas de ranking por pares y scorers per-head.)
-- El run `s_golden` (BC fallido + RL) mostró +0.074 sobre SU probe, pero fue un artefacto de
-  slice: su probe [400:432] tiene kv_norm=0.06 (evicción catastrófica), un régimen hostil
-  tipo screen. En el slice ancho compartido dio **-0.070** con truncamiento 0.29: peor que
-  kv_norm. Segunda vez que la heterogeneidad de slices de GSM8K casi nos engaña
-  (trampa metodológica documentada también en [03](03-screen-capacidad.md) y §4.1 del informe).
+- **BC never converged: `match_oracle` stayed between 0.018 and 0.036** over the 3000
+  steps (loss 9.0 → 8.4, flat). Barely ~8x over chance (1/220 slots). In contrast, the
+  SAME recipe cloning kv_norm reaches match ≈ 1.0: the procedure is stable when the
+  signal is accessible from the present.
+- Conclusion: **the oracle's +7pp margin is made of information that does NOT exist in
+  the present observation**. The problem is partial observability with respect to that
+  criterion. (The literature dodges this by adding attention-history features that our
+  `sdpa` environment does not expose, and even then it needs pairwise ranking schemes and
+  per-head scorers.)
+- The `s_golden` run (failed BC + RL) showed +0.074 on ITS probe, but it was a slice
+  artifact: its probe [400:432] has kv_norm=0.06 (catastrophic eviction), a hostile
+  screen-like regime. On the shared wide slice it gave **-0.070** with truncation 0.29:
+  worse than kv_norm. The second time GSM8K's slice heterogeneity almost fooled us
+  (a methodological trap also documented in [03](03-capacity-screen.md) and §4.1 of the
+  report).
 
-## Qué dice el informe
+## What the report says
 
-§4.10: el behavior cloning no converge en `match_oracle` (0.018-0.036 vs ~1.0 clonando
-kv_norm), así que el margen de +7pp es información no contenida en el estado presente. Esto
-convierte el problema en uno de observabilidad parcial y explica por qué la literatura recurre
-a supervisión offline con features de atención histórica.
+§4.10: behavior cloning does not converge on `match_oracle` (0.018-0.036 vs ~1.0 when
+cloning kv_norm), so the +7pp margin is information not contained in the present state.
+This turns the problem into one of partial observability and explains why the literature
+resorts to offline supervision with attention-history features.
 
-## Datos crudos
+## Raw data
 
 - `kv-eviction-gym/ab_results/s_golden_{learning,probe}_curve.csv`
-- wide2 (la eval que desenmascara el artefacto): `ab_results/wide2_probe_curve.csv`
+- wide2 (the eval that unmasks the artifact): `ab_results/wide2_probe_curve.csv`
 
-## Estado
+## Status
 
-Válido y load-bearing: es la afirmación más limpia de toda la fase 2 (la información futura
-no es predecible desde K/V presentes en GSM8K). El complemento de fase 3 es
-`rank_predictability` ([11](11-dataset-causalidad.md)): un ranker offline sí predice utilidad
-futura en GSM8K pero mayormente vía recencia, no contenido.
+Valid and load-bearing: it is the cleanest claim of all of phase 2 (future information is
+not predictable from present K/V on GSM8K). The phase-3 complement is
+`rank_predictability` ([11](11-dataset-causality.md)): an offline ranker CAN predict
+future utility on GSM8K but mostly via recency, not content.

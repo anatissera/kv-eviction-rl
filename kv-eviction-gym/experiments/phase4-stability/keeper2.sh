@@ -121,6 +121,6 @@ python3 "$SCRIPTS/csv_to_tb.py" >>"$LOG" 2>&1
 python3 "$SCRIPTS/plot_progress.py" >>"$LOG" 2>&1
 
 # regenerate docs/imgs/ figures that depend on active runs (E12)
-python3 "$SCRIPTS/figuras.py" >>"$LOG" 2>&1
+python3 "$SCRIPTS/figures.py" >>"$LOG" 2>&1
 
 echo "$(date -u) keeper2 cycle done" >>"$LOG"

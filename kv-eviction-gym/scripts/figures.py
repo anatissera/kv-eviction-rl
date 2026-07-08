@@ -1,15 +1,15 @@
-"""Genera todas las figuras del capitulo de Resultados (titulos en espanol).
+"""Generates every figure of the Results chapter.
 
-Cada celda produce una figura del informe y la guarda en docs/imgs/.
-Los datos crudos viven en kv-eviction-gym/ (ab_results/ y
-experiments/phase3-dataset-causality/data/). Todas las figuras usan una paleta
-cohesiva fria (teal -> pizarra) con un acento calido para la comparacion clave.
+Each cell produces one report figure and saves it to docs/imgs/.
+Raw data lives in kv-eviction-gym/ (ab_results/ and
+experiments/phase3-dataset-causality/data/). All figures share a cohesive cool
+palette (teal -> slate) with one warm accent for the key comparison.
 
-Correr:  python scripts/figuras.py
+Run:  python scripts/figures.py
 """
 # %% [markdown]
-# # Figuras del capitulo de Resultados
-# Evicion aprendida de KV-cache. Todas las figuras en el estilo del informe.
+# # Results-chapter figures
+# Learned KV-cache eviction. All figures in the report's style.
 
 # %%
 import csv
@@ -48,17 +48,17 @@ def paired_gap(rows, a="oracle_fut", b="kv_norm"):
 
 
 # %% [markdown]
-# ## Figura 1: screen de capacidad E0 (16 ejemplos, overfit)
-# Mejor gap pareado por variante. Muestra que features ricas / atencion pueden
-# superar a kv_norm en capacidad, la base ciega a la norma no, y S4 no ayuda.
+# ## Figure 1: E0 capacity screen (16 examples, overfit)
+# Best paired gap per variant. Shows rich features / attention CAN beat
+# kv_norm in capacity, the norm-blind baseline cannot, and S4 does not help.
 
 # %%
 def fig1_screen():
     variants = [
-        ("e0_baseline_probe_curve.csv", "Base\n(ciega a norma)", C["slate_light"]),
-        ("e0_rich_probe_curve.csv", "Features\nricas", C["blue"]),
-        ("e0_attn_probe_curve.csv", "Atención\ncross-token", C["teal"]),
-        ("e0_rich_s4_probe_curve.csv", "Ricas +\nrec. densa", C["slate"]),
+        ("e0_baseline_probe_curve.csv", "Baseline\n(norm-blind)", C["slate_light"]),
+        ("e0_rich_probe_curve.csv", "Rich\nfeatures", C["blue"]),
+        ("e0_attn_probe_curve.csv", "Cross-token\nattention", C["teal"]),
+        ("e0_rich_s4_probe_curve.csv", "Rich +\ndense reward", C["slate"]),
     ]
     labels, gaps, colors = [], [], []
     for f, lab, col in variants:
@@ -76,11 +76,11 @@ def fig1_screen():
                 fontsize=13, weight="bold")
     ax.axhline(0, color=C["ink"], lw=1.0)
     ax.set_xticks(range(len(labels))); ax.set_xticklabels(labels, fontsize=12.5)
-    ax.set_ylabel("Mejor ventaja sobre kv_norm\n(contraste pareado)")
-    ax.set_title("Capacidad por variante (16 ejemplos)")
+    ax.set_ylabel("Best advantage over kv_norm\n(paired contrast)")
+    ax.set_title("Capacity per variant (16 examples)")
     ax.set_ylim(0, max(gaps) * 1.25)
-    fig.text(0.5, -0.03, "Capacidad: 16 ejemplos, evaluado sobre los mismos que "
-             "entrenó (overfit). Pico sobre la corrida.",
+    fig.text(0.5, -0.03, "Capacity: 16 examples, evaluated on the same examples "
+             "it trained on (overfit). Peak over the run.",
              ha="center", fontsize=11, color="#6b7480")
     fig.tight_layout()
     fig.savefig(OUT / "fig1_screen.png")
@@ -92,16 +92,16 @@ def fig1_screen():
 fig1_screen()
 
 # %% [markdown]
-# ## Figura 2: runs a escala (trayectoria del gap pareado)
-# s_rich, s_warm, s_attn a 2M pasos. Los tres oscilan en o por debajo de 0 =
-# paridad. warm arranca en kv_norm; attn queda debajo.
+# ## Figure 2: scaled runs (paired-gap trajectory)
+# s_rich, s_warm, s_attn at 2M steps. All three oscillate at or below 0 =
+# parity. warm starts at kv_norm; attn stays below.
 
 # %%
 def fig2_scaled():
     runs = [
-        ("s_rich_probe_curve.csv", "Features ricas", C["blue"]),
+        ("s_rich_probe_curve.csv", "Rich features", C["blue"]),
         ("s_warm_probe_curve.csv", "Warm-start", C["accent"]),
-        ("s_attn_probe_curve.csv", "Atención", C["slate"]),
+        ("s_attn_probe_curve.csv", "Attention", C["slate"]),
     ]
     fig, ax = plt.subplots(figsize=(7.4, 4.4))
     for f, lab, col in runs:
@@ -109,10 +109,10 @@ def fig2_scaled():
         if not p.exists():
             continue
         rows = read_probe(p)
-        # ordenar por timestep: los CSV pueden tener intentos de preempcion
-        # concatenados (timesteps que se resetean). Mostramos los probes crudos
-        # tenues + una media movil (tendencia) para que se lea la paridad sin el
-        # zigzag de las corridas reanudadas.
+        # sort by timestep: the CSVs may contain concatenated preemption
+        # attempts (timesteps that reset). We show the raw probes faint plus a
+        # moving average (trend) so parity is readable without the zigzag of
+        # resumed runs.
         pts = sorted((int(r["timestep"]) / 1e6,
                       float(r["correct_learned"]) - float(r["correct_kv_norm"]))
                      for r in rows)
@@ -123,34 +123,34 @@ def fig2_scaled():
         ts_t = ts[w - 1:]
         ax.plot(ts_t, trend, "-", lw=2.2, color=col, label=lab)
     ax.axhline(0, color=C["slate"], lw=1.6, ls="--")
-    ax.text(ax.get_xlim()[1], 0.006, "nivel kv_norm", ha="right", va="bottom",
+    ax.text(ax.get_xlim()[1], 0.006, "kv_norm level", ha="right", va="bottom",
             fontsize=12, color=C["slate"], weight="bold")
-    ax.set_xlabel("Pasos de entrenamiento (millones)")
-    ax.set_ylabel("Ventaja sobre kv_norm\n(contraste pareado)")
-    ax.set_title("Trayectoria de entrenamiento a 2M pasos")
+    ax.set_xlabel("Training steps (millions)")
+    ax.set_ylabel("Advantage over kv_norm\n(paired contrast)")
+    ax.set_title("Training trajectory at 2M steps")
     ax.legend(loc="lower right")
-    fig.text(0.5, -0.04, "Puntos: cada evaluación individual de probe. Líneas: "
-             "tendencia (media móvil de 5 probes) de cada brazo.",
+    fig.text(0.5, -0.04, "Points: each individual probe evaluation. Lines: "
+             "trend (moving average over 5 probes) per arm.",
              ha="center", fontsize=11, color="#6b7480")
     fig.tight_layout()
     fig.savefig(OUT / "fig2_scaled_traj.png")
-    print("fig2_scaled_traj.png escrita")
+    print("fig2_scaled_traj.png written")
     plt.close(fig)
 
 
 fig2_scaled()
 
 # %% [markdown]
-# ## Figura 3: wide eval (n=128, un solo stack)
-# Precision por brazo sobre 128 ejemplos frescos. Los per-token quedan a 2-3
-# ejemplos de kv_norm (paridad); atencion es peor. Insight: full-random ~ 0.04.
+# ## Figure 3: wide eval (n=128, single stack)
+# Accuracy per arm on 128 fresh examples. The per-token variants land within
+# 2-3 examples of kv_norm (parity); attention is worse. Insight: full-random ~ 0.04.
 
 # %%
 def fig3_wide():
-    # numeros del wide eval (scripts/wide_eval.py, n=128, un stack) - FINDINGS 10
+    # numbers from the wide eval (scripts/wide_eval.py, n=128, one stack) - FINDINGS 10
     arms = ["full", "kv_norm", "random", "s_rich", "s_warm", "s_attn"]
     vals = [0.742, 0.711, 0.703, 0.695, 0.688, 0.648]
-    labels = ["Full\n(techo)", "kv_norm", "Random", "Ricas", "Warm", "Atención"]
+    labels = ["Full\n(ceiling)", "kv_norm", "Random", "Rich", "Warm", "Attention"]
     colors = [C["grey"], C["slate"], C["slate_light"], C["blue"], C["accent"], C["teal"]]
     fig, ax = plt.subplots(figsize=(7.2, 4.4))
     bars = ax.bar(range(len(arms)), vals, color=colors, width=0.66,
@@ -158,32 +158,32 @@ def fig3_wide():
     for i, v in enumerate(vals):
         ax.text(i, v + 0.004, f"{v:.2f}", ha="center", va="bottom", fontsize=12.5)
     ax.set_xticks(range(len(arms))); ax.set_xticklabels(labels, fontsize=12)
-    ax.set_ylabel("Precisión (n=128)")
+    ax.set_ylabel("Accuracy (n=128)")
     ax.set_ylim(0.55, 0.78)
-    ax.set_title("Precisión por política (evaluación ancha, 128 ejemplos)")
-    # anotar el headroom full-random
+    ax.set_title("Accuracy per policy (wide evaluation, 128 examples)")
+    # annotate the full-random headroom
     ax.annotate("", xy=(0, 0.742), xytext=(0, 0.703),
                 arrowprops=dict(arrowstyle="<->", color=C["accent"], lw=1.6))
-    ax.text(0.35, 0.722, "full - random\n= 0.04\n(poco margen)", fontsize=11.5,
+    ax.text(0.35, 0.722, "full - random\n= 0.04\n(little headroom)", fontsize=11.5,
             color=C["accent"], va="center")
     fig.tight_layout()
     fig.savefig(OUT / "fig3_wide_eval.png")
-    print("fig3_wide_eval.png escrita")
+    print("fig3_wide_eval.png written")
     plt.close(fig)
 
 
 fig3_wide()
 
 # %% [markdown]
-# ## Figura 4: el oraculo de atencion futura (GSM8K)
-# Solo la informacion FUTURA supera a kv_norm (+7pp); la presente (attn_cur) no.
+# ## Figure 4: the future-attention oracle (GSM8K)
+# Only FUTURE information beats kv_norm (+7pp); present attention (attn_cur) does not.
 
 # %%
 def fig4_oracle():
     rows = load_jsonl(D3 / "gsm8k_oracle.jsonl")
     n = len(rows)
     arms = ["full", "oracle_fut", "attn_cur", "kv_norm"]
-    labels = ["Full", "Oráculo\n(atn. futura)", "Atn. presente\n(H2O)", "kv_norm"]
+    labels = ["Full", "Oracle\n(future attn.)", "Present attn.\n(H2O)", "kv_norm"]
     colors = [C["grey"], C["teal"], C["blue"], C["slate"]]
     vals = [sum(r[a] for r in rows) / n for a in arms]
     g, se, _ = paired_gap(rows, "oracle_fut", "kv_norm")
@@ -201,11 +201,11 @@ def fig4_oracle():
     ax.text((io + ik) / 2, yb + 0.008, f"+{g:.2f} ({g/se:.1f}$\\sigma$)",
             ha="center", va="bottom", fontsize=12.5, weight="bold", color=C["accent"])
     ax.set_xticks(range(len(arms))); ax.set_xticklabels(labels, fontsize=12)
-    ax.set_ylabel(f"Precisión (n={n})")
+    ax.set_ylabel(f"Accuracy (n={n})")
     ax.set_ylim(0, max(vals) * 1.35)
-    ax.set_title("Políticas de evicción: oráculo vs heurísticas (GSM8K)")
-    fig.text(0.5, -0.02, "GSM8K, backend eager. La atención presente no supera a "
-             "kv_norm; sólo el oráculo de atención futura.",
+    ax.set_title("Eviction policies: oracle vs heuristics (GSM8K)")
+    fig.text(0.5, -0.02, "GSM8K, eager backend. Present attention does not beat "
+             "kv_norm; only the future-attention oracle does.",
              ha="center", fontsize=11, color="#6b7480")
     fig.tight_layout()
     fig.savefig(OUT / "fig4_oracle.png")
@@ -216,20 +216,20 @@ def fig4_oracle():
 fig4_oracle()
 
 # %% [markdown]
-# ## Figura 5: el headroom depende del regimen
-# Regimen benigno (budget>=prompt) ~0.04 vs generacion larga ~0.45.
+# ## Figure 5: headroom depends on the regime
+# Low-difficulty regime (budget>=prompt) ~0.04 vs long generation ~0.45.
 
 # %%
 def fig5_regime():
-    # Regimen benigno: del oraculo GSM8K (budget>=prompt, medido aca).
-    # Regimen long-gen: de eval_e6c (128 ejemplos filtrados, budget 256, sdpa;
-    #   full=0.680, random=0.227 -> headroom 0.453). FINDINGS 15. El jsonl
-    #   long-gen local esta bajo eager (regimen aplanado, no sirve para headroom).
+    # Low-difficulty regime: from the GSM8K oracle (budget>=prompt, measured here).
+    # Long-gen regime: from eval_e6c (128 filtered examples, budget 256, sdpa;
+    #   full=0.680, random=0.227 -> headroom 0.453). FINDINGS 15. The local
+    #   long-gen jsonl is under eager (flattened regime, unusable for headroom).
     benign = load_jsonl(D3 / "gsm8k_oracle.jsonl")
     nb = len(benign)
     full_b = sum(r["full"] for r in benign) / nb
     rnd_b = sum(r.get("random", r["kv_norm"]) for r in benign) / nb
-    labels = ["Baja dificultad\n(budget $\\geq$ prompt)", "Generación larga\n(presión de caché)"]
+    labels = ["Low difficulty\n(budget $\\geq$ prompt)", "Long generation\n(cache pressure)"]
     heads = [full_b - rnd_b, 0.680 - 0.227]
     colors = [C["slate_light"], C["accent"]]
     fig, ax = plt.subplots(figsize=(5.6, 4.4))
@@ -239,8 +239,8 @@ def fig5_regime():
         ax.text(i, v + 0.008, f"{v:.2f}", ha="center", va="bottom",
                 fontsize=14, weight="bold")
     ax.set_xticks(range(len(labels))); ax.set_xticklabels(labels, fontsize=12.5)
-    ax.set_ylabel("Margen full - random\n(cuánto duele evictar)")
-    ax.set_title("Margen aprendible (full - random) por régimen")
+    ax.set_ylabel("full - random margin\n(how much eviction hurts)")
+    ax.set_title("Learnable margin (full - random) per regime")
     ax.set_ylim(0, max(heads) * 1.25)
     fig.tight_layout()
     fig.savefig(OUT / "fig5_regime.png")
@@ -252,9 +252,9 @@ def fig5_regime():
 fig5_regime()
 
 # %% [markdown]
-# ## Figura 8: espectro de datasets (GSM8K -> HotpotQA real -> passkey)
-# El margen del oraculo es un continuo, ordenado por cuan distinguible es el
-# contenido importante: razonamiento denso (~0) -> retrieval real -> needle puro.
+# ## Figure 8: dataset spectrum (GSM8K -> real HotpotQA -> passkey)
+# The oracle margin is a continuum, ordered by how distinguishable the
+# important content is: dense reasoning (~0) -> real retrieval -> pure needle.
 
 # %%
 def _gap_se(path, a="oracle_fut", b="kv_norm"):
@@ -267,9 +267,9 @@ def _gap_se(path, a="oracle_fut", b="kv_norm"):
 
 def fig8_spectrum():
     specs = [
-        ("gsm8k_oracle.jsonl", "GSM8K\n(razonamiento denso)", C["slate_light"]),
-        ("hotpot_results.jsonl", "HotpotQA\n(retrieval real)", C["blue"]),
-        ("passkey_oracle.jsonl", "Passkey\n(retrieval sintético)", C["accent"]),
+        ("gsm8k_oracle.jsonl", "GSM8K\n(dense reasoning)", C["slate_light"]),
+        ("hotpot_results.jsonl", "HotpotQA\n(real retrieval)", C["blue"]),
+        ("passkey_oracle.jsonl", "Passkey\n(synthetic retrieval)", C["accent"]),
     ]
     labels, vals, ses, colors = [], [], [], []
     for f, lab, col in specs:
@@ -282,12 +282,12 @@ def fig8_spectrum():
         ax.text(i, v + se + 0.015, f"+{v:.2f}", ha="center", va="bottom",
                 fontsize=14.5, weight="bold")
     ax.set_xticks(range(3)); ax.set_xticklabels(labels, fontsize=12.5)
-    ax.set_ylabel("Margen del oráculo\n(oráculo - kv_norm)")
-    ax.set_title("Margen aprendible por dataset")
+    ax.set_ylabel("Oracle margin\n(oracle - kv_norm)")
+    ax.set_title("Learnable margin per dataset")
     ax.set_ylim(0, max(vals) * 1.3)
     ax.axhline(0, color=C["ink"], lw=0.9)
-    fig.text(0.5, -0.03, "Misma medición en los tres. El margen crece con cuán "
-             "distinguible es el contenido a preservar (denso $\\to$ needle puro).",
+    fig.text(0.5, -0.03, "Same measurement on all three. The margin grows with "
+             "how distinguishable the content to preserve is (dense $\\to$ pure needle).",
              ha="center", fontsize=11, color="#6b7480")
     fig.tight_layout()
     fig.savefig(OUT / "fig8_dataset_spectrum.png")
@@ -299,13 +299,13 @@ def fig8_spectrum():
 fig8_spectrum()
 
 # %% [markdown]
-# ## Figura 9: el margen crece con la compresion (HotpotQA real + passkey)
-# oracle-kv_norm vs presupuesto de cache: a mayor compresion (menor budget),
-# mayor margen aprendible, en dato real y sintetico.
+# ## Figure 9: the margin grows with compression (real HotpotQA + passkey)
+# oracle-kv_norm vs cache budget: the more aggressive the compression (lower
+# budget), the larger the learnable margin, on real and synthetic data.
 
 # %%
 def fig9_compression():
-    # (budget, gap) por dataset, medido de los jsonl a cada presupuesto.
+    # (budget, gap) per dataset, measured from the jsonl at each budget.
     hot = [
         (256, _gap_se(D3 / "hotpot_results.jsonl")[:2]),
         (128, _gap_se(D3 / "hotpot_b128_results.jsonl")[:2]),
@@ -315,12 +315,12 @@ def fig9_compression():
         (128, _gap_se(D3 / "passkey_b128_results.jsonl")[:2]),
     ]
     fig, ax = plt.subplots(figsize=(6.8, 4.5))
-    # offsets de etiqueta por (dataset, budget) para que no pisen las lineas
+    # label offsets per (dataset, budget) so they don't sit on the lines
     offs = {("HotpotQA (real)", 256): (-6, 12), ("HotpotQA (real)", 128): (-2, -20),
-            ("Passkey (sintético)", 176): (-40, -4),
-            ("Passkey (sintético)", 128): (-6, 12)}
+            ("Passkey (synthetic)", 176): (-40, -4),
+            ("Passkey (synthetic)", 128): (-6, 12)}
     for data, lab, col in [(hot, "HotpotQA (real)", C["blue"]),
-                           (pk, "Passkey (sintético)", C["accent"])]:
+                           (pk, "Passkey (synthetic)", C["accent"])]:
         bs = [b for b, _ in data]
         gs = [g for _, (g, se) in data]
         es = [se for _, (g, se) in data]
@@ -331,28 +331,28 @@ def fig9_compression():
             ax.annotate(f"+{g:.2f}", (b, g), textcoords="offset points",
                         xytext=(dx, dy), ha="center", fontsize=12.5,
                         weight="bold", color=col)
-    ax.invert_xaxis()  # menor presupuesto (mas compresion) a la derecha
+    ax.invert_xaxis()  # lower budget (more compression) to the right
     ax.set_xticks([256, 176, 128])
-    ax.set_xlabel("Presupuesto de caché (tokens)  $\\rightarrow$ más compresión")
-    ax.set_ylabel("Margen del oráculo\n(oráculo - kv_norm)")
-    ax.set_title("Margen aprendible vs compresión")
+    ax.set_xlabel("Cache budget (tokens)  $\\rightarrow$ more compression")
+    ax.set_ylabel("Oracle margin\n(oracle - kv_norm)")
+    ax.set_title("Learnable margin vs compression")
     ax.set_ylim(0, 1.05)
     ax.legend(loc="upper left")
-    fig.text(0.5, -0.03, "Cuanto más agresiva la compresión, más pierde kv_norm "
-             "frente al oráculo. Se cumple en dato real y sintético.",
+    fig.text(0.5, -0.03, "The more aggressive the compression, the more kv_norm "
+             "loses to the oracle. Holds on real and synthetic data.",
              ha="center", fontsize=11, color="#6b7480")
     fig.tight_layout()
     fig.savefig(OUT / "fig9_margin_vs_compression.png")
-    print("fig9_margin_vs_compression.png escrita")
+    print("fig9_margin_vs_compression.png written")
     plt.close(fig)
 
 
 fig9_compression()
 
 # %% [markdown]
-# ## Figura 10: nuestro metodo online en passkey (curva de klC)
-# El probe learned oscila pero el centro se desplaza hacia arriba de kv_norm en
-# la segunda mitad del entrenamiento; toca la politica optima (1.0).
+# ## Figure 10: our online method on passkey (klC curve)
+# The learned probe oscillates but its centre shifts above kv_norm in the
+# second half of training; it touches the optimal policy (1.0).
 
 # %%
 def fig10_capstone():
@@ -363,36 +363,36 @@ def fig10_capstone():
     ts = np.array([t for t, _ in pts]); acc = np.array([a for _, a in pts])
     kv = np.mean([float(r["correct_kv_norm"]) for r in rows])
     fig, ax = plt.subplots(figsize=(7.4, 4.4))
-    # sombra segunda mitad
+    # shade the second half
     mid = ts[len(ts) // 2]
     ax.axvspan(mid, ts[-1], color=C["teal"], alpha=0.06)
-    # probes crudos + tendencia
+    # raw probes + trend
     ax.plot(ts, acc, "o", ms=3.5, color=C["blue"], alpha=0.35)
     w = 5 if len(acc) >= 5 else max(1, len(acc))
     trend = np.convolve(acc, np.ones(w) / w, mode="valid")
     ax.plot(ts[w - 1:], trend, "-", lw=2.4, color=C["blue"],
-            label="Nuestro método (online)")
+            label="Our method (online)")
     ax.axhline(kv, color=C["slate"], lw=1.8, ls="--")
-    ax.text(ts[-1], kv - 0.03, "nivel kv_norm", ha="right", va="top",
+    ax.text(ts[-1], kv - 0.03, "kv_norm level", ha="right", va="top",
             fontsize=12, color=C["slate"], weight="bold")
     ax.axhline(1.0, color=C["teal"], lw=1.2, ls=":", alpha=0.7)
-    ax.text(ts[0], 1.005, "política óptima", ha="left", va="bottom",
+    ax.text(ts[0], 1.005, "optimal policy", ha="left", va="bottom",
             fontsize=11.5, color=C["teal"])
-    ax.set_xlabel("Pasos de entrenamiento (millones)")
-    ax.set_ylabel("Precisión en el probe\n(política aprendida)")
-    ax.set_title("Nuestro método online en passkey")
+    ax.set_xlabel("Training steps (millions)")
+    ax.set_ylabel("Probe accuracy\n(learned policy)")
+    ax.set_title("Our online method on passkey")
     ax.set_ylim(-0.05, 1.12)
     ax.legend(loc="lower right")
-    fig.text(0.5, -0.04, "Puntos: probes crudos. Línea: tendencia (media móvil). "
-             "La franja marca la segunda mitad, donde el centro sube sobre kv_norm.",
+    fig.text(0.5, -0.04, "Points: raw probes. Line: trend (moving average). "
+             "The band marks the second half, where the centre rises above kv_norm.",
              ha="center", fontsize=11, color="#6b7480")
     fig.tight_layout()
     fig.savefig(OUT / "fig10_capstone.png")
     h = len(acc) // 2
-    print("fig10_capstone.png: 2a mitad mean=%.3f vs kv_norm=%.3f (n=%d probes)"
+    print("fig10_capstone.png: 2nd half mean=%.3f vs kv_norm=%.3f (n=%d probes)"
           % (acc[h:].mean(), kv, len(acc)))
     plt.close(fig)
 
 
 fig10_capstone()
-print("\nTodas las figuras generadas en", OUT)
+print("\nAll figures written to", OUT)

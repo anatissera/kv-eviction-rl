@@ -95,7 +95,7 @@ for i, (name, path) in enumerate(panels):
     ax.set_visible(True)
     rows = load_rows(name, path)
     if not rows:
-        ax.set_title(f"{name} (sin probes aun)")
+        ax.set_title(f"{name} (no probes yet)")
         continue
     ts = np.array([int(r["timestep"]) for r in rows]) / 1e6
     acc = np.array([float(r["correct_learned"]) for r in rows])
@@ -113,7 +113,7 @@ for i, (name, path) in enumerate(panels):
                         acc.mean() if n else float("nan"), kv))
     ax.set_xlim(0, None)
     ax.set_ylim(-0.05, 1.05)
-    ax.set_xlabel("M pasos")
+    ax.set_xlabel("M steps")
 
 fig.tight_layout()
 fig.savefig(OUT / "e12_progress.png")

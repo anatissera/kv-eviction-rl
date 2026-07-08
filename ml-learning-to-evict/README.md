@@ -17,11 +17,11 @@
 > section below) and `src/kvcompression/rl/environments/kvsorting_env.py` (a one-line
 > fix so the eval dataloader actually resets; marked with a `local fix` comment).
 >
-> Como usamos este codigo: reproducción del método KVP (rankers offline por (capa, cabeza)
-> entrenados con RLOO + Gumbel-top-k sobre RULER) con Qwen2-1.5B-Instruct, y comparación
-> RLOO vs PPO. Ver [`docs/runs/00-kvp-repro.md`](../docs/runs/00-kvp-repro.md). Nuestra
-> contribución principal (el entorno secuencial entrenable con MaskablePPO) es independiente
-> de este código y vive en [`kv-eviction-gym/`](../kv-eviction-gym/).
+> How we use this code: reproduction of the KVP method (offline per-(layer, head)
+> rankers trained with RLOO + Gumbel-top-k on RULER) with Qwen2-1.5B-Instruct, and an
+> RLOO vs PPO comparison. See [`docs/runs/00-kvp-repro.md`](../docs/runs/00-kvp-repro.md).
+> Our main contribution (the sequential environment trainable with MaskablePPO) is
+> independent of this code and lives in [`kv-eviction-gym/`](../kv-eviction-gym/).
 
 [![OpenReview](https://img.shields.io/badge/OpenReview-Paper-1f6feb?logo=openreview)](https://openreview.net/forum?id=0OevIlRMYN)
 [![arXiv](https://img.shields.io/badge/arXiv-2602.10238-b31b1b.svg)](https://arxiv.org/abs/2602.10238)

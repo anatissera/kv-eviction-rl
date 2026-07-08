@@ -14,7 +14,7 @@ Parameters
 ----------
 serif : bool, default False
     When *False* (default) use DejaVu Sans with compact sizes (font.size 11).
-    When *True*  register Latin Modern Roman (like ``figuras.py``) and switch
+    When *True*  register Latin Modern Roman (like ``figures.py``) and switch
     to serif family with larger sizes suitable for the report.
 
 Import ``apply_style()`` once, then use PALETTE / SERIES_COLORS.

@@ -1,44 +1,44 @@
-# 02 · La causa raíz que invalidó todos los runs iniciales: el chat template (+ fix de budget)
+# 02 · The root cause that invalidated every initial run: the chat template (+ budget fix)
 
-**Sección del informe:** §4.4 "El problema del chat template".
-**Fix en código:** `format_gsm8k_chat` en `kv-eviction-gym/src/kv_gym/vendor/prompts.py`
-(commit `7c6d2d8` en main, 2026-06-29). Test de contrato: `tests/test_chat_template.py`.
+**Report section:** §4.4 "The chat-template problem".
+**Code fix:** `format_gsm8k_chat` in `kv-eviction-gym/src/kv_gym/vendor/prompts.py`
+(commit `7c6d2d8` on main, 2026-06-29). Contract test: `tests/test_chat_template.py`.
 
-## Síntoma
+## Symptom
 
-Todos los runs, independientemente de la recompensa, morían en la misma pared:
+Every run, regardless of the reward, died against the same wall:
 
-| run | recompensa | resultado |
+| run | reward | result |
 |---|---|---|
-| `corr_reward_v1` | corrección + entropía | 100% truncamiento, retención 0 |
-| `s4_kl_v1` | corrección + KL-to-full | 100% truncamiento, retención 0-5%, patrón idéntico |
+| `corr_reward_v1` | correctness + entropy | 100% truncation, retention 0 |
+| `s4_kl_v1` | correctness + KL-to-full | 100% truncation, retention 0-5%, identical pattern |
 
-100% de truncamiento, corrección 0%, `explained_variance=NaN`: PPO sin gradiente.
-Antes de encontrar la causa real se probaron mitigaciones que no atacaban el problema
-(sets de ejemplos fáciles, presupuestos por ejemplo, protección del prompt); el handoff de
-la época (hoy en el historial de git) atribuía el problema al "free-growth skip" que descartaba ejemplos fáciles. Eso era
-un síntoma, no la causa.
+100% truncation, 0% correctness, `explained_variance=NaN`: PPO with no gradient.
+Before finding the real cause, mitigations that did not attack the problem were tried
+(easy-example sets, per-example budgets, prompt protection); the handoff of that era
+(now in the git history) attributed the problem to the "free-growth skip" that discarded
+easy examples. That was a symptom, not the cause.
 
-## Causa raíz
+## Root cause
 
-El pipeline tokenizaba el **texto crudo** del enunciado, sin el **chat template** del modelo.
-Qwen2.5-1.5B-**Instruct** solo emite su token de fin de turno `<|im_end|>` (que ES
-`tokenizer.eos_token_id`, id 151645) cuando responde dentro del frame
-`<|im_start|>assistant ... <|im_end|>` con el que fue fine-tuneado. Con prompt crudo el modelo
-nunca entra en ese frame, **nunca emite EOS** y genera hasta `max_new_tokens` en todos los
-episodios. Eso explica todo de una vez: 100% truncamiento, corrección 0, EV=NaN, y que el
-skip de free-growth nunca disparara (EOS nunca aparecía).
+The pipeline tokenized the **raw text** of the problem statement, without the model's
+**chat template**. Qwen2.5-1.5B-**Instruct** only emits its end-of-turn token `<|im_end|>`
+(which IS `tokenizer.eos_token_id`, id 151645) when it answers inside the
+`<|im_start|>assistant ... <|im_end|>` frame it was fine-tuned on. With a raw prompt the
+model never enters that frame, **never emits EOS**, and generates until `max_new_tokens`
+on every episode. That explains everything at once: 100% truncation, 0 correctness,
+EV=NaN, and why the free-growth skip never fired (EOS never appeared).
 
-## Evidencia decisiva
+## Decisive evidence
 
-Mismo modelo, mismos ejemplos de GSM8K, solo cambia el formato del prompt:
+Same model, same GSM8K examples, only the prompt format changes:
 
-| formato | terminan (EOS < 600 tok) | gen_len |
+| format | finish (EOS < 600 tok) | gen_len |
 |---|---|---|
-| crudo (pipeline viejo) | **0 / 300** | 600 para todos (min = p50 = max) |
-| chat template | **5 / 5** | 206-302, `<|im_end|>` emitido siempre |
+| raw (old pipeline) | **0 / 300** | 600 for all (min = p50 = max) |
+| chat template | **5 / 5** | 206-302, `<|im_end|>` always emitted |
 
-## El fix
+## The fix
 
 ```python
 def format_gsm8k_chat(tokenizer, example):
@@ -50,47 +50,47 @@ def format_gsm8k_chat(tokenizer, example):
     return text, max_new
 ```
 
-Aplicado en todos los puntos de tokenización: `capture.py` (eval + probe), `batched_env.py` y
-`env.py` (training). La extracción de respuesta no necesita cambios: `flexible_extract` (el
-filtro flexible de lm-eval-harness) toma el último número del texto y ya maneja los formatos
-del Instruct (`\boxed{}`, `**$X**`) sin requerir `####`.
+Applied at every tokenization point: `capture.py` (eval + probe), `batched_env.py` and
+`env.py` (training). Answer extraction needs no changes: `flexible_extract`
+(lm-eval-harness's flexible filter) takes the last number in the text and already handles
+the Instruct formats (`\boxed{}`, `**$X**`) without requiring `####`.
 
-Implicaciones:
-1. **Todos los runs previos quedan inválidos** (entrenaron sobre el formato crudo y no
-   aprendieron nada; estaban en 0% de corrección).
-2. La maquinaria de ejemplos fáciles y presupuestos por ejemplo deja de ser necesaria: con
-   EOS funcionando casi todos los ejemplos terminan solos en gen_len 200-400.
-3. El cache de free-growth previo quedó inválido (tokens del formato crudo).
+Implications:
+1. **All previous runs are invalid** (they trained on the raw format and learned nothing;
+   they sat at 0% correctness).
+2. The easy-example and per-example-budget machinery becomes unnecessary: with EOS
+   working, almost every example finishes on its own at gen_len 200-400.
+3. The previous free-growth cache became invalid (raw-format tokens).
 
-## El fix acoplado: piso de budget y el crash de `_replace_slice`
+## The coupled fix: budget floor and the `_replace_slice` crash
 
-Con el chat template activo, `chat_full_v1` (control) crasheó a 309k steps:
-`_replace_slice tensor size mismatch (195 vs 218)`. Causa: el curriculum de budget bajó a
-194 mientras el entorno batched exige un tamaño de cache uniforme (`budget+1` slots
-compartidos por los N episodios); al resetear un episodio con un prompt de 217 tokens,
-`ep.budget = max(shared_budget, T) = 217` rompe la invariante y crashea.
+With the chat template active, `chat_full_v1` (control) crashed at 309k steps:
+`_replace_slice tensor size mismatch (195 vs 218)`. Cause: the budget curriculum went
+down to 194 while the batched environment requires a uniform cache size (`budget+1` slots
+shared by the N episodes); resetting an episode with a 217-token prompt makes
+`ep.budget = max(shared_budget, T) = 217`, breaking the invariant and crashing.
 
-Longitudes de prompt chat-format sobre los 1000 ejemplos de entrenamiento:
+Chat-format prompt lengths over the 1000 training examples:
 
 | min | p50 | p90 | p95 | p99 | max |
 |---|---|---|---|---|---|
 | 80 | 116 | 147 | 158 | 186 | **232** |
 
-Con un piso de curriculum de 120, el 40.6% de los ejemplos tiene prompt más largo que todo el
-budget. **Fix: budget fijo = 256** (mayor que max(T)=232), sin curriculum, `max_len=288`. La
-compresión sigue ocurriendo donde debe: sobre la cadena de razonamiento generada. Este es
-además el régimen realista (presupuesto de memoria fijo, independiente del largo de salida).
-Esta restricción arquitectural (budget >= prompt en el entorno batched de entrenamiento) es
-la que después explica el insight de régimen ([05](05-wide-eval-regimen.md)).
+With a curriculum floor of 120, 40.6% of the examples have a prompt longer than the whole
+budget. **Fix: fixed budget = 256** (larger than max(T)=232), no curriculum, `max_len=288`.
+Compression still happens where it should: over the generated reasoning chain. This is
+also the realistic regime (a fixed memory budget, independent of output length). This
+architectural restriction (budget >= prompt in the batched training environment) is what
+later explains the regime insight ([05](05-wide-eval-regime.md)).
 
-## Qué dice el informe
+## What the report says
 
-§4.4 cuenta la historia del bug (incluida la trampa del diagnóstico "cold start" previo) y
-§4.8 usa la restricción de budget del entorno batched para explicar el régimen de baja
-dificultad. La tabla de percentiles de prompt está detrás de la decisión budget=256 usada en
-todos los experimentos a escala.
+§4.4 tells the story of the bug (including the trap of the earlier "cold start"
+diagnosis) and §4.8 uses the batched environment's budget restriction to explain the
+low-difficulty regime. The prompt-percentile table is behind the budget=256 decision used
+in every scaled experiment.
 
-## Estado
+## Status
 
-Vigente: el fix está en el código y es condición de validez de todo lo que sigue. Cualquier
-resultado fechado antes de 2026-06-29 es inválido por este bug.
+Current: the fix is in the code and is a validity condition for everything that follows.
+Any result dated before 2026-06-29 is invalid due to this bug.

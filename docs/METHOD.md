@@ -3,12 +3,12 @@
 This document defines what this project does, how it does it, and what it
 explicitly does NOT do.
 
-> Nota de vigencia (2026-07-05): este es el documento de diseño de `kv-eviction-gym/`.
-> Sigue siendo la referencia del entorno y la política, con dos actualizaciones
-> posteriores: (1) los prompts se formatean SIEMPRE con el chat template del modelo
-> (ver [runs/02](runs/02-chat-template-fix.md)); (2) el entorno soporta recompensa densa
-> causal (`kl_shaping`) y recompensa por capa (`per_layer_reward`), ver
-> [runs/09](runs/09-kl-densa-a-escala.md) y [runs/10](runs/10-credito-por-capa.md).
+> Currency note (2026-07-05): this is the design document of `kv-eviction-gym/`.
+> It remains the reference for the environment and the policy, with two later
+> updates: (1) prompts are ALWAYS formatted with the model's chat template
+> (see [runs/02](runs/02-chat-template-fix.md)); (2) the environment supports the
+> causal dense reward (`kl_shaping`) and the per-layer reward (`per_layer_reward`),
+> see [runs/09](runs/09-dense-kl-at-scale.md) and [runs/10](runs/10-per-layer-credit.md).
 
 ---
 
@@ -494,5 +494,5 @@ Changes:
   (Alex's original, reference), `per_step` (the mode that collapsed; kept for reproduction).
 - **`probe/evict_generated_frac`** metric makes the collapse visible.
 
-See [runs/01](runs/01-entorno-primeras-rewards.md) for the full post-mortem,
+See [runs/01](runs/01-env-first-rewards.md) for the full post-mortem,
 and how to run. **Always eval `best_probe_model`, not `final_model`.**

@@ -82,7 +82,7 @@ Key config options (`configs/run_none.yaml`):
 | `dataset` | `gsm8k` | `passkey` selects the synthetic retrieval arena (phase 3) |
 
 The experiment configs used in the report live in `configs/` (`e1_rich`, `e3_warm`,
-`e4_attn`, `e5_golden`, `e6*`, `e7_repeat`, `e8*`, `e9*`, `e10*`, `e11*`); each maps to a
+`e4_attn`, `e5_golden`, `e6*`, `e7_repeat`, `e8*`, `e9*`, `e10*`, `e11*`, `e12_*`); each maps to a
 doc in [`../docs/runs/`](../docs/runs/).
 
 All outputs go to `runs/<run_name>/`:
@@ -172,16 +172,17 @@ uv run python scripts/train.py --config configs/quickstart.yaml --run-name quick
 
 | Script | What it does | Doc |
 |---|---|---|
-| `scripts/wide_eval.py` | Wide paired eval (n=128, one stack, shared anchors) | [05](../docs/runs/05-wide-eval-regimen.md) |
-| `scripts/oracle_eval.py` | Future-attention oracle vs heuristics (paired, eager) | [06](../docs/runs/06-oraculo-atencion-futura.md) |
+| `scripts/wide_eval.py` | Wide paired eval (n=128, one stack, shared anchors) | [05](../docs/runs/05-wide-eval-regime.md) |
+| `scripts/oracle_eval.py` | Future-attention oracle vs heuristics (paired, eager) | [06](../docs/runs/06-future-attention-oracle.md) |
 | `scripts/trace_gen.py` | Full-cache traces with attention capture (for BC/rankers) | [07](../docs/runs/07-bc-match-oracle.md) |
-| `scripts/screen_pool.py` | Full-cache solvability screening of a training pool | [08](../docs/runs/08-longgen-exploracion.md) |
-| `scripts/eval_passkey.py` | Passkey retrieval arena (oracle vs heuristics) | [11](../docs/runs/11-dataset-causalidad.md) |
-| `scripts/eval_prefill_compress.py` | HotpotQA prefill-compression arena (SnapKV-style) | [11](../docs/runs/11-dataset-causalidad.md) |
-| `scripts/rank_predictability.py` | Offline ranker predictability control (GSM8K traces) | [11](../docs/runs/11-dataset-causalidad.md) |
+| `scripts/screen_pool.py` | Full-cache solvability screening of a training pool | [08](../docs/runs/08-longgen-exploration.md) |
+| `scripts/eval_passkey.py` | Passkey retrieval arena (oracle vs heuristics) | [11](../docs/runs/11-dataset-causality.md) |
+| `scripts/eval_prefill_compress.py` | HotpotQA prefill-compression arena (SnapKV-style) | [11](../docs/runs/11-dataset-causality.md) |
+| `scripts/rank_predictability.py` | Offline ranker predictability control (GSM8K traces) | [11](../docs/runs/11-dataset-causality.md) |
 | `scripts/passkey_ranker.py` | KVP offline recipe end-to-end on passkey (reference) | [12](../docs/runs/12-capstone-passkey.md) |
-| `experiments/phase2-capacity/` | E0 screen + scaled-run drivers, `compare.py` | [03](../docs/runs/03-screen-capacidad.md)-[04](../docs/runs/04-runs-a-escala.md) |
-| `experiments/phase3-dataset-causality/` | Phase-3 data, plots (`make_plots.py`), E11 keeper | [11](../docs/runs/11-dataset-causalidad.md)-[12](../docs/runs/12-capstone-passkey.md) |
+| `experiments/phase2-capacity/` | E0 screen + scaled-run drivers, `compare.py` | [03](../docs/runs/03-capacity-screen.md)-[04](../docs/runs/04-scaled-runs.md) |
+| `experiments/phase3-dataset-causality/` | Phase-3 data, plots (`make_plots.py`), E11 keeper | [11](../docs/runs/11-dataset-causality.md)-[12](../docs/runs/12-capstone-passkey.md) |
+| `experiments/phase4-stability/` | E12 stability sweep: keeper2 queues/resume, raw probe data | [13](../docs/runs/13-e12-stability.md) |
 
 ---
 
