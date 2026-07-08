@@ -38,6 +38,15 @@ CONT_ORIGINS = {
     "s_e12_cont_klC": P3 / "e11_klC_probe.csv",
     "s_e12_cont_klC_seed1": P3 / "e11_klC_seed1_probe.csv",
 }
+# Runs whose probe was built from 1-3 of 16 examples because kvp-ab carried a
+# stale vendor/prompts.py (no raw_chat branch) that inflated passkey prompts
+# past the eviction budget. Their kv_norm anchors (0.00 / 0.25 / 1.00) and every
+# paired gap derived from them are meaningless, so they are excluded from the
+# grid rather than plotted next to valid runs. See docs/runs/13.
+INVALID_RUNS = {
+    "s_e12_seed2", "s_e12_seed3", "s_e12_seed4", "s_e12_cont_klC_seed1",
+}
+
 # reference-only runs (finished E11 runs with no E12 continuation) still get
 # their own panel for visual context.
 REFS = {"s_e11_klC (ref seed0)": P3 / "e11_klC_probe.csv",
@@ -66,7 +75,8 @@ def load_rows(name, path):
 
 
 runs = sorted((PH4 / "data").glob("s_e12_*_probe.csv"))
-panels = [(p.stem.replace("_probe", ""), p) for p in runs]
+panels = [(p.stem.replace("_probe", ""), p) for p in runs
+          if p.stem.replace("_probe", "") not in INVALID_RUNS]
 panels += [(k, v) for k, v in REFS.items() if v.exists()]
 
 if not panels:

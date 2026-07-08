@@ -107,7 +107,7 @@ lane(){
 }
 
 lane kv-none-v2 proyecto-final-425415 us-west4-a 1 \
-  "e12_lrdecay_s0.yaml:s_e12_lrdecay_s0,e12_lrdecay_s1.yaml:s_e12_lrdecay_s1,e12_epochs4.yaml:s_e12_epochs4,e12_seed5.yaml:s_e12_seed5"
+  "e12_lrdecay_s0.yaml:s_e12_lrdecay_s0,e12_lrdecay_s1.yaml:s_e12_lrdecay_s1,e12_epochs4.yaml:s_e12_epochs4,e12_seed5.yaml:s_e12_seed5,e12_entcoef.yaml:s_e12_entcoef"
 lane kvp-ab tp-final-rl-kv-eviction asia-southeast1-a 1 \
   "e12_seed2.yaml:s_e12_seed2,e12_seed3.yaml:s_e12_seed3,e12_cont_klC_seed1.yaml:s_e12_cont_klC_seed1,e12_seed4.yaml:s_e12_seed4,e12_targetkl.yaml:s_e12_targetkl"
 lane simcot-t4 tp-final-nlp us-central1-a 0 \
