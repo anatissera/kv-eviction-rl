@@ -111,9 +111,10 @@ entre corridas, cada slot arranca apenas termina el anterior.
 | s_e12_cont_klC | DONE (10M, extendido 6M->9M auto + 9M->10M manual) | 0.58 (0->10M completo) | 0.56 | 89/186 (48%) | positivo muy leve en el agregado (+0.02); picos altos reales (toca 1.0) pero se diluyen en la historia completa, no es una convergencia sostenida |
 | s_e12_cont_klC_seed1 | DONE (6M, extendido 3M->6M auto) | tramo propio (3M-6M): 0.43 vs kv 0.50 | 0.50-0.57 | tramo propio: 8/36 (22%) | la extension NO reprodujo la mejora de cont_klC; termina por debajo |
 | s_e12_epochs4 | DONE (3M) | 0.37 | 0.69 | 2/55 (4%) | **confirma que n_epochs=10 es el driver**: con n_epochs=4 se comporta igual de mal que lrdecay_s0/klA/klB |
-| s_e12_klw15 | en curso (~14% de 3M) | - | 0.56 | - | muy temprano |
-| s_e12_seed4 | en curso (~11% de 3M) | - | 0.00 (anchor degenerado, como seed3) | - | muy temprano |
-| s_e12_seed5 | recien lanzado | - | - | - | bonus, a pedido del usuario tras liberar kv-none-v2 |
+| s_e12_klw15 | en curso | - | 0.56 | - | oscila en rango razonable, muy temprano para veredicto |
+| s_e12_seed4 | MATADO (57%, sin terminar) | - | 0.00 (anchor degenerado, como seed3) | - | anchor kv_norm=0 hacia inutil evaluar "supera a kv_norm"; cortado para liberar kvp-ab |
+| s_e12_seed5 | en curso | - | 0.375 | - | mixto, sin tendencia clara aun |
+| s_e12_targetkl | en curso (recien lanzado) | - | - | - | **nuevo brazo F**: clip_range 0.2->0.1 + target_kl=0.03 (resto identico a klC), en kvp-ab (reemplaza a seed4). Ataca directamente el patron "toca el optimo y se cae": con n_epochs=10 confirmado como driver, un update de politica mas conservador podria evitar que 10 epocas de gradiente se pasen de largo y deshagan una buena politica. Requirio agregar `target_kl` al constructor de PPO en train.py (no estaba threaded, solo clip_range/ent_coef lo estaban). |
 
 **Lectura agregada del brazo de continuacion (C):** extender el entrenamiento
 mas alla de 3M SI produce picos mas altos y mas frecuentes (cont_klC llega a

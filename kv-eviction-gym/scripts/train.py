@@ -555,6 +555,7 @@ def main():
             gae_lambda=cfg.get("gae_lambda", 1.0),
             clip_range=cfg.get("clip_range", 0.2),
             ent_coef=cfg.get("ent_coef", 0.01),
+            target_kl=cfg.get("target_kl", None),
             tensorboard_log=str(tb_dir),
             verbose=1,
             device=device,
