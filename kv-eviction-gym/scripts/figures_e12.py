@@ -226,8 +226,81 @@ def fig13_epochs():
     plt.close(fig)
 
 
+# ---------------------------------------------------------------------------
+# Figure 14: probe accuracy over training (one panel per arm)
+# ---------------------------------------------------------------------------
+def fig14_accuracy():
+    """Raw probe accuracy vs steps, one panel per arm.
+
+    In panels rather than overlaid because each run has its OWN kv_norm
+    (0.375 to 0.688 depending on VM and seed: the same 16 examples give
+    different absolute accuracies on L4 vs T4). Overlaying raw accuracies
+    against a single reference would suggest comparisons that are not valid;
+    each panel carries its own kv_norm line.
+    """
+    # (run, label, origin to prepend so the axis starts at 0)
+    arms = [
+        ("s_e12_cont_klC",   "Base config extended to 10M steps",
+         P3 / "e11_klC_probe.csv"),
+        ("s_e12_seed5",      "Base config (seed 5)", None),
+        ("s_e12_targetkl",   "More conservative clipping and target KL", None),
+        ("s_e12_entcoef",    "Less exploration (entropy coef.)", None),
+        ("s_e12_epochs15",   "15 epochs per rollout", None),
+        ("s_e12_epochs4",    "4 epochs per rollout", None),
+        ("s_e12_lrdecay_s0", "LR decay (seed 0)", None),
+        ("s_e12_lrdecay_s1", "LR decay (seed 1)", None),
+        ("s_e12_klw15",      "Stronger dense reward", None),
+    ]
+    MIN_PROBES = 3
+    present = [(r, l, o) for r, l, o in arms
+               if (D4 / f"{r}_probe.csv").exists()
+               and len(read(D4 / f"{r}_probe.csv")) >= MIN_PROBES]
+    if not present:
+        print("fig14: no data yet")
+        return
+
+    ncols = 3
+    nrows = (len(present) + ncols - 1) // ncols
+    fig, axes = plt.subplots(nrows, ncols, figsize=(4.9 * ncols, 3.5 * nrows),
+                             squeeze=False)
+    for ax in axes.flat:
+        ax.set_visible(False)
+
+    for i, (run, lab, origin) in enumerate(present):
+        ax = axes[i // ncols][i % ncols]
+        ax.set_visible(True)
+        ts, learned, kv = series(run, origin)
+        ax.plot(ts, learned, "o", ms=3.0, color=C["blue"], alpha=0.32)
+        idx, trend = smooth(learned)
+        if trend is not None:
+            ax.plot(ts[idx], trend, "-", lw=2.2, color=C["blue"])
+        ax.axhline(kv, color=C["slate"], ls="--", lw=1.5)
+        ax.axhline(1.0, color=C["teal"], ls=":", lw=1.1, alpha=0.65)
+        status = "" if done(run) else "  (in progress)"
+        ax.set_title(f"{lab}{status}\nkv_norm = {kv:.2f}  (n={len(learned)})",
+                     fontsize=12)
+        ax.set_ylim(-0.05, 1.10)
+        ax.set_xlim(0, None)
+        ax.set_xlabel("Training steps (millions)", fontsize=11)
+        if i % ncols == 0:
+            ax.set_ylabel("Probe accuracy", fontsize=11)
+
+    fig.suptitle("Probe accuracy over training",
+                 fontsize=17, weight="bold", y=1.005)
+    fig.text(0.5, -0.015,
+             "Points: individual evaluations (16 examples each). Lines: "
+             "trend (moving average). Dashed: that same run's kv_norm. "
+             "Dotted: perfect policy.",
+             ha="center", fontsize=11, color="#6b7480")
+    fig.tight_layout()
+    fig.savefig(OUT / "fig14_e12_accuracy.png")
+    print("fig14_e12_accuracy.png:", [r for r, _, _ in present])
+    plt.close(fig)
+
+
 if __name__ == "__main__":
-    fig11_resumen()
-    fig12_estabilidad()
-    fig13_epocas()
-    print("\nFiguras E12 escritas en", OUT)
+    fig11_summary()
+    fig12_stability()
+    fig13_epochs()
+    fig14_accuracy()
+    print("\nE12 figures written to", OUT)
