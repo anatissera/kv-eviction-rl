@@ -208,7 +208,7 @@ def fig13_epochs():
            edgecolor="white", linewidth=1.3)
     ax.axhline(0.5, color=C["slate"], lw=1.5, ls="--")
     for i, f in enumerate(fracs):
-        # label inside the bar if it would touch the 50% line
+        # put the label inside the bar if it would touch the 50% line
         near_line = abs(f - 0.5) < 0.06
         y, va, col = ((f - 0.02, "top", "white") if near_line
                       else (f + 0.012, "bottom", C["ink"]))
@@ -221,7 +221,8 @@ def fig13_epochs():
     ax.set_title("Optimization epochs per rollout")
     ax.set_ylim(0, max(fracs + [0.6]) * 1.28)
     n_shown = len(labels)
-    note = ("Everything else identical across the runs."
+    note = ("Everything else identical. The 15-epoch run stopped "
+            "early (1.15M steps vs 3M): a trend, not a final value."
             if n_shown >= 3 else
             "Everything else identical across the runs. "
             "The 15-epoch variant does not have enough evaluations yet.")

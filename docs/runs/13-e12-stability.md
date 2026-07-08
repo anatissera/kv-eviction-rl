@@ -2,9 +2,11 @@
 
 **Branch:** `exp/e12-stability` (isolated from main so the results are reportable as a
 closed experiment).
-**Status:** IN PROGRESS (launched 2026-07-06).
+**Status:** CLOSED (launched 2026-07-06, VMs stopped 2026-07-08). See the conclusion at
+the end.
 **Data:** `kv-eviction-gym/experiments/phase4-stability/data/`
 **Progress plots:** `python experiments/phase4-stability/plot_progress.py`
+**Report figures:** `python scripts/figures_e12.py` -> `docs/imgs/fig11..14`
 
 ## Motivation (what E11 left behind)
 
@@ -110,9 +112,9 @@ runs, each slot starts as soon as the previous one finishes.
 | s_e12_seed4 | **INVALID / KILLED** | - | 0.00 (broken probe, n=1) | - | its "degenerate anchor" was the bug, not seed bad luck |
 | s_e12_seed5 | DONE (3M) | 0.439 | 0.375 | 32/54 (59%) | VALID (16/16). Gap +0.064 but mean below the 0.5 floor -> STOP. FLAT trend (1st 0.444 -> 2nd 0.433), final stretch the weakest. Same pattern as seed2/cont_klC: real peaks, no sustained convergence. |
 | s_e12_entcoef | KILLED at 33% (conclusive verdict) | 0.257 | 0.688 | 0/19 (0%) | **arm G negative, with a mechanism**: ent_coef 0.003 causes an entropy collapse (-5.5 -> -4.53) and `truncation_rate` 0 -> **1.0**. The policy becomes deterministic and converges to an eviction pattern that stops the model from emitting EOS: episodes never finish, correctness is 0 and PPO loses its gradient. Same failure mode as the chat-template bug, reached by another path. Same-window contrast: targetkl (ent_coef 0.01) sits at entropy -5.56 and truncation 0.06. |
-| s_e12_entcoef6 | running (kv-none-v2) | - | - | - | **arm G'**: ent_coef 0.006, a midpoint between 0.003 (collapses) and 0.01 (base). Looks for a window where less exploration helps without killing EOS. |
-| s_e12_epochs15 | running (simcot-t4) | - | - | - | **arm H**: n_epochs 10->15 isolated. epochs4 showed 10>>4; the open question is whether it is monotonic or whether 10 is already the sweet spot. |
-| s_e12_targetkl | RELAUNCHED clean, running | - | 0.688 | - | **arm F**: clip_range 0.2->0.1 + target_kl=0.03 (the rest identical to klC). Attacks the "touches the optimum and falls" pattern: with n_epochs=10 confirmed as the driver, a more conservative update should keep 10 epochs of gradient from overshooting. Required threading `target_kl` into train.py's PPO constructor (it was not). The first attempt ran with the broken probe and was discarded. |
+| s_e12_entcoef6 | CUT at 0.55M (VM stopped) | 0.15 | 0.688 | 0/10 (0%) | **arm G' negative, mechanism DIFFERENT from entcoef's**: with ent_coef 0.006 entropy stays healthy (-5.3, does not collapse like 0.003 which fell to -4.53), but the policy still converges to a bad local optimum: it evicts ~80% freshly generated tokens, truncates 100% and correctness is 0. Two different paths (entropy collapse vs a local optimum with healthy exploration), same destination. Less exploration does not help. |
+| s_e12_epochs15 | CUT at 1.15M (VM stopped, incomplete) | 0.63 | 0.562 | 14/21 (67% strict, 86% >=) | **arm H, the strongest signal in the sweep but the least mature**: n_epochs 15, 1st half 0.556 -> 2nd half 0.705, rising. Completes the monotonic story with epochs4/klC: 4 ep 4% above, 10 ep 48%, 15 ep 67%. BUT it ran only 1.15M steps (vs 3M for the others): a VERY promising early trend, not a comparable final value. **The number 1 candidate for more compute** if resumed. |
+| s_e12_targetkl | CUT at 2.70M (VM stopped, ~90%) | 0.59 | 0.688 | 6/50 (12% strict, 26% >=) | **arm F negative**: clip_range 0.2->0.1 + target_kl=0.03. The more conservative update did NOT cross its anchor (the sweep's highest, 0.688): flat trend (1st 0.583 -> 2nd 0.605), oscillates below. Required threading `target_kl` into train.py's PPO constructor (it was not; it would have been a silent no-op). The first attempt ran with the broken probe and was discarded; this is the clean relaunch. |
 
 ### kvp-ab probe bug (found 2026-07-08, invalidates 4 runs)
 
@@ -150,3 +152,58 @@ two seeds where it was tried, the final result over the full history is parity (
 negative, not clear, sustained convergence above kv_norm. The "more steps stabilize"
 hypothesis is confirmed partially: it improves the magnitude of the peaks, not the
 consistency.
+
+## Sweep conclusion (2026-07-08, VMs stopped)
+
+13 arms were run; 4 were invalidated by the kvp-ab probe bug (seed2, seed3, seed4,
+cont_klC_seed1), 9 are valid. The report figures (`docs/imgs/fig11..14`) reflect only the
+valid ones.
+
+**What was learned, ordered by strength of evidence:**
+
+1. **`n_epochs` is the causal driver, and the effect looks monotonic.** With everything
+   else fixed: 4 epochs cross kv_norm in 4% of the evaluations, 10 in 48%, 15 in 67%
+   (fig13). It is the sweep's cleanest result. Honest caveat: the 15-epoch run was cut at
+   1.15M steps (the others reached 3M), so that 67% is an early TREND, not a comparable
+   final value. Even so, the direction (more optimization epochs per rollout -> more
+   coupling with correctness) is consistent across three points.
+
+2. **No configuration, on its own, crosses kv_norm in a stable, sustained way.**
+   klC/cont_klC's positive is real but fragile: there are high, frequent peaks (touching
+   1.0), but over the full history the aggregate is parity (+0.02 at 10M). Extending
+   steps improves the HEIGHT of the peaks, not their CONSISTENCY. This is the central
+   message the report already carries, and E12 reinforces it with more data rather than
+   contradicting it.
+
+3. **The PPO stabilization levers we tried did not help:**
+   - Linear LR decay (seeds 0 and 1): below kv_norm, did not turn the oscillation into
+     convergence.
+   - A more conservative update (clip_range 0.1 + target_kl 0.03): flat trend, never
+     crossed its anchor.
+   - A stronger dense reward (kl_weight 0.05->0.15): never beat the heuristic; more
+     weight on the KL proxy does not fix its decoupling from final correctness.
+   - Less exploration (ent_coef 0.003 and 0.006): both collapse to zero correctness,
+     via two distinct mechanisms (entropy collapse for 0.003; a bad local optimum with
+     healthy entropy for 0.006). Confirms the base config's exploration (0.01) was not
+     the bottleneck.
+
+4. **Seeds:** with valid anchors (seed5 on kv-none-v2), the positive does not reproduce
+   as a sustained crossing: gap +0.064 but a flat trend and a mean below the 0.5 floor.
+   It remains "a single-seed positive that the other seeds do not reproduce as a stable
+   crossing", just as before E12.
+
+**What would remain for more compute (future work):**
+- Resume **n_epochs=15 up to 3M+** and with >=2 seeds: it is the only arm with a clearly
+  rising, unresolved trend. Candidate number 1.
+- The **wide paired eval** (n~96-128 shared passkey examples) on klC's final checkpoint,
+  to separate real policy instability from the 16-example probe's noise. Proposed, never
+  executed.
+- Real GAE/gamma<1, which requires surgery on the episode buffer (discarded for the 48h
+  window, see above).
+
+**Methodological note E12 made clear:** with probe_n=16, much of the "oscillation" we had
+been reading as policy instability is measurement noise (1 example = 0.0625). The
+analysis rests on the paired learned-vs-kv_norm contrast within each run and on
+aggregates over dozens of evaluations, never on a single probe. The kvp-ab probe bug
+(which shrank n to 1-3 without warning) was the most expensive reminder of this; now
+`probe.py` aborts if fewer than 50% of the examples survive.
